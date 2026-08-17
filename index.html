@@ -60,33 +60,45 @@
                 <!-- ===== 基本情報 ===== -->
                 <h3 class="board-form-group-title" data-i18n="groupBasic">基本情報</h3>
 
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <label for="input-uid" data-i18n="labelUid">原神UID</label>
-                        <select class="board-visibility-select" id="vis-genshinUid" data-field="genshinUid"></select>
+                <div class="board-form-row-pair">
+                    <div class="board-form-row">
+                        <div class="board-form-row-head">
+                            <label for="input-uid" data-i18n="labelUid">原神UID</label>
+                            <select class="board-visibility-select" id="vis-genshinUid" data-field="genshinUid"></select>
+                        </div>
+                        <input type="text" id="input-uid" name="genshinUid" inputmode="numeric" maxlength="20" data-i18n-placeholder="uidPlaceholder" required />
                     </div>
-                    <input type="text" id="input-uid" name="genshinUid" inputmode="numeric" maxlength="20" data-i18n-placeholder="uidPlaceholder" required />
+
+                    <div class="board-form-row">
+                        <div class="board-form-row-head">
+                            <label for="input-server" data-i18n="labelServer">サーバー</label>
+                            <select class="board-visibility-select" id="vis-server" data-field="server"></select>
+                        </div>
+                        <select id="input-server" name="server" required>
+                            <option value="asia" data-i18n="serverAsia">アジア</option>
+                            <option value="america" data-i18n="serverAmerica">北米</option>
+                            <option value="europe" data-i18n="serverEurope">欧州</option>
+                            <option value="sar" data-i18n="serverSar">香港・マカオ・台湾</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <label for="input-server" data-i18n="labelServer">サーバー</label>
-                        <select class="board-visibility-select" id="vis-server" data-field="server"></select>
+                <div class="board-form-row-pair">
+                    <div class="board-form-row">
+                        <div class="board-form-row-head">
+                            <label for="input-ar" data-i18n="labelAdventureRank">冒険者ランク</label>
+                            <select class="board-visibility-select" id="vis-adventureRank" data-field="adventureRank"></select>
+                        </div>
+                        <select id="input-ar" name="adventureRank"></select>
                     </div>
-                    <select id="input-server" name="server" required>
-                        <option value="asia" data-i18n="serverAsia">アジア</option>
-                        <option value="america" data-i18n="serverAmerica">北米</option>
-                        <option value="europe" data-i18n="serverEurope">欧州</option>
-                        <option value="sar" data-i18n="serverSar">香港・マカオ・台湾</option>
-                    </select>
-                </div>
 
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <label for="input-ar" data-i18n="labelAdventureRank">冒険者ランク</label>
-                        <select class="board-visibility-select" id="vis-adventureRank" data-field="adventureRank"></select>
+                    <div class="board-form-row">
+                        <div class="board-form-row-head">
+                            <label for="input-wl" data-i18n="labelWorldLevel">世界ランク</label>
+                            <select class="board-visibility-select" id="vis-worldLevel" data-field="worldLevel"></select>
+                        </div>
+                        <select id="input-wl" name="worldLevel"></select>
                     </div>
-                    <input type="number" id="input-ar" name="adventureRank" min="1" max="60" />
                 </div>
 
                 <div class="board-form-row">
@@ -108,9 +120,10 @@
                     </div>
                     <div class="board-checkbox-group" id="group-platforms">
                         <label><input type="checkbox" name="platforms" value="pc" /><span data-i18n="platformPc">PC</span></label>
-                        <label><input type="checkbox" name="platforms" value="ps5" /><span data-i18n="platformPs5">PS5</span></label>
-                        <label><input type="checkbox" name="platforms" value="ps4" /><span data-i18n="platformPs4">PS4</span></label>
                         <label><input type="checkbox" name="platforms" value="mobile" /><span data-i18n="platformMobile">スマホ</span></label>
+                        <label><input type="checkbox" name="platforms" value="tablet" /><span data-i18n="platformTablet">タブレット</span></label>
+                        <label><input type="checkbox" name="platforms" value="ps5" /><span data-i18n="platformPs5">PS5</span></label>
+                        <label><input type="checkbox" name="platforms" value="other" /><span data-i18n="platformOther">その他</span></label>
                     </div>
                 </div>
 
@@ -149,7 +162,47 @@
                         <label><input type="checkbox" name="playStyles" value="chill" /><span data-i18n="styleChill">まったり勢</span></label>
                         <label><input type="checkbox" name="playStyles" value="hardcore" /><span data-i18n="styleHardcore">がっつり勢</span></label>
                         <label><input type="checkbox" name="playStyles" value="beginnerFriendly" /><span data-i18n="styleBeginner">初心者歓迎</span></label>
-                        <label><input type="checkbox" name="playStyles" value="efficient" /><span data-i18n="styleEfficient">効率重視</span></label>
+                        <label><input type="checkbox" name="playStyles" value="callOnly" /><span data-i18n="styleCallOnly">通話しながら各々プレイしたい！</span></label>
+                        <label><input type="checkbox" name="playStyles" value="canHelpExplore" /><span data-i18n="styleCanHelpExplore">探索手伝います！</span></label>
+                        <label><input type="checkbox" name="playStyles" value="wantPhotos" /><span data-i18n="styleWantPhotos">写真撮影しよう！</span></label>
+                        <label><input type="checkbox" name="playStyles" value="wantElites" /><span data-i18n="styleWantElites">精鋭狩りしたい！</span></label>
+                        <label><input type="checkbox" name="playStyles" value="canHelpBuild" /><span data-i18n="styleCanHelpBuild">育成手伝います！</span></label>
+                    </div>
+                    <details class="board-substyle-details">
+                        <summary data-i18n="styleBeginnerGroupTitle">初心者向け</summary>
+                        <div class="board-checkbox-group">
+                            <label><input type="checkbox" name="playStyles" value="needExploreHelp" /><span data-i18n="styleNeedExploreHelp">探索手伝って！</span></label>
+                            <label><input type="checkbox" name="playStyles" value="needFarmHelp" /><span data-i18n="styleNeedFarmHelp">育成素材集め手伝って！</span></label>
+                            <label><input type="checkbox" name="playStyles" value="needQuestions" /><span data-i18n="styleNeedQuestions">わからないことが多いので質問させて！</span></label>
+                            <label><input type="checkbox" name="playStyles" value="needCarry" /><span data-i18n="styleNeedCarry">とにかくキャリーして！</span></label>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- ===== 連絡・時間帯 ===== -->
+                <h3 class="board-form-group-title" data-i18n="groupContact">連絡・時間帯</h3>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelWeekdayTimes">平日のマルチ可能時間帯</span>
+                        <select class="board-visibility-select" id="vis-weekdayTimes" data-field="weekdayTimes"></select>
+                    </div>
+                    <div class="board-time-range">
+                        <select id="weekday-start" class="board-time-select"></select>
+                        <span class="board-time-tilde">〜</span>
+                        <select id="weekday-end" class="board-time-select"></select>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelWeekendTimes">休日のマルチ可能時間帯</span>
+                        <select class="board-visibility-select" id="vis-weekendTimes" data-field="weekendTimes"></select>
+                    </div>
+                    <div class="board-time-range">
+                        <select id="weekend-start" class="board-time-select"></select>
+                        <span class="board-time-tilde">〜</span>
+                        <select id="weekend-end" class="board-time-select"></select>
                     </div>
                 </div>
 
@@ -167,14 +220,14 @@
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
-                        <span data-i18n="labelWorkCallOk">作業通話のみでもOK</span>
-                        <select class="board-visibility-select" id="vis-workCallOk" data-field="workCallOk"></select>
+                        <label for="input-twitter" data-i18n="labelTwitter">ツイッターID</label>
+                        <select class="board-visibility-select" id="vis-twitterId" data-field="twitterId"></select>
                     </div>
-                    <label class="board-single-checkbox"><input type="checkbox" id="input-workCallOk" name="workCallOk" /><span data-i18n="workCallOkLabel">作業通話だけの参加でもOK</span></label>
+                    <input type="text" id="input-twitter" name="twitterId" maxlength="20" data-i18n-placeholder="twitterPlaceholder" />
                 </div>
 
-                <!-- ===== 連絡・時間帯 ===== -->
-                <h3 class="board-form-group-title" data-i18n="groupContact">連絡・時間帯</h3>
+                <!-- ===== ボイスチャット ===== -->
+                <h3 class="board-form-group-title" data-i18n="groupVoice">ボイスチャット</h3>
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
@@ -200,40 +253,42 @@
                     </div>
                 </div>
 
+                <h4 class="board-form-subgroup-title" data-i18n="groupCallStyle">通話スタイル</h4>
+
                 <div class="board-form-row">
                     <div class="board-form-row-head">
-                        <label for="input-twitter" data-i18n="labelTwitter">ツイッターID</label>
-                        <select class="board-visibility-select" id="vis-twitterId" data-field="twitterId"></select>
+                        <span data-i18n="labelCasualOk">タメ口OK</span>
+                        <select class="board-visibility-select" id="vis-casualOk" data-field="casualOk"></select>
                     </div>
-                    <input type="text" id="input-twitter" name="twitterId" maxlength="20" data-i18n-placeholder="twitterPlaceholder" />
+                    <label class="board-single-checkbox"><input type="checkbox" id="input-casualOk" name="casualOk" /><span data-i18n="casualOkLabel">タメ口で話してもOK</span></label>
                 </div>
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
-                        <span data-i18n="labelWeekdayTimes">平日のマルチ可能時間帯</span>
-                        <select class="board-visibility-select" id="vis-weekdayTimes" data-field="weekdayTimes"></select>
+                        <span data-i18n="labelJokingOk">おふざけOK</span>
+                        <select class="board-visibility-select" id="vis-jokingOk" data-field="jokingOk"></select>
                     </div>
-                    <div class="board-checkbox-group" id="group-weekdayTimes">
-                        <label><input type="checkbox" name="weekdayTimes" value="morning" /><span data-i18n="slotMorning">朝(6-12)</span></label>
-                        <label><input type="checkbox" name="weekdayTimes" value="day" /><span data-i18n="slotDay">昼(12-18)</span></label>
-                        <label><input type="checkbox" name="weekdayTimes" value="night" /><span data-i18n="slotNight">夜(18-24)</span></label>
-                        <label><input type="checkbox" name="weekdayTimes" value="midnight" /><span data-i18n="slotMidnight">深夜(0-6)</span></label>
-                        <label><input type="checkbox" name="weekdayTimes" value="irregular" /><span data-i18n="slotIrregular">不定期</span></label>
+                    <label class="board-single-checkbox"><input type="checkbox" id="input-jokingOk" name="jokingOk" /><span data-i18n="jokingOkLabel">おふざけしながらでもOK</span></label>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelSameOshiPolicy">同担拒否</span>
+                        <select class="board-visibility-select" id="vis-sameOshiPolicy" data-field="sameOshiPolicy"></select>
+                    </div>
+                    <div class="board-radio-group" id="group-sameOshiPolicy">
+                        <label><input type="radio" name="sameOshiPolicy" value="reject" /><span data-i18n="sameOshiReject">あり</span></label>
+                        <label><input type="radio" name="sameOshiPolicy" value="ok" /><span data-i18n="sameOshiOk">なし</span></label>
+                        <label><input type="radio" name="sameOshiPolicy" value="noOpinion" /><span data-i18n="sameOshiNoOpinion">気にしたことない</span></label>
                     </div>
                 </div>
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
-                        <span data-i18n="labelWeekendTimes">休日のマルチ可能時間帯</span>
-                        <select class="board-visibility-select" id="vis-weekendTimes" data-field="weekendTimes"></select>
+                        <span data-i18n="labelWorkCallOk">作業通話のみでもOK</span>
+                        <select class="board-visibility-select" id="vis-workCallOk" data-field="workCallOk"></select>
                     </div>
-                    <div class="board-checkbox-group" id="group-weekendTimes">
-                        <label><input type="checkbox" name="weekendTimes" value="morning" /><span data-i18n="slotMorning">朝(6-12)</span></label>
-                        <label><input type="checkbox" name="weekendTimes" value="day" /><span data-i18n="slotDay">昼(12-18)</span></label>
-                        <label><input type="checkbox" name="weekendTimes" value="night" /><span data-i18n="slotNight">夜(18-24)</span></label>
-                        <label><input type="checkbox" name="weekendTimes" value="midnight" /><span data-i18n="slotMidnight">深夜(0-6)</span></label>
-                        <label><input type="checkbox" name="weekendTimes" value="irregular" /><span data-i18n="slotIrregular">不定期</span></label>
-                    </div>
+                    <label class="board-single-checkbox"><input type="checkbox" id="input-workCallOk" name="workCallOk" /><span data-i18n="workCallOkLabel">作業通話だけの参加でもOK</span></label>
                 </div>
 
                 <!-- ===== コメント ===== -->

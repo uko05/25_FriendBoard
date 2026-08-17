@@ -71,7 +71,8 @@ export const store = {
   genshinUid: '',
   server: '',
   intro: '', // 募集コメントの既定値（次回の募集フォームにも自動反映される）
-  adventureRank: '',
+  adventureRank: 60,
+  worldLevel: 9,
   gender: '',
   platforms: [],
   oshiChars: [], // 原神キャラのicon名、最大3件
@@ -81,13 +82,17 @@ export const store = {
   workCallOk: false,
   vc: '',
   vcApps: [],
+  casualOk: false,
+  jokingOk: false,
+  sameOshiPolicy: '',
   twitterId: '',
-  weekdayTimes: [],
-  weekendTimes: [],
+  weekdayTimes: { start: '', end: '' },
+  weekendTimes: { start: '', end: '' },
   visibility: defaultVisibility(), // 項目名 -> 'hidden' | 'public' | 'approval'
 };
 
-const ARRAY_FIELDS = ['platforms', 'oshiChars', 'playStyles', 'vcApps', 'weekdayTimes', 'weekendTimes'];
+const ARRAY_FIELDS = ['platforms', 'oshiChars', 'playStyles', 'vcApps'];
+const TIME_RANGE_FIELDS = ['weekdayTimes', 'weekendTimes'];
 
 export async function loadProfileFromFirestore() {
   try {
@@ -99,13 +104,20 @@ export async function loadProfileFromFirestore() {
       if (d.server != null) store.server = d.server;
       if (d.intro != null) store.intro = d.intro;
       if (d.adventureRank != null) store.adventureRank = d.adventureRank;
+      if (d.worldLevel != null) store.worldLevel = d.worldLevel;
       if (d.gender != null) store.gender = d.gender;
       if (d.spending != null) store.spending = d.spending;
       if (d.inviteStyle != null) store.inviteStyle = d.inviteStyle;
       if (d.workCallOk != null) store.workCallOk = !!d.workCallOk;
       if (d.vc != null) store.vc = d.vc;
+      if (d.casualOk != null) store.casualOk = !!d.casualOk;
+      if (d.jokingOk != null) store.jokingOk = !!d.jokingOk;
+      if (d.sameOshiPolicy != null) store.sameOshiPolicy = d.sameOshiPolicy;
       if (d.twitterId != null) store.twitterId = d.twitterId;
       ARRAY_FIELDS.forEach((k) => { if (Array.isArray(d[k])) store[k] = d[k]; });
+      TIME_RANGE_FIELDS.forEach((k) => {
+        if (d[k] && typeof d[k] === 'object') store[k] = { start: d[k].start || '', end: d[k].end || '' };
+      });
       if (d.visibility && typeof d.visibility === 'object') {
         VISIBILITY_FIELDS.forEach((k) => {
           if (d.visibility[k]) store.visibility[k] = d.visibility[k];
@@ -125,6 +137,7 @@ export async function syncProfileToFirestore() {
       server: store.server,
       intro: store.intro,
       adventureRank: store.adventureRank,
+      worldLevel: store.worldLevel,
       gender: store.gender,
       platforms: store.platforms,
       oshiChars: store.oshiChars,
@@ -134,6 +147,9 @@ export async function syncProfileToFirestore() {
       workCallOk: store.workCallOk,
       vc: store.vc,
       vcApps: store.vcApps,
+      casualOk: store.casualOk,
+      jokingOk: store.jokingOk,
+      sameOshiPolicy: store.sameOshiPolicy,
       twitterId: store.twitterId,
       weekdayTimes: store.weekdayTimes,
       weekendTimes: store.weekendTimes,

@@ -3,10 +3,12 @@
 // board.js(投稿フォーム・カード表示)とapplications.js(申請カード表示)の両方から使う。
 
 // 公開設定(visibility)の対象となる項目一覧。コメントは常に公開のため対象外。
+// フォームの並び順とだいたい揃えている(カードのチップ表示順にも使われる)。
 export const VISIBILITY_FIELDS = [
-  'genshinUid', 'server', 'adventureRank', 'gender', 'platforms',
-  'oshiChars', 'spending', 'playStyles', 'inviteStyle', 'workCallOk',
-  'vc', 'vcApps', 'twitterId', 'weekdayTimes', 'weekendTimes',
+  'genshinUid', 'server', 'adventureRank', 'worldLevel', 'gender', 'platforms',
+  'oshiChars', 'spending', 'playStyles',
+  'weekdayTimes', 'weekendTimes', 'inviteStyle', 'twitterId',
+  'vc', 'vcApps', 'casualOk', 'jokingOk', 'sameOshiPolicy', 'workCallOk',
 ];
 
 // 既定の公開設定。性別だけ非公開始まり、他は公開始まり。
@@ -20,6 +22,7 @@ const FIELD_LABELS = {
   genshinUid: { ja: '原神UID', en: 'Genshin UID' },
   server: { ja: 'サーバー', en: 'Server' },
   adventureRank: { ja: '冒険者ランク', en: 'Adventure Rank' },
+  worldLevel: { ja: '世界ランク', en: 'World Level' },
   gender: { ja: '性別', en: 'Gender' },
   platforms: { ja: 'ハード', en: 'Platform' },
   oshiChars: { ja: '推しキャラ', en: 'Favorite Characters' },
@@ -32,6 +35,9 @@ const FIELD_LABELS = {
   twitterId: { ja: 'ツイッターID', en: 'X (Twitter) ID' },
   weekdayTimes: { ja: '平日のマルチ可能時間帯', en: 'Weekday availability' },
   weekendTimes: { ja: '休日のマルチ可能時間帯', en: 'Weekend availability' },
+  casualOk: { ja: 'タメ口OK', en: 'Casual speech OK' },
+  jokingOk: { ja: 'おふざけOK', en: 'Joking around OK' },
+  sameOshiPolicy: { ja: '同担拒否', en: 'Same-favorite policy' },
 };
 
 export function fieldLabel(key, lang) {
@@ -53,9 +59,10 @@ const OPTION_LABELS = {
   },
   platforms: {
     pc: { ja: 'PC', en: 'PC' },
-    ps5: { ja: 'PS5', en: 'PS5' },
-    ps4: { ja: 'PS4', en: 'PS4' },
     mobile: { ja: 'スマホ', en: 'Mobile' },
+    tablet: { ja: 'タブレット', en: 'Tablet' },
+    ps5: { ja: 'PS5', en: 'PS5' },
+    other: { ja: 'その他', en: 'Other' },
   },
   spending: {
     f2p: { ja: '無課金', en: 'F2P' },
@@ -66,7 +73,15 @@ const OPTION_LABELS = {
     chill: { ja: 'まったり勢', en: 'Casual' },
     hardcore: { ja: 'がっつり勢', en: 'Hardcore' },
     beginnerFriendly: { ja: '初心者歓迎', en: 'Beginner friendly' },
-    efficient: { ja: '効率重視', en: 'Efficiency focused' },
+    callOnly: { ja: '通話しながら各々プレイしたい！', en: 'Want to play separately while on call!' },
+    canHelpExplore: { ja: '探索手伝います！', en: "I'll help you explore!" },
+    wantPhotos: { ja: '写真撮影しよう！', en: "Let's take photos!" },
+    wantElites: { ja: '精鋭狩りしたい！', en: 'Want to hunt elites!' },
+    canHelpBuild: { ja: '育成手伝います！', en: "I'll help with character building!" },
+    needExploreHelp: { ja: '探索手伝って！', en: 'Help me explore!' },
+    needFarmHelp: { ja: '育成素材集め手伝って！', en: 'Help me farm ascension materials!' },
+    needQuestions: { ja: 'わからないことが多いので質問させて！', en: "I have lots of questions, let me ask!" },
+    needCarry: { ja: 'とにかくキャリーして！', en: 'Just carry me!' },
   },
   inviteStyle: {
     invite: { ja: '誘うタイプ', en: 'I invite' },
@@ -83,19 +98,18 @@ const OPTION_LABELS = {
     line: { ja: 'LINE', en: 'LINE' },
     other: { ja: 'その他', en: 'Other' },
   },
-  timeSlot: {
-    morning: { ja: '朝(6-12)', en: 'Morning (6-12)' },
-    day: { ja: '昼(12-18)', en: 'Day (12-18)' },
-    night: { ja: '夜(18-24)', en: 'Night (18-24)' },
-    midnight: { ja: '深夜(0-6)', en: 'Late night (0-6)' },
-    irregular: { ja: '不定期', en: 'Irregular' },
+  sameOshiPolicy: {
+    reject: { ja: 'あり', en: 'Yes' },
+    ok: { ja: 'なし', en: 'No' },
+    noOpinion: { ja: '気にしたことない', en: "Never thought about it" },
   },
 };
 
-const TIME_SLOT_FIELDS = new Set(['weekdayTimes', 'weekendTimes']);
+// 初心者向け(サブグループ)に属するプレイスタイルの値一覧。フォーム描画で使う。
+export const BEGINNER_PLAY_STYLE_VALUES = ['needExploreHelp', 'needFarmHelp', 'needQuestions', 'needCarry'];
 
 function optionLabel(key, value, lang) {
-  const group = TIME_SLOT_FIELDS.has(key) ? OPTION_LABELS.timeSlot : OPTION_LABELS[key];
+  const group = OPTION_LABELS[key];
   if (!group) return String(value);
   const l = group[value];
   return l ? (lang === 'en' ? l.en : l.ja) : String(value);
@@ -103,6 +117,7 @@ function optionLabel(key, value, lang) {
 
 function isEmptyValue(v) {
   if (Array.isArray(v)) return v.length === 0;
+  if (v && typeof v === 'object') return !v.start && !v.end;
   return v === '' || v == null;
 }
 
@@ -141,15 +156,17 @@ export function snapshotVisibleFields(values, visibility) {
   return out;
 }
 
-// 保存されている値(文字列/配列/真偽値/数値)を画面表示用の文字列に整形する。
+// 保存されている値(文字列/配列/真偽値/数値/{start,end})を画面表示用の文字列に整形する。
 // oshiCharsだけはアイコン画像なのでここでは扱わず、呼び出し側でアイコン表示する。
 export function formatFieldValue(key, value, lang) {
-  if (value == null || value === '') return '';
-  if (key === 'workCallOk') {
-    return value ? (lang === 'en' ? 'OK' : 'OK') : '';
+  if (isEmptyValue(value)) return '';
+  if (key === 'workCallOk' || key === 'casualOk' || key === 'jokingOk') {
+    return value ? 'OK' : '';
   }
-  if (key === 'adventureRank') {
-    return `AR ${value}`;
+  if (key === 'adventureRank') return `AR ${value}`;
+  if (key === 'worldLevel') return `WL ${value}`;
+  if (key === 'weekdayTimes' || key === 'weekendTimes') {
+    return `${value.start || '?'} ~ ${value.end || '?'}`;
   }
   if (Array.isArray(value)) {
     if (!value.length) return '';

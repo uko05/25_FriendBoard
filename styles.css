@@ -292,6 +292,48 @@ body.portal-page {
 }
 .board-form-group-title:first-child { margin-top: 0; }
 
+.board-form-subgroup-title {
+  margin: 4px 0 -4px;
+  font-size: 13px;
+  color: #8a6d00;
+}
+
+.board-form-row-pair {
+  display: flex;
+  gap: 16px;
+}
+.board-form-row-pair > .board-form-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.board-time-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.board-time-select {
+  flex: 1;
+  min-width: 0;
+}
+.board-time-tilde {
+  color: #888;
+  flex-shrink: 0;
+}
+
+.board-substyle-details {
+  margin-top: 4px;
+}
+.board-substyle-details summary {
+  font-size: 13px;
+  color: #8a6d00;
+  cursor: pointer;
+  user-select: none;
+}
+.board-substyle-details .board-checkbox-group {
+  margin-top: 8px;
+}
+
 .board-form-row-head {
   display: flex;
   align-items: center;

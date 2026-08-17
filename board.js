@@ -107,8 +107,15 @@ const uidInput = document.getElementById('input-uid');
 const serverInput = document.getElementById('input-server');
 const commentInput = document.getElementById('input-comment');
 const arInput = document.getElementById('input-ar');
+const wlInput = document.getElementById('input-wl');
 const twitterInput = document.getElementById('input-twitter');
 const workCallOkInput = document.getElementById('input-workCallOk');
+const casualOkInput = document.getElementById('input-casualOk');
+const jokingOkInput = document.getElementById('input-jokingOk');
+const weekdayStartInput = document.getElementById('weekday-start');
+const weekdayEndInput = document.getElementById('weekday-end');
+const weekendStartInput = document.getElementById('weekend-start');
+const weekendEndInput = document.getElementById('weekend-end');
 
 function getRadioValue(name) {
   const el = document.querySelector(`input[name="${name}"]:checked`);
@@ -129,6 +136,43 @@ function setCheckboxValues(name, values) {
   });
 }
 
+// 冒険者ランク(1-60)/世界ランク(0-9)の<select>用の選択肢を生成する
+function populateNumberSelect(sel, min, max) {
+  if (!sel) return;
+  sel.innerHTML = '';
+  for (let n = min; n <= max; n++) {
+    const opt = document.createElement('option');
+    opt.value = String(n);
+    opt.textContent = String(n);
+    sel.appendChild(opt);
+  }
+}
+
+// マルチ可能時間帯(開始/終了)用の30分刻み時刻セレクトを生成する(0:00〜24:00)
+function populateTimeSelect(sel) {
+  if (!sel) return;
+  sel.innerHTML = '';
+  const blank = document.createElement('option');
+  blank.value = '';
+  blank.textContent = '--:--';
+  sel.appendChild(blank);
+  for (let m = 0; m <= 24 * 60; m += 30) {
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    const label = `${h}:${String(min).padStart(2, '0')}`;
+    const opt = document.createElement('option');
+    opt.value = label;
+    opt.textContent = label;
+    sel.appendChild(opt);
+  }
+}
+
+function populateNumberAndTimeSelects() {
+  populateNumberSelect(arInput, 1, 60);
+  populateNumberSelect(wlInput, 0, 9);
+  [weekdayStartInput, weekdayEndInput, weekendStartInput, weekendEndInput].forEach(populateTimeSelect);
+}
+
 function updateVcAppsVisibility() {
   const row = document.getElementById('row-vcApps');
   if (row) row.classList.toggle('hidden', getRadioValue('vc') === 'no');
@@ -139,19 +183,25 @@ function fillFormFromProfile() {
   if (uidInput && store.genshinUid) uidInput.value = store.genshinUid;
   if (serverInput && store.server) serverInput.value = store.server;
   if (commentInput && store.intro) commentInput.value = store.intro;
-  if (arInput && store.adventureRank) arInput.value = store.adventureRank;
+  if (arInput) arInput.value = store.adventureRank || 60;
+  if (wlInput) wlInput.value = store.worldLevel != null ? store.worldLevel : 9;
   if (twitterInput && store.twitterId) twitterInput.value = store.twitterId;
   if (workCallOkInput) workCallOkInput.checked = !!store.workCallOk;
+  if (casualOkInput) casualOkInput.checked = !!store.casualOk;
+  if (jokingOkInput) jokingOkInput.checked = !!store.jokingOk;
+  if (weekdayStartInput) weekdayStartInput.value = store.weekdayTimes?.start || '';
+  if (weekdayEndInput) weekdayEndInput.value = store.weekdayTimes?.end || '';
+  if (weekendStartInput) weekendStartInput.value = store.weekendTimes?.start || '';
+  if (weekendEndInput) weekendEndInput.value = store.weekendTimes?.end || '';
 
   setRadioValue('gender', store.gender);
   setRadioValue('spending', store.spending);
   setRadioValue('inviteStyle', store.inviteStyle);
   setRadioValue('vc', store.vc);
+  setRadioValue('sameOshiPolicy', store.sameOshiPolicy);
   setCheckboxValues('platforms', store.platforms);
   setCheckboxValues('playStyles', store.playStyles);
   setCheckboxValues('vcApps', store.vcApps);
-  setCheckboxValues('weekdayTimes', store.weekdayTimes);
-  setCheckboxValues('weekendTimes', store.weekendTimes);
   updateVcAppsVisibility();
 
   renderOshiSelected();
@@ -316,6 +366,7 @@ function collectFormValues() {
     genshinUid: uidInput.value.trim(),
     server: serverInput.value,
     adventureRank: arInput.value ? Number(arInput.value) : '',
+    worldLevel: wlInput.value !== '' ? Number(wlInput.value) : '',
     gender: getRadioValue('gender'),
     platforms: getCheckboxValues('platforms'),
     oshiChars: store.oshiChars,
@@ -325,9 +376,12 @@ function collectFormValues() {
     workCallOk: !!workCallOkInput?.checked,
     vc: getRadioValue('vc'),
     vcApps: getRadioValue('vc') === 'no' ? [] : getCheckboxValues('vcApps'),
+    casualOk: !!casualOkInput?.checked,
+    jokingOk: !!jokingOkInput?.checked,
+    sameOshiPolicy: getRadioValue('sameOshiPolicy'),
     twitterId: twitterInput.value.trim(),
-    weekdayTimes: getCheckboxValues('weekdayTimes'),
-    weekendTimes: getCheckboxValues('weekendTimes'),
+    weekdayTimes: { start: weekdayStartInput?.value || '', end: weekdayEndInput?.value || '' },
+    weekendTimes: { start: weekendStartInput?.value || '', end: weekendEndInput?.value || '' },
   };
 }
 
@@ -672,6 +726,7 @@ async function init() {
   // ログイン中ならaccountLinksから共有IDを解決してから(=正しいuserIdが確定してから)
   // プロフィール読み込み・一覧購読を始める
   await waitForAccountLink();
+  populateNumberAndTimeSelects();
   await loadProfileFromFirestore();
   fillFormFromProfile();
   updateApprovalNotice();
