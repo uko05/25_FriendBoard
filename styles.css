@@ -1,0 +1,905 @@
+/* =========================
+   FriendBoard (00_TopPageのデザインを踏襲)
+   ========================= */
+
+* { box-sizing: border-box; }
+
+@font-face {
+  font-family: 'mihoyo-zenzero';
+  src: url('font/mihoyo-zenzero.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body.portal-page {
+  margin: 0;
+  background: #f4f4f4;
+  font-family: 'mihoyo-zenzero', sans-serif;
+  overflow-x: hidden;
+}
+
+/* ヘッダー */
+.portal-header {
+  position: relative;
+  text-align: center;
+  padding: 56px 16px 34px;
+}
+
+.portal-header h1 {
+  font-size: 42px;
+  margin: 0;
+  color: #222;
+}
+
+.portal-header p {
+  margin: 10px 0 0;
+  font-size: 16px;
+  color: #666;
+}
+
+.account-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #888;
+  text-decoration: underline;
+}
+.account-link:hover { color: #222; }
+
+.header-topbar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 32px);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+}
+
+.lang-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lang-option input { cursor: pointer; }
+
+/* 全体コンテナ */
+.portal-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 10px 16px 30px;
+}
+
+/* セクション：囲い（グループ枠） */
+.portal-section {
+  margin: 0 auto 18px;
+  padding: 18px 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.65);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.06);
+}
+
+.portal-section h2 {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 22px;
+  color: #222;
+}
+
+.portal-section h3 {
+  margin: 24px 0 12px;
+  font-size: 17px;
+  color: #222;
+  text-align: center;
+}
+
+/* =========================
+   掲示板タブ
+   ========================= */
+.board-tabs {
+  display: flex;
+  max-width: 480px;
+  margin: 0 auto;
+  border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+.board-tab-btn {
+  flex: 1;
+  font-family: inherit;
+  font-size: 16px;
+  padding: 12px 8px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+.board-tab-btn:hover { color: #444; }
+
+.board-tab-btn.active {
+  color: #222;
+  font-weight: bold;
+  border-bottom-color: #ffcc00;
+}
+
+.board-tab-panel {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.hidden { display: none !important; }
+
+/* =========================
+   自分のアバター
+   ========================= */
+.board-player-row {
+  max-width: 480px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.player-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffcc00;
+  background: #fff6d9;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.board-player-avatar-hint {
+  font-size: 12px;
+  color: #888;
+}
+
+/* =========================
+   募集フォーム
+   ========================= */
+.board-form {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.board-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.board-form-row label {
+  font-size: 14px;
+  color: #444;
+  font-weight: bold;
+}
+
+.board-form-row input:not([type="checkbox"]):not([type="radio"]),
+.board-form-row select:not(.board-visibility-select),
+.board-form-row textarea {
+  font-family: inherit;
+  font-size: 15px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 10px;
+  background: #fff;
+  color: #222;
+  resize: vertical;
+  width: 100%;
+}
+
+.board-form-row input:not([type="checkbox"]):not([type="radio"]):focus,
+.board-form-row select:focus,
+.board-form-row textarea:focus {
+  outline: 2px solid #ffcc00;
+  outline-offset: 1px;
+}
+
+.board-form-row input[type="checkbox"],
+.board-form-row input[type="radio"] {
+  width: auto;
+  cursor: pointer;
+}
+
+.board-submit-btn {
+  font-family: inherit;
+  font-size: 16px;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #ffcc00;
+  color: #222;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform .1s ease, box-shadow .15s ease;
+}
+
+.board-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+
+.board-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.board-form-msg {
+  min-height: 1.2em;
+  text-align: center;
+  font-size: 13px;
+  margin: 0;
+}
+.board-form-msg.ok { color: #2e7d32; }
+.board-form-msg.error { color: #c62828; }
+
+.board-approval-notice {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+.board-approval-notice-on {
+  background: #fff6d9;
+  color: #8a6d00;
+}
+.board-approval-notice-off {
+  background: #f2f2f2;
+  color: #777;
+}
+.board-approval-notice-off a {
+  color: #8a6d00;
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.board-form-group-title {
+  margin: 8px 0 -2px;
+  font-size: 15px;
+  color: #8a6d00;
+  border-bottom: 2px solid #ffcc00;
+  padding-bottom: 6px;
+}
+.board-form-group-title:first-child { margin-top: 0; }
+
+.board-form-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.board-form-row-head > label,
+.board-form-row-head > span {
+  font-size: 14px;
+  color: #444;
+  font-weight: bold;
+}
+
+.board-visibility-select {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 8px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 999px;
+  background: #f8f8f8;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.board-radio-group,
+.board-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.board-radio-group label,
+.board-checkbox-group label,
+.board-single-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: normal;
+  color: #333;
+  cursor: pointer;
+}
+
+.board-oshi-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.board-oshi-selected {
+  display: flex;
+  gap: 8px;
+}
+
+.board-oshi-thumb {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+.board-oshi-thumb img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffcc00;
+  display: block;
+}
+.board-oshi-thumb-remove {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: #c62828;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.board-oshi-add-btn {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 16px;
+  border: 1px dashed rgba(0,0,0,0.25);
+  border-radius: 999px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+}
+.board-oshi-add-btn:hover { background: #f8f8f8; }
+.board-oshi-add-btn:disabled { opacity: .5; cursor: default; }
+
+.board-oshi-picker-hint {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  margin: 4px 0 0;
+}
+
+/* =========================
+   絞り込み
+   ========================= */
+.board-filter {
+  max-width: 480px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+.board-filter label {
+  font-size: 14px;
+  color: #444;
+}
+
+.board-filter select {
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* =========================
+   募集カード一覧
+   ========================= */
+.board-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.board-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fff;
+  border: 2px solid #ffcc00;
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+}
+
+.board-card-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff6d9;
+  flex-shrink: 0;
+}
+
+.board-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.board-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.board-card-server {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: bold;
+  color: #8a6d00;
+  background: #fff6d9;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.board-card-uid {
+  font-size: 13px;
+  color: #888;
+}
+
+.board-card-approval-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: bold;
+  color: #fff;
+  background: #d99e00;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.board-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+}
+
+.board-card-chip {
+  font-size: 11px;
+  color: #555;
+  background: #f2f2f2;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.board-card-oshi-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ffcc00;
+}
+
+.board-card-secret-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: #8a6d00;
+}
+
+.board-card-comment {
+  margin: 8px 0 6px;
+  font-size: 15px;
+  color: #222;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.board-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.board-card-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.board-card-delete-btn {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 14px;
+  border: 1px solid #c62828;
+  border-radius: 999px;
+  background: #fff;
+  color: #c62828;
+  cursor: pointer;
+}
+.board-card-delete-btn:hover { background: #ffecec; }
+
+.board-card-apply-btn {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 999px;
+  background: #ffcc00;
+  color: #222;
+  font-weight: bold;
+  cursor: pointer;
+}
+.board-card-apply-btn:hover { transform: translateY(-1px); }
+.board-card-apply-btn:disabled {
+  background: #eee;
+  color: #999;
+  cursor: default;
+  transform: none;
+}
+
+.board-list-empty {
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  padding: 20px 0;
+}
+
+/* =========================
+   申請タブ
+   ========================= */
+.board-requests-desc {
+  max-width: 480px;
+  margin: 0 auto 20px;
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+}
+
+.board-requests-group + .board-requests-group {
+  margin-top: 28px;
+}
+
+.board-request-for {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #888;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.board-request-revealed-title {
+  margin: 6px 0 4px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #8a6d00;
+}
+
+.board-request-revealed-chip {
+  background: #fff6d9;
+  color: #8a6d00;
+  font-weight: bold;
+}
+
+.board-request-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.board-request-accept-btn,
+.board-request-reject-btn {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.board-request-accept-btn {
+  border: none;
+  background: #ffcc00;
+  color: #222;
+  font-weight: bold;
+}
+
+.board-request-reject-btn {
+  border: 1px solid rgba(0,0,0,0.15);
+  background: #fff;
+  color: #888;
+}
+.board-request-reject-btn:hover { background: #f2f2f2; }
+
+.board-request-status {
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+.board-request-status-accepted { background: #e6f4ea; color: #2e7d32; }
+.board-request-status-rejected { background: #f2f2f2; color: #888; }
+.board-request-status-pending { background: #fff6d9; color: #8a6d00; }
+
+/* =========================
+   通知トースト（申請）
+   ========================= */
+@keyframes app-toast-in {
+  from { transform: translateX(-50%) translateY(80px); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+}
+@keyframes app-toast-out {
+  from { transform: translateX(-50%) translateY(0);    opacity: 1; }
+  to   { transform: translateX(-50%) translateY(80px); opacity: 0; }
+}
+
+.app-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 2px solid #ffcc00;
+  border-radius: 12px;
+  padding: 10px 20px;
+  width: min(88vw, 420px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  z-index: 2000;
+  pointer-events: none;
+}
+.app-toast-show { animation: app-toast-in .32s ease-out forwards; }
+.app-toast-hide { animation: app-toast-out .32s ease-in forwards; }
+
+.app-toast-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.app-toast-text {
+  font-size: 13px;
+  color: #222;
+}
+
+/* =========================
+   モーダル共通（アバター関連）
+   ========================= */
+.col-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.col-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.col-modal-content {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 20px 22px;
+  width: min(88vw, 480px);
+  max-height: 90vh;
+  overflow-y: auto;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+}
+
+.col-modal-close {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #999;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 6px;
+}
+.col-modal-close:hover { color: #333; }
+
+.avatar-nudge-content { text-align: center; }
+
+.avatar-nudge-text {
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 16px;
+}
+
+.avatar-nudge-btn {
+  display: inline-block;
+  background: #ffcc00;
+  border-radius: 999px;
+  color: #222;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 10px 24px;
+  text-decoration: none;
+}
+
+.avatar-picker-content {
+  text-align: left;
+  width: min(94vw, 560px);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.avatar-game-tab-bar {
+  display: flex;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  margin-top: 8px;
+}
+.avatar-game-tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 10px 6px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #888;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+  margin-bottom: -1px;
+}
+.avatar-game-tab-btn:hover { color: #444; }
+.avatar-game-tab-btn.active {
+  color: #222;
+  font-weight: bold;
+  border-bottom-color: #ffcc00;
+  background: rgba(255, 204, 0, 0.12);
+}
+
+.avatar-elem-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  background: #f8f8f8;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  margin-bottom: 10px;
+}
+.avatar-elem-tab-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 6px 2px;
+  font-family: inherit;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.avatar-elem-tab-btn.active {
+  background: #fff;
+  color: #222;
+  font-weight: bold;
+  border-bottom-color: #ffcc00;
+}
+
+.avatar-picker-char-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding: 8px;
+  margin: 0 16px 4px;
+  background: #f8f8f8;
+  border-radius: 10px;
+}
+.avatar-picker-thumb {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.avatar-picker-thumb:hover { border-color: rgba(255, 204, 0, 0.7); }
+.board-oshi-picker-thumb-selected { border-color: #ffcc00; box-shadow: 0 0 0 2px rgba(255,204,0,0.35); }
+.avatar-picker-thumb img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  pointer-events: none;
+}
+
+/* フッター */
+.portal-footer {
+  text-align: center;
+  padding: 26px 16px 40px;
+  color: #777;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.twitter-icon {
+  width: 30px;
+  height: 30px;
+  display: block;
+}
+
+/* =========================
+   スマホ（<=768）
+   ========================= */
+@media (max-width: 768px) {
+
+  .portal-header { padding: 44px 14px 20px; }
+  .portal-header h1 { font-size: 28px; }
+  .portal-header p { font-size: 13px; }
+
+  .lang-switch {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+    padding: 6px 8px;
+    border-radius: 10px;
+    max-width: calc(100% - 20px);
+  }
+
+  .portal-container { padding-left: 10px; padding-right: 10px; }
+
+  .portal-section { padding: 14px 10px; border-radius: 10px; }
+
+  .board-tab-btn { font-size: 13px; padding: 10px 4px; }
+
+  .lang-option { font-size: 13px; }
+
+  .board-card-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  .board-form-row-head { flex-wrap: wrap; gap: 4px 8px; }
+  .board-radio-group, .board-checkbox-group { gap: 6px 12px; }
+  .board-radio-group label, .board-checkbox-group label, .board-single-checkbox { font-size: 13px; }
+}

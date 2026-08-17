@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>フレンド募集掲示板</title>
+
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Favicon -->
+    <link rel="icon" href="public/scripts/favicon_io/favicon.ico" type="image/x-icon">
+    <link rel="icon" sizes="16x16" href="public/scripts/favicon_io/favicon-16x16.png">
+    <link rel="icon" sizes="32x32" href="public/scripts/favicon_io/favicon-32x32.png">
+    <link rel="apple-touch-icon" href="public/scripts/favicon_io/apple-touch-icon.png">
+    <link rel="icon" sizes="192x192" href="public/scripts/favicon_io/android-chrome-192x192.png">
+    <link rel="icon" sizes="512x512" href="public/scripts/favicon_io/android-chrome-512x512.png">
+</head>
+
+<body class="portal-page board-page">
+
+    <header class="portal-header">
+        <div class="header-topbar">
+            <span id="uko-account-status-slot"></span>
+            <div class="lang-switch" aria-label="Language switch">
+                <label class="lang-option">
+                    <input type="radio" name="lang" value="ja" checked />
+                    <span data-i18n="langJa">JP</span>
+                </label>
+                <label class="lang-option">
+                    <input type="radio" name="lang" value="en" />
+                    <span data-i18n="langEn">EN</span>
+                </label>
+            </div>
+        </div>
+
+        <h1 id="site-title" data-i18n="homeTitle">フレンド募集掲示板</h1>
+        <p data-i18n="headerSub">原神のフレンド募集・co-op相手探しはこちらから</p>
+        <a href="https://uko05.github.io/24_AccountCenter/" class="account-link" data-i18n="accountLink">アカウント管理（登録は任意です）</a>
+    </header>
+
+    <main class="portal-container board-container">
+
+        <nav class="board-tabs" role="tablist">
+            <button type="button" class="board-tab-btn active" id="tab-btn-post" data-tab="post" role="tab" aria-selected="true" data-i18n="tabPost">募集する</button>
+            <button type="button" class="board-tab-btn" id="tab-btn-search" data-tab="search" role="tab" aria-selected="false" data-i18n="tabSearch">さがす</button>
+            <button type="button" class="board-tab-btn" id="tab-btn-requests" data-tab="requests" role="tab" aria-selected="false" data-i18n="tabRequests">申請</button>
+        </nav>
+
+        <!-- 募集する -->
+        <section class="portal-section board-tab-panel" id="tab-panel-post" role="tabpanel">
+            <h2 data-i18n="postFormTitle">募集を出す</h2>
+
+            <div class="board-player-row">
+                <img id="player-avatar" class="player-avatar" src="" alt="" title="">
+                <span class="board-player-avatar-hint" data-i18n="avatarHint">タップしてアイコンを変更（要アカウント登録）</span>
+            </div>
+
+            <form id="post-form" class="board-form">
+
+                <!-- ===== 基本情報 ===== -->
+                <h3 class="board-form-group-title" data-i18n="groupBasic">基本情報</h3>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <label for="input-uid" data-i18n="labelUid">原神UID</label>
+                        <select class="board-visibility-select" id="vis-genshinUid" data-field="genshinUid"></select>
+                    </div>
+                    <input type="text" id="input-uid" name="genshinUid" inputmode="numeric" maxlength="20" data-i18n-placeholder="uidPlaceholder" required />
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <label for="input-server" data-i18n="labelServer">サーバー</label>
+                        <select class="board-visibility-select" id="vis-server" data-field="server"></select>
+                    </div>
+                    <select id="input-server" name="server" required>
+                        <option value="asia" data-i18n="serverAsia">アジア</option>
+                        <option value="america" data-i18n="serverAmerica">北米</option>
+                        <option value="europe" data-i18n="serverEurope">欧州</option>
+                        <option value="sar" data-i18n="serverSar">香港・マカオ・台湾</option>
+                    </select>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <label for="input-ar" data-i18n="labelAdventureRank">冒険者ランク</label>
+                        <select class="board-visibility-select" id="vis-adventureRank" data-field="adventureRank"></select>
+                    </div>
+                    <input type="number" id="input-ar" name="adventureRank" min="1" max="60" />
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelGender">性別</span>
+                        <select class="board-visibility-select" id="vis-gender" data-field="gender"></select>
+                    </div>
+                    <div class="board-radio-group" id="group-gender">
+                        <label><input type="radio" name="gender" value="male" /><span data-i18n="genderMale">男性</span></label>
+                        <label><input type="radio" name="gender" value="female" /><span data-i18n="genderFemale">女性</span></label>
+                        <label><input type="radio" name="gender" value="secret" /><span data-i18n="genderSecret">回答しない</span></label>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelPlatforms">ハード</span>
+                        <select class="board-visibility-select" id="vis-platforms" data-field="platforms"></select>
+                    </div>
+                    <div class="board-checkbox-group" id="group-platforms">
+                        <label><input type="checkbox" name="platforms" value="pc" /><span data-i18n="platformPc">PC</span></label>
+                        <label><input type="checkbox" name="platforms" value="ps5" /><span data-i18n="platformPs5">PS5</span></label>
+                        <label><input type="checkbox" name="platforms" value="ps4" /><span data-i18n="platformPs4">PS4</span></label>
+                        <label><input type="checkbox" name="platforms" value="mobile" /><span data-i18n="platformMobile">スマホ</span></label>
+                    </div>
+                </div>
+
+                <!-- ===== プレイスタイル ===== -->
+                <h3 class="board-form-group-title" data-i18n="groupStyle">プレイスタイル</h3>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelOshiChars">推しキャラ（最大3人）</span>
+                        <select class="board-visibility-select" id="vis-oshiChars" data-field="oshiChars"></select>
+                    </div>
+                    <div class="board-oshi-picker">
+                        <div class="board-oshi-selected" id="oshi-selected"></div>
+                        <button type="button" class="board-oshi-add-btn" id="oshi-add-btn" data-i18n="oshiAddBtn">追加する</button>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelSpending">課金スタンス</span>
+                        <select class="board-visibility-select" id="vis-spending" data-field="spending"></select>
+                    </div>
+                    <div class="board-radio-group" id="group-spending">
+                        <label><input type="radio" name="spending" value="f2p" /><span data-i18n="spendingF2p">無課金</span></label>
+                        <label><input type="radio" name="spending" value="light" /><span data-i18n="spendingLight">微課金</span></label>
+                        <label><input type="radio" name="spending" value="heavy" /><span data-i18n="spendingHeavy">廃課金</span></label>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelPlayStyles">プレイスタイル</span>
+                        <select class="board-visibility-select" id="vis-playStyles" data-field="playStyles"></select>
+                    </div>
+                    <div class="board-checkbox-group" id="group-playStyles">
+                        <label><input type="checkbox" name="playStyles" value="chill" /><span data-i18n="styleChill">まったり勢</span></label>
+                        <label><input type="checkbox" name="playStyles" value="hardcore" /><span data-i18n="styleHardcore">がっつり勢</span></label>
+                        <label><input type="checkbox" name="playStyles" value="beginnerFriendly" /><span data-i18n="styleBeginner">初心者歓迎</span></label>
+                        <label><input type="checkbox" name="playStyles" value="efficient" /><span data-i18n="styleEfficient">効率重視</span></label>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelInviteStyle">マルチの誘うタイプ</span>
+                        <select class="board-visibility-select" id="vis-inviteStyle" data-field="inviteStyle"></select>
+                    </div>
+                    <div class="board-radio-group" id="group-inviteStyle">
+                        <label><input type="radio" name="inviteStyle" value="invite" /><span data-i18n="inviteInvite">誘うタイプ</span></label>
+                        <label><input type="radio" name="inviteStyle" value="invited" /><span data-i18n="inviteInvited">誘われたいタイプ</span></label>
+                        <label><input type="radio" name="inviteStyle" value="either" /><span data-i18n="inviteEither">どちらでも</span></label>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelWorkCallOk">作業通話のみでもOK</span>
+                        <select class="board-visibility-select" id="vis-workCallOk" data-field="workCallOk"></select>
+                    </div>
+                    <label class="board-single-checkbox"><input type="checkbox" id="input-workCallOk" name="workCallOk" /><span data-i18n="workCallOkLabel">作業通話だけの参加でもOK</span></label>
+                </div>
+
+                <!-- ===== 連絡・時間帯 ===== -->
+                <h3 class="board-form-group-title" data-i18n="groupContact">連絡・時間帯</h3>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelVc">VC(ボイスチャット)</span>
+                        <select class="board-visibility-select" id="vis-vc" data-field="vc"></select>
+                    </div>
+                    <div class="board-radio-group" id="group-vc">
+                        <label><input type="radio" name="vc" value="yes" /><span data-i18n="vcYes">可能</span></label>
+                        <label><input type="radio" name="vc" value="no" /><span data-i18n="vcNo">不可</span></label>
+                        <label><input type="radio" name="vc" value="maybe" /><span data-i18n="vcMaybe">相談</span></label>
+                    </div>
+                </div>
+
+                <div class="board-form-row" id="row-vcApps">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelVcApps">VC利用アプリ</span>
+                        <select class="board-visibility-select" id="vis-vcApps" data-field="vcApps"></select>
+                    </div>
+                    <div class="board-checkbox-group" id="group-vcApps">
+                        <label><input type="checkbox" name="vcApps" value="discord" /><span data-i18n="vcAppDiscord">Discord</span></label>
+                        <label><input type="checkbox" name="vcApps" value="line" /><span data-i18n="vcAppLine">LINE</span></label>
+                        <label><input type="checkbox" name="vcApps" value="other" /><span data-i18n="vcAppOther">その他</span></label>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <label for="input-twitter" data-i18n="labelTwitter">ツイッターID</label>
+                        <select class="board-visibility-select" id="vis-twitterId" data-field="twitterId"></select>
+                    </div>
+                    <input type="text" id="input-twitter" name="twitterId" maxlength="20" data-i18n-placeholder="twitterPlaceholder" />
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelWeekdayTimes">平日のマルチ可能時間帯</span>
+                        <select class="board-visibility-select" id="vis-weekdayTimes" data-field="weekdayTimes"></select>
+                    </div>
+                    <div class="board-checkbox-group" id="group-weekdayTimes">
+                        <label><input type="checkbox" name="weekdayTimes" value="morning" /><span data-i18n="slotMorning">朝(6-12)</span></label>
+                        <label><input type="checkbox" name="weekdayTimes" value="day" /><span data-i18n="slotDay">昼(12-18)</span></label>
+                        <label><input type="checkbox" name="weekdayTimes" value="night" /><span data-i18n="slotNight">夜(18-24)</span></label>
+                        <label><input type="checkbox" name="weekdayTimes" value="midnight" /><span data-i18n="slotMidnight">深夜(0-6)</span></label>
+                        <label><input type="checkbox" name="weekdayTimes" value="irregular" /><span data-i18n="slotIrregular">不定期</span></label>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelWeekendTimes">休日のマルチ可能時間帯</span>
+                        <select class="board-visibility-select" id="vis-weekendTimes" data-field="weekendTimes"></select>
+                    </div>
+                    <div class="board-checkbox-group" id="group-weekendTimes">
+                        <label><input type="checkbox" name="weekendTimes" value="morning" /><span data-i18n="slotMorning">朝(6-12)</span></label>
+                        <label><input type="checkbox" name="weekendTimes" value="day" /><span data-i18n="slotDay">昼(12-18)</span></label>
+                        <label><input type="checkbox" name="weekendTimes" value="night" /><span data-i18n="slotNight">夜(18-24)</span></label>
+                        <label><input type="checkbox" name="weekendTimes" value="midnight" /><span data-i18n="slotMidnight">深夜(0-6)</span></label>
+                        <label><input type="checkbox" name="weekendTimes" value="irregular" /><span data-i18n="slotIrregular">不定期</span></label>
+                    </div>
+                </div>
+
+                <!-- ===== コメント ===== -->
+                <h3 class="board-form-group-title" data-i18n="groupComment">コメント</h3>
+                <div class="board-form-row">
+                    <label for="input-comment" data-i18n="labelComment">募集コメント</label>
+                    <textarea id="input-comment" name="comment" rows="3" maxlength="200" data-i18n-placeholder="commentPlaceholder" required></textarea>
+                </div>
+
+                <p class="board-approval-notice" id="post-approval-notice"></p>
+                <button type="submit" class="board-submit-btn" id="post-submit-btn" data-i18n="postSubmitBtn">募集を投稿する</button>
+                <p class="board-form-msg" id="post-form-msg"></p>
+            </form>
+
+            <div class="board-myposts">
+                <h3 data-i18n="myPostsTitle">自分の募集</h3>
+                <div class="board-list" id="my-posts-list"></div>
+            </div>
+        </section>
+
+        <!-- さがす -->
+        <section class="portal-section board-tab-panel hidden" id="tab-panel-search" role="tabpanel">
+            <h2 data-i18n="searchTitle">募集をさがす</h2>
+            <div class="board-filter">
+                <label for="filter-server" data-i18n="filterServerLabel">サーバーで絞り込み</label>
+                <select id="filter-server">
+                    <option value="" data-i18n="filterAll">すべて</option>
+                    <option value="asia" data-i18n="serverAsia">アジア</option>
+                    <option value="america" data-i18n="serverAmerica">北米</option>
+                    <option value="europe" data-i18n="serverEurope">欧州</option>
+                    <option value="sar" data-i18n="serverSar">香港・マカオ・台湾</option>
+                </select>
+            </div>
+            <div class="board-list" id="search-list"></div>
+        </section>
+
+        <!-- 申請 -->
+        <section class="portal-section board-tab-panel hidden" id="tab-panel-requests" role="tabpanel">
+            <h2 data-i18n="requestsTitle">申請の管理</h2>
+            <p class="board-requests-desc" data-i18n="requestsDesc">気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。</p>
+
+            <div class="board-requests-group">
+                <h3 data-i18n="receivedTitle">届いた申請</h3>
+                <div class="board-list" id="received-list"></div>
+            </div>
+
+            <div class="board-requests-group">
+                <h3 data-i18n="sentTitle">送った申請</h3>
+                <div class="board-list" id="sent-list"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 通知トースト（申請が届いた／結果が出た） -->
+    <div id="app-toast" class="app-toast" style="display:none;">
+        <img id="app-toast-avatar" class="app-toast-avatar" src="" alt="">
+        <div id="app-toast-text" class="app-toast-text"></div>
+    </div>
+
+    <!-- アバター未登録者向けの登録導線ポップ -->
+    <div id="avatar-nudge-modal" class="col-modal" style="display:none;">
+        <div class="col-modal-backdrop"></div>
+        <div class="col-modal-content avatar-nudge-content">
+            <button type="button" id="avatar-nudge-close" class="col-modal-close" aria-label="close">×</button>
+            <p class="avatar-nudge-text" data-i18n="avatarNudgeText">アカウント登録することでアイコンを設定できます</p>
+            <a href="https://uko05.github.io/24_AccountCenter/" target="_blank" rel="noopener" class="avatar-nudge-btn" data-i18n="avatarNudgeBtn">アカウント登録へ</a>
+        </div>
+    </div>
+
+    <!-- アバターキャラ選択ポップ（アカウント登録済みユーザー向け） -->
+    <div id="avatar-picker-modal" class="col-modal" style="display:none;">
+        <div class="col-modal-backdrop"></div>
+        <div class="col-modal-content avatar-picker-content">
+            <button type="button" id="avatar-picker-close" class="col-modal-close" aria-label="close">×</button>
+            <div class="avatar-game-tab-bar" id="avatar-picker-game-tabs"></div>
+            <div class="avatar-elem-tab-bar" id="avatar-picker-elem-tabs"></div>
+            <div class="avatar-picker-char-list" id="avatar-picker-char-list"></div>
+        </div>
+    </div>
+
+    <!-- 推しキャラ選択ポップ（最大3人） -->
+    <div id="oshi-picker-modal" class="col-modal" style="display:none;">
+        <div class="col-modal-backdrop"></div>
+        <div class="col-modal-content avatar-picker-content">
+            <button type="button" id="oshi-picker-close" class="col-modal-close" aria-label="close">×</button>
+            <p class="board-oshi-picker-hint" data-i18n="oshiPickerHint">最大3人まで選べます</p>
+            <div class="avatar-elem-tab-bar" id="oshi-picker-elem-tabs"></div>
+            <div class="avatar-picker-char-list" id="oshi-picker-char-list"></div>
+        </div>
+    </div>
+
+    <footer class="portal-footer">
+        <a href="https://x.com/uko_dayo_" target="_blank" rel="noopener noreferrer" class="twitter-link">
+            <img src="Image/twitter_image.png" alt="X(Twitter)" class="twitter-icon">
+        </a>
+        <span data-i18n="friend">＜友達ください…</span>
+    </footer>
+
+    <script type="module" src="board.js"></script>
+    <script src="script.js"></script>
+    <script type="module" src="https://uko05.github.io/24_AccountCenter/account-status.js"></script>
+
+    <!-- 共通サイドバー -->
+    <!-- ローカル確認用: -->
+    <script src="./shared/sidebar.js"></script>
+    <!-- 本番（GitHub Pages公開後はこちらに切り替え）:
+    <script src="https://uko05.github.io/00_TopPage/shared/sidebar.js"></script>
+    -->
+</body>
+</html>
