@@ -112,6 +112,7 @@ const twitterInput = document.getElementById('input-twitter');
 const workCallOkInput = document.getElementById('input-workCallOk');
 const casualOkInput = document.getElementById('input-casualOk');
 const jokingOkInput = document.getElementById('input-jokingOk');
+const sameOshiRejectInput = document.getElementById('input-sameOshiReject');
 const weekdayStartInput = document.getElementById('weekday-start');
 const weekdayEndInput = document.getElementById('weekday-end');
 const weekendStartInput = document.getElementById('weekend-start');
@@ -173,11 +174,19 @@ function populateNumberAndTimeSelects() {
   [weekdayStartInput, weekdayEndInput, weekendStartInput, weekendEndInput].forEach(populateTimeSelect);
 }
 
-function updateVcAppsVisibility() {
-  const row = document.getElementById('row-vcApps');
-  if (row) row.classList.toggle('hidden', getRadioValue('vc') === 'no');
+// VCが「可能」の場合だけVC利用アプリ・通話スタイル一式を表示する
+function updateVcExtraGroupVisibility() {
+  const group = document.getElementById('vc-extra-group');
+  if (group) group.classList.toggle('hidden', getRadioValue('vc') !== 'yes');
 }
-document.getElementById('group-vc')?.addEventListener('change', updateVcAppsVisibility);
+document.getElementById('group-vc')?.addEventListener('change', updateVcExtraGroupVisibility);
+
+// 「同担拒否あり」にチェックが入っているときだけキャラ選択欄を表示する
+function updateSameOshiCharsVisibility() {
+  const row = document.getElementById('row-sameOshiChars');
+  if (row) row.classList.toggle('hidden', !sameOshiRejectInput?.checked);
+}
+sameOshiRejectInput?.addEventListener('change', updateSameOshiCharsVisibility);
 
 function fillFormFromProfile() {
   if (uidInput && store.genshinUid) uidInput.value = store.genshinUid;
@@ -189,6 +198,7 @@ function fillFormFromProfile() {
   if (workCallOkInput) workCallOkInput.checked = !!store.workCallOk;
   if (casualOkInput) casualOkInput.checked = !!store.casualOk;
   if (jokingOkInput) jokingOkInput.checked = !!store.jokingOk;
+  if (sameOshiRejectInput) sameOshiRejectInput.checked = !!store.sameOshiReject;
   if (weekdayStartInput) weekdayStartInput.value = store.weekdayTimes?.start || '';
   if (weekdayEndInput) weekdayEndInput.value = store.weekdayTimes?.end || '';
   if (weekendStartInput) weekendStartInput.value = store.weekendTimes?.start || '';
@@ -197,14 +207,16 @@ function fillFormFromProfile() {
   setRadioValue('gender', store.gender);
   setRadioValue('spending', store.spending);
   setRadioValue('inviteStyle', store.inviteStyle);
+  setRadioValue('multiFrequency', store.multiFrequency);
   setRadioValue('vc', store.vc);
-  setRadioValue('sameOshiPolicy', store.sameOshiPolicy);
   setCheckboxValues('platforms', store.platforms);
   setCheckboxValues('playStyles', store.playStyles);
   setCheckboxValues('vcApps', store.vcApps);
-  updateVcAppsVisibility();
+  updateVcExtraGroupVisibility();
+  updateSameOshiCharsVisibility();
 
-  renderOshiSelected();
+  oshiPicker.renderSelected();
+  sameOshiPicker.renderSelected();
 }
 
 // ===== 公開設定(非公開/公開/承認制)セレクト =====
@@ -228,105 +240,128 @@ function populateVisibilitySelects() {
   });
 }
 
-// ===== 推しキャラ選択(最大3人) =====
-function renderOshiSelected() {
-  const box = document.getElementById('oshi-selected');
-  const addBtn = document.getElementById('oshi-add-btn');
-  if (!box) return;
-  box.innerHTML = '';
-  store.oshiChars.forEach((icon) => {
-    const char = genshinChars.find((c) => c.icon === icon);
-    const thumb = document.createElement('div');
-    thumb.className = 'board-oshi-thumb';
-    const img = document.createElement('img');
-    img.src = GENSHIN_ICON_BASE + icon;
-    img.alt = char?.name || '';
-    thumb.appendChild(img);
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.className = 'board-oshi-thumb-remove';
-    remove.textContent = '×';
-    remove.addEventListener('click', () => {
-      store.oshiChars = store.oshiChars.filter((i) => i !== icon);
-      scheduleSync();
-      renderOshiSelected();
+// ===== キャラクター複数選択(推しキャラ・同担拒否キャラ共通) =====
+// max: null なら人数無制限
+function createCharPicker({ key, max, selectedElId, addBtnId, modalId, closeBtnId, elemTabsId, charListId, fullMessage }) {
+  let pickerElem = OSHI_ELEMS[0];
+
+  function renderSelected() {
+    const box = document.getElementById(selectedElId);
+    const addBtn = document.getElementById(addBtnId);
+    if (!box) return;
+    box.innerHTML = '';
+    store[key].forEach((icon) => {
+      const char = genshinChars.find((c) => c.icon === icon);
+      const thumb = document.createElement('div');
+      thumb.className = 'board-oshi-thumb';
+      const img = document.createElement('img');
+      img.src = GENSHIN_ICON_BASE + icon;
+      img.alt = char?.name || '';
+      thumb.appendChild(img);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'board-oshi-thumb-remove';
+      remove.textContent = '×';
+      remove.addEventListener('click', () => {
+        store[key] = store[key].filter((i) => i !== icon);
+        scheduleSync();
+        renderSelected();
+        renderCharList();
+      });
+      thumb.appendChild(remove);
+      box.appendChild(thumb);
     });
-    thumb.appendChild(remove);
-    box.appendChild(thumb);
-  });
-  if (addBtn) addBtn.disabled = store.oshiChars.length >= OSHI_MAX;
-}
-
-let oshiPickerElem = OSHI_ELEMS[0];
-
-function renderOshiPickerElemTabs() {
-  const bar = document.getElementById('oshi-picker-elem-tabs');
-  if (!bar) return;
-  bar.innerHTML = '';
-  const labels = OSHI_ELEM_LABELS[currentLang()];
-  OSHI_ELEMS.forEach((elem) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'avatar-elem-tab-btn' + (elem === oshiPickerElem ? ' active' : '');
-    btn.textContent = labels[elem];
-    btn.addEventListener('click', () => {
-      oshiPickerElem = elem;
-      renderOshiPickerElemTabs();
-      renderOshiPickerCharList();
-    });
-    bar.appendChild(btn);
-  });
-}
-
-function renderOshiPickerCharList() {
-  const list = document.getElementById('oshi-picker-char-list');
-  if (!list) return;
-  list.innerHTML = '';
-  genshinChars.filter((c) => c.element === oshiPickerElem).forEach((c) => {
-    const name = c.name || c.icon.replace(/\.\w+$/, '');
-    const thumb = document.createElement('button');
-    thumb.type = 'button';
-    thumb.className = 'avatar-picker-thumb';
-    if (store.oshiChars.includes(c.icon)) thumb.classList.add('board-oshi-picker-thumb-selected');
-    thumb.title = name;
-    const img = document.createElement('img');
-    img.src = GENSHIN_ICON_BASE + c.icon;
-    img.alt = name;
-    img.loading = 'lazy';
-    thumb.appendChild(img);
-    thumb.addEventListener('click', () => toggleOshiChar(c.icon));
-    list.appendChild(thumb);
-  });
-}
-
-function toggleOshiChar(icon) {
-  if (store.oshiChars.includes(icon)) {
-    store.oshiChars = store.oshiChars.filter((i) => i !== icon);
-  } else if (store.oshiChars.length < OSHI_MAX) {
-    store.oshiChars = [...store.oshiChars, icon];
-  } else {
-    alert(s().oshiPickerFull);
-    return;
+    if (addBtn) addBtn.disabled = max != null && store[key].length >= max;
   }
-  scheduleSync();
-  renderOshiSelected();
-  renderOshiPickerCharList();
+
+  function renderElemTabs() {
+    const bar = document.getElementById(elemTabsId);
+    if (!bar) return;
+    bar.innerHTML = '';
+    const labels = OSHI_ELEM_LABELS[currentLang()];
+    OSHI_ELEMS.forEach((elem) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'avatar-elem-tab-btn' + (elem === pickerElem ? ' active' : '');
+      btn.textContent = labels[elem];
+      btn.addEventListener('click', () => {
+        pickerElem = elem;
+        renderElemTabs();
+        renderCharList();
+      });
+      bar.appendChild(btn);
+    });
+  }
+
+  function renderCharList() {
+    const list = document.getElementById(charListId);
+    if (!list) return;
+    list.innerHTML = '';
+    genshinChars.filter((c) => c.element === pickerElem).forEach((c) => {
+      const name = c.name || c.icon.replace(/\.\w+$/, '');
+      const thumb = document.createElement('button');
+      thumb.type = 'button';
+      thumb.className = 'avatar-picker-thumb';
+      if (store[key].includes(c.icon)) thumb.classList.add('board-oshi-picker-thumb-selected');
+      thumb.title = name;
+      const img = document.createElement('img');
+      img.src = GENSHIN_ICON_BASE + c.icon;
+      img.alt = name;
+      img.loading = 'lazy';
+      thumb.appendChild(img);
+      thumb.addEventListener('click', () => toggle(c.icon));
+      list.appendChild(thumb);
+    });
+  }
+
+  function toggle(icon) {
+    if (store[key].includes(icon)) {
+      store[key] = store[key].filter((i) => i !== icon);
+    } else if (max == null || store[key].length < max) {
+      store[key] = [...store[key], icon];
+    } else {
+      alert(fullMessage());
+      return;
+    }
+    scheduleSync();
+    renderSelected();
+    renderCharList();
+  }
+
+  function open() {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.style.display = 'flex';
+    renderElemTabs();
+    renderCharList();
+  }
+  function close() {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
+  }
+
+  document.getElementById(addBtnId)?.addEventListener('click', open);
+  document.getElementById(closeBtnId)?.addEventListener('click', close);
+  document.querySelector(`#${modalId} .col-modal-backdrop`)?.addEventListener('click', close);
+
+  return { renderSelected, renderElemTabs, renderCharList };
 }
 
-function openOshiPicker() {
-  const modal = document.getElementById('oshi-picker-modal');
-  if (!modal) return;
-  modal.style.display = 'flex';
-  renderOshiPickerElemTabs();
-  renderOshiPickerCharList();
-}
-function closeOshiPicker() {
-  const modal = document.getElementById('oshi-picker-modal');
-  if (modal) modal.style.display = 'none';
-}
-document.getElementById('oshi-add-btn')?.addEventListener('click', openOshiPicker);
-document.getElementById('oshi-picker-close')?.addEventListener('click', closeOshiPicker);
-document.querySelector('#oshi-picker-modal .col-modal-backdrop')?.addEventListener('click', closeOshiPicker);
+const oshiPicker = createCharPicker({
+  key: 'oshiChars', max: OSHI_MAX,
+  selectedElId: 'oshi-selected', addBtnId: 'oshi-add-btn',
+  modalId: 'oshi-picker-modal', closeBtnId: 'oshi-picker-close',
+  elemTabsId: 'oshi-picker-elem-tabs', charListId: 'oshi-picker-char-list',
+  fullMessage: () => s().oshiPickerFull,
+});
+
+const sameOshiPicker = createCharPicker({
+  key: 'sameOshiChars', max: null,
+  selectedElId: 'same-oshi-selected', addBtnId: 'same-oshi-add-btn',
+  modalId: 'same-oshi-picker-modal', closeBtnId: 'same-oshi-picker-close',
+  elemTabsId: 'same-oshi-picker-elem-tabs', charListId: 'same-oshi-picker-char-list',
+  fullMessage: () => '',
+});
 
 // ログイン状態に応じて、これから投稿する募集が承認制になるかどうかを案内する
 function updateApprovalNotice() {
@@ -362,6 +397,11 @@ function showMsg(el, text, isError) {
 
 // フォームの現在値を全項目分集めて{key: value}で返す(genshinUid/serverも含む)
 function collectFormValues() {
+  // VCが「可能」以外のときはVC利用アプリ・通話スタイル一式は非表示にしているため、
+  // 古い入力値が残っていても投稿には含めない
+  const vcOpen = getRadioValue('vc') === 'yes';
+  const sameOshiReject = vcOpen && !!sameOshiRejectInput?.checked;
+
   return {
     genshinUid: uidInput.value.trim(),
     server: serverInput.value,
@@ -373,12 +413,14 @@ function collectFormValues() {
     spending: getRadioValue('spending'),
     playStyles: getCheckboxValues('playStyles'),
     inviteStyle: getRadioValue('inviteStyle'),
-    workCallOk: !!workCallOkInput?.checked,
+    multiFrequency: getRadioValue('multiFrequency'),
+    workCallOk: vcOpen && !!workCallOkInput?.checked,
     vc: getRadioValue('vc'),
-    vcApps: getRadioValue('vc') === 'no' ? [] : getCheckboxValues('vcApps'),
-    casualOk: !!casualOkInput?.checked,
-    jokingOk: !!jokingOkInput?.checked,
-    sameOshiPolicy: getRadioValue('sameOshiPolicy'),
+    vcApps: vcOpen ? getCheckboxValues('vcApps') : [],
+    casualOk: vcOpen && !!casualOkInput?.checked,
+    jokingOk: vcOpen && !!jokingOkInput?.checked,
+    sameOshiReject,
+    sameOshiChars: sameOshiReject ? store.sameOshiChars : [],
     twitterId: twitterInput.value.trim(),
     weekdayTimes: { start: weekdayStartInput?.value || '', end: weekdayEndInput?.value || '' },
     weekendTimes: { start: weekendStartInput?.value || '', end: weekendEndInput?.value || '' },
@@ -463,7 +505,7 @@ function getDisplayFields(post, mine) {
 }
 
 function pushFieldRow(rows, key, value, lang) {
-  if (key === 'oshiChars') {
+  if (key === 'oshiChars' || key === 'sameOshiChars') {
     if (Array.isArray(value) && value.length) rows.push({ key, oshiIcons: value });
     return;
   }
@@ -715,8 +757,10 @@ document.querySelectorAll('input[name="lang"]').forEach((radio) => {
       renderSearchList();
       updateApprovalNotice();
       populateVisibilitySelects();
-      renderOshiPickerElemTabs();
-      renderOshiPickerCharList();
+      oshiPicker.renderElemTabs();
+      oshiPicker.renderCharList();
+      sameOshiPicker.renderElemTabs();
+      sameOshiPicker.renderCharList();
     }, 0);
   });
 });

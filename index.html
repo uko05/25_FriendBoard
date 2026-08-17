@@ -175,6 +175,7 @@
                             <label><input type="checkbox" name="playStyles" value="needFarmHelp" /><span data-i18n="styleNeedFarmHelp">育成素材集め手伝って！</span></label>
                             <label><input type="checkbox" name="playStyles" value="needQuestions" /><span data-i18n="styleNeedQuestions">わからないことが多いので質問させて！</span></label>
                             <label><input type="checkbox" name="playStyles" value="needCarry" /><span data-i18n="styleNeedCarry">とにかくキャリーして！</span></label>
+                            <label><input type="checkbox" name="playStyles" value="needDomainHelp" /><span data-i18n="styleNeedDomainHelp">秘境周回手伝って！</span></label>
                         </div>
                     </details>
                 </div>
@@ -220,6 +221,20 @@
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
+                        <span data-i18n="labelMultiFrequency">マルチ頻度</span>
+                        <select class="board-visibility-select" id="vis-multiFrequency" data-field="multiFrequency"></select>
+                    </div>
+                    <div class="board-radio-group" id="group-multiFrequency">
+                        <label><input type="radio" name="multiFrequency" value="anytime" /><span data-i18n="freqAnytime">オンラインの時ならいつでも可</span></label>
+                        <label><input type="radio" name="multiFrequency" value="daily" /><span data-i18n="freqDaily">ほぼ毎日</span></label>
+                        <label><input type="radio" name="multiFrequency" value="often" /><span data-i18n="freqOften">週３～５くらい</span></label>
+                        <label><input type="radio" name="multiFrequency" value="sometimes" /><span data-i18n="freqSometimes">週１～２くらい</span></label>
+                        <label><input type="radio" name="multiFrequency" value="ask" /><span data-i18n="freqAsk">要相談</span></label>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
                         <label for="input-twitter" data-i18n="labelTwitter">ツイッターID</label>
                         <select class="board-visibility-select" id="vis-twitterId" data-field="twitterId"></select>
                     </div>
@@ -241,60 +256,57 @@
                     </div>
                 </div>
 
-                <div class="board-form-row" id="row-vcApps">
-                    <div class="board-form-row-head">
-                        <span data-i18n="labelVcApps">VC利用アプリ</span>
-                        <select class="board-visibility-select" id="vis-vcApps" data-field="vcApps"></select>
+                <div id="vc-extra-group">
+                    <div class="board-form-row" id="row-vcApps">
+                        <div class="board-form-row-head">
+                            <span data-i18n="labelVcApps">VC利用アプリ</span>
+                            <select class="board-visibility-select" id="vis-vcApps" data-field="vcApps"></select>
+                        </div>
+                        <div class="board-checkbox-group" id="group-vcApps">
+                            <label><input type="checkbox" name="vcApps" value="discord" /><span data-i18n="vcAppDiscord">Discord</span></label>
+                            <label><input type="checkbox" name="vcApps" value="line" /><span data-i18n="vcAppLine">LINE</span></label>
+                            <label><input type="checkbox" name="vcApps" value="other" /><span data-i18n="vcAppOther">その他</span></label>
+                        </div>
                     </div>
-                    <div class="board-checkbox-group" id="group-vcApps">
-                        <label><input type="checkbox" name="vcApps" value="discord" /><span data-i18n="vcAppDiscord">Discord</span></label>
-                        <label><input type="checkbox" name="vcApps" value="line" /><span data-i18n="vcAppLine">LINE</span></label>
-                        <label><input type="checkbox" name="vcApps" value="other" /><span data-i18n="vcAppOther">その他</span></label>
-                    </div>
-                </div>
 
-                <h4 class="board-form-subgroup-title" data-i18n="groupCallStyle">通話スタイル</h4>
+                    <h4 class="board-form-subgroup-title" data-i18n="groupCallStyle">通話スタイル</h4>
 
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <span data-i18n="labelCasualOk">タメ口OK</span>
+                    <div class="board-form-row board-form-row-inline">
+                        <label class="board-single-checkbox"><input type="checkbox" id="input-casualOk" name="casualOk" /><span data-i18n="casualOkLabel">タメ口で話してもOK</span></label>
                         <select class="board-visibility-select" id="vis-casualOk" data-field="casualOk"></select>
                     </div>
-                    <label class="board-single-checkbox"><input type="checkbox" id="input-casualOk" name="casualOk" /><span data-i18n="casualOkLabel">タメ口で話してもOK</span></label>
-                </div>
 
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <span data-i18n="labelJokingOk">おふざけOK</span>
+                    <div class="board-form-row board-form-row-inline">
+                        <label class="board-single-checkbox"><input type="checkbox" id="input-jokingOk" name="jokingOk" /><span data-i18n="jokingOkLabel">おふざけしながらでもOK</span></label>
                         <select class="board-visibility-select" id="vis-jokingOk" data-field="jokingOk"></select>
                     </div>
-                    <label class="board-single-checkbox"><input type="checkbox" id="input-jokingOk" name="jokingOk" /><span data-i18n="jokingOkLabel">おふざけしながらでもOK</span></label>
-                </div>
 
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <span data-i18n="labelSameOshiPolicy">同担拒否</span>
-                        <select class="board-visibility-select" id="vis-sameOshiPolicy" data-field="sameOshiPolicy"></select>
+                    <div class="board-form-row board-form-row-inline">
+                        <label class="board-single-checkbox"><input type="checkbox" id="input-sameOshiReject" name="sameOshiReject" /><span data-i18n="sameOshiRejectLabel">同担拒否あり</span></label>
+                        <select class="board-visibility-select" id="vis-sameOshiReject" data-field="sameOshiReject"></select>
                     </div>
-                    <div class="board-radio-group" id="group-sameOshiPolicy">
-                        <label><input type="radio" name="sameOshiPolicy" value="reject" /><span data-i18n="sameOshiReject">あり</span></label>
-                        <label><input type="radio" name="sameOshiPolicy" value="ok" /><span data-i18n="sameOshiOk">なし</span></label>
-                        <label><input type="radio" name="sameOshiPolicy" value="noOpinion" /><span data-i18n="sameOshiNoOpinion">気にしたことない</span></label>
-                    </div>
-                </div>
 
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <span data-i18n="labelWorkCallOk">作業通話のみでもOK</span>
+                    <div class="board-form-row" id="row-sameOshiChars">
+                        <div class="board-form-row-head">
+                            <span data-i18n="labelSameOshiChars">同担拒否キャラ</span>
+                            <select class="board-visibility-select" id="vis-sameOshiChars" data-field="sameOshiChars"></select>
+                        </div>
+                        <div class="board-oshi-picker">
+                            <div class="board-oshi-selected" id="same-oshi-selected"></div>
+                            <button type="button" class="board-oshi-add-btn" id="same-oshi-add-btn" data-i18n="oshiAddBtn">追加する</button>
+                        </div>
+                    </div>
+
+                    <div class="board-form-row board-form-row-inline">
+                        <label class="board-single-checkbox"><input type="checkbox" id="input-workCallOk" name="workCallOk" /><span data-i18n="workCallOkLabel">作業通話だけの参加でもOK</span></label>
                         <select class="board-visibility-select" id="vis-workCallOk" data-field="workCallOk"></select>
                     </div>
-                    <label class="board-single-checkbox"><input type="checkbox" id="input-workCallOk" name="workCallOk" /><span data-i18n="workCallOkLabel">作業通話だけの参加でもOK</span></label>
                 </div>
 
                 <!-- ===== コメント ===== -->
                 <h3 class="board-form-group-title" data-i18n="groupComment">コメント</h3>
                 <div class="board-form-row">
-                    <label for="input-comment" data-i18n="labelComment">募集コメント</label>
+                    <label for="input-comment" data-i18n="labelComment">なんでも一言</label>
                     <textarea id="input-comment" name="comment" rows="3" maxlength="200" data-i18n-placeholder="commentPlaceholder" required></textarea>
                 </div>
 
@@ -378,6 +390,16 @@
             <p class="board-oshi-picker-hint" data-i18n="oshiPickerHint">最大3人まで選べます</p>
             <div class="avatar-elem-tab-bar" id="oshi-picker-elem-tabs"></div>
             <div class="avatar-picker-char-list" id="oshi-picker-char-list"></div>
+        </div>
+    </div>
+
+    <!-- 同担拒否キャラ選択ポップ（人数制限なし） -->
+    <div id="same-oshi-picker-modal" class="col-modal" style="display:none;">
+        <div class="col-modal-backdrop"></div>
+        <div class="col-modal-content avatar-picker-content">
+            <button type="button" id="same-oshi-picker-close" class="col-modal-close" aria-label="close">×</button>
+            <div class="avatar-elem-tab-bar" id="same-oshi-picker-elem-tabs"></div>
+            <div class="avatar-picker-char-list" id="same-oshi-picker-char-list"></div>
         </div>
     </div>
 

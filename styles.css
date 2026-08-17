@@ -376,6 +376,13 @@ body.portal-page {
   cursor: pointer;
 }
 
+.board-form-row.board-form-row-inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
 .board-oshi-picker {
   display: flex;
   align-items: center;

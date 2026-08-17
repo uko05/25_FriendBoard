@@ -7,8 +7,8 @@
 export const VISIBILITY_FIELDS = [
   'genshinUid', 'server', 'adventureRank', 'worldLevel', 'gender', 'platforms',
   'oshiChars', 'spending', 'playStyles',
-  'weekdayTimes', 'weekendTimes', 'inviteStyle', 'twitterId',
-  'vc', 'vcApps', 'casualOk', 'jokingOk', 'sameOshiPolicy', 'workCallOk',
+  'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency', 'twitterId',
+  'vc', 'vcApps', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
 ];
 
 // 既定の公開設定。性別だけ非公開始まり、他は公開始まり。
@@ -28,7 +28,8 @@ const FIELD_LABELS = {
   oshiChars: { ja: '推しキャラ', en: 'Favorite Characters' },
   spending: { ja: '課金スタンス', en: 'Spending' },
   playStyles: { ja: 'プレイスタイル', en: 'Play Style' },
-  inviteStyle: { ja: 'マルチの誘うタイプ', en: 'Invite Style' },
+  inviteStyle: { ja: 'マルチ誘い/誘われタイプ', en: 'Invite Style' },
+  multiFrequency: { ja: 'マルチ頻度', en: 'Multiplayer Frequency' },
   workCallOk: { ja: '作業通話のみでもOK', en: 'OK with silent/work call' },
   vc: { ja: 'VC(ボイスチャット)', en: 'Voice Chat' },
   vcApps: { ja: 'VC利用アプリ', en: 'VC App' },
@@ -37,7 +38,8 @@ const FIELD_LABELS = {
   weekendTimes: { ja: '休日のマルチ可能時間帯', en: 'Weekend availability' },
   casualOk: { ja: 'タメ口OK', en: 'Casual speech OK' },
   jokingOk: { ja: 'おふざけOK', en: 'Joking around OK' },
-  sameOshiPolicy: { ja: '同担拒否', en: 'Same-favorite policy' },
+  sameOshiReject: { ja: '同担拒否', en: 'Same-favorite rejection' },
+  sameOshiChars: { ja: '同担拒否キャラ', en: 'Rejected characters' },
 };
 
 export function fieldLabel(key, lang) {
@@ -82,11 +84,19 @@ const OPTION_LABELS = {
     needFarmHelp: { ja: '育成素材集め手伝って！', en: 'Help me farm ascension materials!' },
     needQuestions: { ja: 'わからないことが多いので質問させて！', en: "I have lots of questions, let me ask!" },
     needCarry: { ja: 'とにかくキャリーして！', en: 'Just carry me!' },
+    needDomainHelp: { ja: '秘境周回手伝って！', en: 'Help me farm domains!' },
   },
   inviteStyle: {
     invite: { ja: '誘うタイプ', en: 'I invite' },
     invited: { ja: '誘われたいタイプ', en: 'I wait to be invited' },
     either: { ja: 'どちらでも', en: 'Either' },
+  },
+  multiFrequency: {
+    anytime: { ja: 'オンラインの時ならいつでも可', en: 'Anytime I\'m online' },
+    daily: { ja: 'ほぼ毎日', en: 'Almost every day' },
+    often: { ja: '週３～５くらい', en: '3-5 times/week' },
+    sometimes: { ja: '週１～２くらい', en: '1-2 times/week' },
+    ask: { ja: '要相談', en: 'Ask me' },
   },
   vc: {
     yes: { ja: '可能', en: 'Available' },
@@ -98,15 +108,7 @@ const OPTION_LABELS = {
     line: { ja: 'LINE', en: 'LINE' },
     other: { ja: 'その他', en: 'Other' },
   },
-  sameOshiPolicy: {
-    reject: { ja: 'あり', en: 'Yes' },
-    ok: { ja: 'なし', en: 'No' },
-    noOpinion: { ja: '気にしたことない', en: "Never thought about it" },
-  },
 };
-
-// 初心者向け(サブグループ)に属するプレイスタイルの値一覧。フォーム描画で使う。
-export const BEGINNER_PLAY_STYLE_VALUES = ['needExploreHelp', 'needFarmHelp', 'needQuestions', 'needCarry'];
 
 function optionLabel(key, value, lang) {
   const group = OPTION_LABELS[key];
@@ -162,6 +164,9 @@ export function formatFieldValue(key, value, lang) {
   if (isEmptyValue(value)) return '';
   if (key === 'workCallOk' || key === 'casualOk' || key === 'jokingOk') {
     return value ? 'OK' : '';
+  }
+  if (key === 'sameOshiReject') {
+    return value ? (lang === 'en' ? 'Yes' : 'あり') : '';
   }
   if (key === 'adventureRank') return `AR ${value}`;
   if (key === 'worldLevel') return `WL ${value}`;

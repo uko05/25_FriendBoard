@@ -79,19 +79,21 @@ export const store = {
   spending: '',
   playStyles: [],
   inviteStyle: '',
+  multiFrequency: '',
   workCallOk: false,
   vc: '',
   vcApps: [],
   casualOk: false,
   jokingOk: false,
-  sameOshiPolicy: '',
+  sameOshiReject: false,
+  sameOshiChars: [], // 原神キャラのicon名、人数制限なし
   twitterId: '',
   weekdayTimes: { start: '', end: '' },
   weekendTimes: { start: '', end: '' },
   visibility: defaultVisibility(), // 項目名 -> 'hidden' | 'public' | 'approval'
 };
 
-const ARRAY_FIELDS = ['platforms', 'oshiChars', 'playStyles', 'vcApps'];
+const ARRAY_FIELDS = ['platforms', 'oshiChars', 'playStyles', 'vcApps', 'sameOshiChars'];
 const TIME_RANGE_FIELDS = ['weekdayTimes', 'weekendTimes'];
 
 export async function loadProfileFromFirestore() {
@@ -108,11 +110,12 @@ export async function loadProfileFromFirestore() {
       if (d.gender != null) store.gender = d.gender;
       if (d.spending != null) store.spending = d.spending;
       if (d.inviteStyle != null) store.inviteStyle = d.inviteStyle;
+      if (d.multiFrequency != null) store.multiFrequency = d.multiFrequency;
       if (d.workCallOk != null) store.workCallOk = !!d.workCallOk;
       if (d.vc != null) store.vc = d.vc;
       if (d.casualOk != null) store.casualOk = !!d.casualOk;
       if (d.jokingOk != null) store.jokingOk = !!d.jokingOk;
-      if (d.sameOshiPolicy != null) store.sameOshiPolicy = d.sameOshiPolicy;
+      if (d.sameOshiReject != null) store.sameOshiReject = !!d.sameOshiReject;
       if (d.twitterId != null) store.twitterId = d.twitterId;
       ARRAY_FIELDS.forEach((k) => { if (Array.isArray(d[k])) store[k] = d[k]; });
       TIME_RANGE_FIELDS.forEach((k) => {
@@ -144,12 +147,14 @@ export async function syncProfileToFirestore() {
       spending: store.spending,
       playStyles: store.playStyles,
       inviteStyle: store.inviteStyle,
+      multiFrequency: store.multiFrequency,
       workCallOk: store.workCallOk,
       vc: store.vc,
       vcApps: store.vcApps,
       casualOk: store.casualOk,
       jokingOk: store.jokingOk,
-      sameOshiPolicy: store.sameOshiPolicy,
+      sameOshiReject: store.sameOshiReject,
+      sameOshiChars: store.sameOshiChars,
       twitterId: store.twitterId,
       weekdayTimes: store.weekdayTimes,
       weekendTimes: store.weekendTimes,
