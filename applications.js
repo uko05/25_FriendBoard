@@ -70,7 +70,7 @@ function relTime(ts) {
 function formatFieldDict(dict, lang) {
   if (!dict) return [];
   return VISIBILITY_FIELDS
-    .filter((key) => key !== 'oshiChars' && dict[key] != null && dict[key] !== '')
+    .filter((key) => key !== 'oshiChars' && key !== 'friendPreference' && dict[key] != null && dict[key] !== '')
     .map((key) => {
       const text = formatFieldValue(key, dict[key], lang);
       return text ? `${fieldLabel(key, lang)}: ${text}` : null;

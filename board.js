@@ -20,6 +20,9 @@ const OSHI_ELEM_LABELS = {
 };
 const OSHI_MAX = 3;
 
+// 管理者(私)は初回ポップの文言を何度も見直したいので、既読フラグに関わらず毎回表示する
+const ADMIN_UID = 'UPInlRxp2eM8OI3p18UU1d3OzNc2';
+
 const STR = {
   ja: {
     serverLabels: { asia: 'アジア', america: '北米', europe: '欧州', sar: '香港・マカオ・台湾' },
@@ -106,6 +109,9 @@ const commentInput = document.getElementById('input-comment');
 const arInput = document.getElementById('input-ar');
 const wlInput = document.getElementById('input-wl');
 const twitterInput = document.getElementById('input-twitter');
+const tiktokInput = document.getElementById('input-tiktok');
+const lineInput = document.getElementById('input-line');
+const instagramInput = document.getElementById('input-instagram');
 const workCallOkInput = document.getElementById('input-workCallOk');
 const casualOkInput = document.getElementById('input-casualOk');
 const jokingOkInput = document.getElementById('input-jokingOk');
@@ -193,6 +199,9 @@ function fillFormFromProfile() {
   if (arInput) arInput.value = store.adventureRank || 60;
   if (wlInput) wlInput.value = store.worldLevel != null ? store.worldLevel : 9;
   if (twitterInput && store.twitterId) twitterInput.value = store.twitterId;
+  if (tiktokInput && store.tiktokId) tiktokInput.value = store.tiktokId;
+  if (lineInput && store.lineId) lineInput.value = store.lineId;
+  if (instagramInput && store.instagramId) instagramInput.value = store.instagramId;
   if (workCallOkInput) workCallOkInput.checked = !!store.workCallOk;
   if (casualOkInput) casualOkInput.checked = !!store.casualOk;
   if (jokingOkInput) jokingOkInput.checked = !!store.jokingOk;
@@ -203,6 +212,7 @@ function fillFormFromProfile() {
   if (weekendEndInput) weekendEndInput.value = store.weekendTimes?.end || '';
 
   setRadioValue('gender', store.gender);
+  setRadioValue('ageGroup', store.ageGroup);
   setRadioValue('spending', store.spending);
   setRadioValue('inviteStyle', store.inviteStyle);
   setRadioValue('multiFrequency', store.multiFrequency);
@@ -386,6 +396,7 @@ function collectFormValues() {
     adventureRank: arInput.value ? Number(arInput.value) : '',
     worldLevel: wlInput.value !== '' ? Number(wlInput.value) : '',
     gender: getRadioValue('gender'),
+    ageGroup: getRadioValue('ageGroup'),
     platforms: getCheckboxValues('platforms'),
     oshiChars: store.oshiChars,
     spending: getRadioValue('spending'),
@@ -400,6 +411,9 @@ function collectFormValues() {
     sameOshiReject,
     sameOshiChars: sameOshiReject ? store.sameOshiChars : [],
     twitterId: twitterInput.value.trim(),
+    tiktokId: tiktokInput?.value.trim() || '',
+    lineId: lineInput?.value.trim() || '',
+    instagramId: instagramInput?.value.trim() || '',
     weekdayTimes: { start: weekdayStartInput?.value || '', end: weekdayEndInput?.value || '' },
     weekendTimes: { start: weekendStartInput?.value || '', end: weekendEndInput?.value || '' },
     friendPreference: getCheckboxValues('friendPreference'),
@@ -465,6 +479,9 @@ function getDisplayFields(post, mine) {
   const headFields = new Set(['genshinUid', 'server', 'displayName']); // ヘッダー側で個別に描画する項目
 
   VISIBILITY_FIELDS.forEach((key) => {
+    // どういうフレンドがほしい？はマッチ度計算専用の内部データであり、
+    // 自分/他人どちらのカードにもチップとして表示しない(ユーザーへの明言済み仕様)。
+    if (key === 'friendPreference') return;
     if (mine) {
       // 自分のカードは常にstoreの値をそのまま見せる(自分自身なので隠す意味がない)。
       // ただし本人が「非公開」にした項目は一覧に出さない(フォーム側で確認できるため)。
@@ -779,6 +796,10 @@ async function init() {
   // ログイン中ならaccountLinksから共有IDを解決してから(=正しいuserIdが確定してから)
   // プロフィール読み込み・一覧購読を始める
   await waitForAccountLink();
+  if (getAuthUid() === ADMIN_UID) {
+    const infoModal = document.getElementById('info-modal');
+    if (infoModal) infoModal.style.display = 'flex';
+  }
   populateNumberAndTimeSelects();
   await loadProfileFromFirestore();
   fillFormFromProfile();

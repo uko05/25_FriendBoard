@@ -75,6 +75,7 @@ export const store = {
   adventureRank: 60,
   worldLevel: 9,
   gender: '',
+  ageGroup: '',
   platforms: [],
   oshiChars: [], // 原神キャラのicon名、最大3件
   spending: '',
@@ -89,6 +90,9 @@ export const store = {
   sameOshiReject: false,
   sameOshiChars: [], // 原神キャラのicon名、人数制限なし
   twitterId: '',
+  tiktokId: '',
+  lineId: '',
+  instagramId: '',
   weekdayTimes: { start: '', end: '' },
   weekendTimes: { start: '', end: '' },
   friendPreference: [],
@@ -111,6 +115,7 @@ export async function loadProfileFromFirestore() {
       if (d.adventureRank != null) store.adventureRank = d.adventureRank;
       if (d.worldLevel != null) store.worldLevel = d.worldLevel;
       if (d.gender != null) store.gender = d.gender;
+      if (d.ageGroup != null) store.ageGroup = d.ageGroup;
       if (d.spending != null) store.spending = d.spending;
       if (d.inviteStyle != null) store.inviteStyle = d.inviteStyle;
       if (d.multiFrequency != null) store.multiFrequency = d.multiFrequency;
@@ -120,6 +125,9 @@ export async function loadProfileFromFirestore() {
       if (d.jokingOk != null) store.jokingOk = !!d.jokingOk;
       if (d.sameOshiReject != null) store.sameOshiReject = !!d.sameOshiReject;
       if (d.twitterId != null) store.twitterId = d.twitterId;
+      if (d.tiktokId != null) store.tiktokId = d.tiktokId;
+      if (d.lineId != null) store.lineId = d.lineId;
+      if (d.instagramId != null) store.instagramId = d.instagramId;
       ARRAY_FIELDS.forEach((k) => { if (Array.isArray(d[k])) store[k] = d[k]; });
       TIME_RANGE_FIELDS.forEach((k) => {
         if (d[k] && typeof d[k] === 'object') store[k] = { start: d[k].start || '', end: d[k].end || '' };
@@ -146,6 +154,7 @@ export async function syncProfileToFirestore() {
       adventureRank: store.adventureRank,
       worldLevel: store.worldLevel,
       gender: store.gender,
+      ageGroup: store.ageGroup,
       platforms: store.platforms,
       oshiChars: store.oshiChars,
       spending: store.spending,
@@ -160,6 +169,9 @@ export async function syncProfileToFirestore() {
       sameOshiReject: store.sameOshiReject,
       sameOshiChars: store.sameOshiChars,
       twitterId: store.twitterId,
+      tiktokId: store.tiktokId,
+      lineId: store.lineId,
+      instagramId: store.instagramId,
       weekdayTimes: store.weekdayTimes,
       weekendTimes: store.weekendTimes,
       friendPreference: store.friendPreference,

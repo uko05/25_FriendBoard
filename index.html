@@ -18,8 +18,6 @@
 
 <body class="portal-page board-page">
 
-    <button type="button" id="info-btn" class="board-info-btn" aria-label="このサイトについて">?</button>
-
     <header class="portal-header">
         <div class="header-topbar">
             <span id="uko-account-status-slot"></span>
@@ -51,6 +49,7 @@
 
         <!-- 募集する -->
         <section class="portal-section board-tab-panel" id="tab-panel-post" role="tabpanel">
+            <button type="button" class="board-info-btn" aria-label="このサイトについて">?</button>
             <h2 data-i18n="postFormTitle">マイプロフィール</h2>
             <p class="board-profile-desc" data-i18n="profileDesc">この掲示板を使うには、まずあなたの情報を保存してください。保存すると「さがす」が使えるようになります。</p>
 
@@ -64,7 +63,7 @@
                     <div class="board-form-row board-player-name-row">
                         <div class="board-form-row-head">
                             <label for="input-displayName" data-i18n="labelDisplayName">名前</label>
-                            <select class="board-visibility-select" id="vis-displayName" data-field="displayName"></select>
+                            <span class="board-fixed-approval-badge" data-i18n="uidAlwaysApproval">🔒承認後に公開</span>
                         </div>
                         <input type="text" id="input-displayName" name="displayName" maxlength="20" data-i18n-placeholder="displayNamePlaceholder" />
                     </div>
@@ -122,7 +121,17 @@
                     <div class="board-radio-group" id="group-gender">
                         <label><input type="radio" name="gender" value="male" /><span data-i18n="genderMale">男性</span></label>
                         <label><input type="radio" name="gender" value="female" /><span data-i18n="genderFemale">女性</span></label>
-                        <label><input type="radio" name="gender" value="secret" /><span data-i18n="genderSecret">回答しない</span></label>
+                    </div>
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelAgeGroup">年齢</span>
+                        <select class="board-visibility-select" id="vis-ageGroup" data-field="ageGroup"></select>
+                    </div>
+                    <div class="board-radio-group" id="group-ageGroup">
+                        <label><input type="radio" name="ageGroup" value="adult" /><span data-i18n="ageAdult">成人</span></label>
+                        <label><input type="radio" name="ageGroup" value="minor" /><span data-i18n="ageMinor">未成年</span></label>
                     </div>
                 </div>
 
@@ -184,9 +193,9 @@
                         <div class="board-checkbox-group">
                             <label><input type="checkbox" name="playStyles" value="needExploreHelp" /><span data-i18n="styleNeedExploreHelp">探索手伝って！</span></label>
                             <label><input type="checkbox" name="playStyles" value="needFarmHelp" /><span data-i18n="styleNeedFarmHelp">育成素材集め手伝って！</span></label>
-                            <label><input type="checkbox" name="playStyles" value="needQuestions" /><span data-i18n="styleNeedQuestions">わからないことが多いので質問させて！</span></label>
-                            <label><input type="checkbox" name="playStyles" value="needCarry" /><span data-i18n="styleNeedCarry">とにかくキャリーして！</span></label>
                             <label><input type="checkbox" name="playStyles" value="needDomainHelp" /><span data-i18n="styleNeedDomainHelp">秘境周回手伝って！</span></label>
+                            <label><input type="checkbox" name="playStyles" value="needCarry" /><span data-i18n="styleNeedCarry">とにかくキャリーして！</span></label>
+                            <label><input type="checkbox" name="playStyles" value="needQuestions" /><span data-i18n="styleNeedQuestions">わからないことが多いので質問させて！</span></label>
                         </div>
                     </div>
                 </div>
@@ -242,14 +251,6 @@
                         <label><input type="radio" name="multiFrequency" value="sometimes" /><span data-i18n="freqSometimes">週１～２くらい</span></label>
                         <label><input type="radio" name="multiFrequency" value="ask" /><span data-i18n="freqAsk">要相談</span></label>
                     </div>
-                </div>
-
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <label for="input-twitter" data-i18n="labelTwitter">ツイッターID</label>
-                        <select class="board-visibility-select" id="vis-twitterId" data-field="twitterId"></select>
-                    </div>
-                    <input type="text" id="input-twitter" name="twitterId" maxlength="20" data-i18n-placeholder="twitterPlaceholder" />
                 </div>
 
                 <!-- ===== ボイスチャット ===== -->
@@ -314,14 +315,48 @@
                     </div>
                 </div>
 
+                <!-- ===== つながれるSNS ===== -->
+                <h3 class="board-form-group-title" data-i18n="groupSns">つながれるSNS</h3>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <label for="input-twitter" data-i18n="labelTwitter">ツイッターID</label>
+                        <select class="board-visibility-select" id="vis-twitterId" data-field="twitterId"></select>
+                    </div>
+                    <input type="text" id="input-twitter" name="twitterId" maxlength="20" data-i18n-placeholder="twitterPlaceholder" />
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <label for="input-tiktok" data-i18n="labelTiktok">TikTok ID</label>
+                        <select class="board-visibility-select" id="vis-tiktokId" data-field="tiktokId"></select>
+                    </div>
+                    <input type="text" id="input-tiktok" name="tiktokId" maxlength="20" data-i18n-placeholder="tiktokPlaceholder" />
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <label for="input-line" data-i18n="labelLineId">LINE ID</label>
+                        <select class="board-visibility-select" id="vis-lineId" data-field="lineId"></select>
+                    </div>
+                    <input type="text" id="input-line" name="lineId" maxlength="20" data-i18n-placeholder="lineIdPlaceholder" />
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <label for="input-instagram" data-i18n="labelInstagram">Instagram ID</label>
+                        <select class="board-visibility-select" id="vis-instagramId" data-field="instagramId"></select>
+                    </div>
+                    <input type="text" id="input-instagram" name="instagramId" maxlength="20" data-i18n-placeholder="instagramPlaceholder" />
+                </div>
+
                 <!-- ===== どういうフレンドがほしい？ ===== -->
                 <h3 class="board-form-group-title" data-i18n="groupFriendPref">どういうフレンドがほしい？</h3>
-                <p class="board-friendpref-desc" data-i18n="friendPrefDesc">ここで選んだ内容は「さがす」でのマッチ度計算に使われます。</p>
+                <p class="board-friendpref-desc" data-i18n="friendPrefDesc">ここで選んだ内容は「さがす」でのマッチ度計算に使われます。ここのチェックした内容は相手に公開されません。一致条件のみ公開されます。</p>
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
                         <span data-i18n="labelFriendPreference">どういうフレンドがほしい？</span>
-                        <select class="board-visibility-select" id="vis-friendPreference" data-field="friendPreference"></select>
                     </div>
                     <div class="board-checkbox-group" id="group-friendPreference">
                         <label><input type="checkbox" name="friendPreference" value="sameGender" /><span data-i18n="prefSameGender">同性のフレンドがほしい</span></label>
@@ -354,6 +389,7 @@
 
         <!-- さがす -->
         <section class="portal-section board-tab-panel hidden" id="tab-panel-search" role="tabpanel">
+            <button type="button" class="board-info-btn" aria-label="このサイトについて">?</button>
             <h2 data-i18n="searchTitle">募集をさがす</h2>
             <div class="board-filter">
                 <label for="filter-server" data-i18n="filterServerLabel">サーバーで絞り込み</label>
@@ -370,6 +406,7 @@
 
         <!-- 申請 -->
         <section class="portal-section board-tab-panel hidden" id="tab-panel-requests" role="tabpanel">
+            <button type="button" class="board-info-btn" aria-label="このサイトについて">?</button>
             <h2 data-i18n="requestsTitle">申請の管理</h2>
             <p class="board-requests-desc" data-i18n="requestsDesc">気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。</p>
 
@@ -391,8 +428,10 @@
         <div class="col-modal-backdrop"></div>
         <div class="col-modal-content info-modal-content">
             <button type="button" id="info-modal-close" class="col-modal-close" aria-label="close">×</button>
-            <h3 class="info-modal-title" data-i18n="infoModalTitle">このサイトについて</h3>
-            <p class="info-modal-body" data-i18n="infoModalBody">気になる募集にはまず申請が必要で、相手が承認するまで原神UIDなどは見られません。お互いのことを事前にしっかり知ってからやり取りできるので、長続きするフレンドが見つかりやすくなります。「マイプロフィール」の「どういうフレンドがほしい？」を正しく入力しておくと、「さがす」で相性の良い相手が自動で見つかりやすくなります。</p>
+            <h3 class="info-modal-title" data-i18n="infoModalTitle">このサイトは承認制です</h3>
+            <p class="info-modal-body" data-i18n="infoModalBody1">このサイトは一般的なフレンド募集とは異なり、相手に承認されないとUIDなどの公開されません。</p>
+            <p class="info-modal-body" data-i18n="infoModalBody2">全利用者はマイプロフィールの設定が必須です。気になる人に申請をしたら相手にマイプロフィールが一部公開されます。相手が承認することで、お互いにUIDなど承認後に公開される情報を閲覧でき、ゲーム内でフレンド申請することができるようになります。</p>
+            <p class="info-modal-body info-modal-emphasis" data-i18n="infoModalBody3">お互いのことを事前にしっかり知れるので、挨拶だけで終わらない長続きするフレンドを探すことができます</p>
         </div>
     </div>
 

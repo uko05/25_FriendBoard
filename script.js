@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (infoModal) infoModal.style.display = "none";
     localStorage.setItem(LS_INFO_SEEN, "1");
   }
-  document.getElementById("info-btn")?.addEventListener("click", openInfoModal);
+  document.querySelectorAll(".board-info-btn").forEach((btn) => btn.addEventListener("click", openInfoModal));
   document.getElementById("info-modal-close")?.addEventListener("click", closeInfoModal);
   document.querySelector("#info-modal .col-modal-backdrop")?.addEventListener("click", closeInfoModal);
   if (!localStorage.getItem(LS_INFO_SEEN)) openInfoModal();
@@ -82,7 +82,9 @@ document.addEventListener("DOMContentLoaded", () => {
       labelGender: "性別",
       genderMale: "男性",
       genderFemale: "女性",
-      genderSecret: "回答しない",
+      labelAgeGroup: "年齢",
+      ageAdult: "成人",
+      ageMinor: "未成年",
       labelPlatforms: "ハード",
       platformPc: "PC",
       platformPs5: "PS5",
@@ -135,13 +137,21 @@ document.addEventListener("DOMContentLoaded", () => {
       vcAppDiscord: "Discord",
       vcAppLine: "LINE",
       vcAppOther: "その他",
-      labelTwitter: "ツイッターID",
-      twitterPlaceholder: "例）@uko_dayo_",
       labelWeekdayTimes: "平日のマルチ可能時間帯",
       labelWeekendTimes: "休日のマルチ可能時間帯",
 
+      groupSns: "つながれるSNS",
+      labelTwitter: "ツイッターID",
+      twitterPlaceholder: "例）@uko_dayo_",
+      labelTiktok: "TikTok ID",
+      tiktokPlaceholder: "例）@uko_dayo_",
+      labelLineId: "LINE ID",
+      lineIdPlaceholder: "例）uko_dayo_",
+      labelInstagram: "Instagram ID",
+      instagramPlaceholder: "例）@uko_dayo_",
+
       groupFriendPref: "どういうフレンドがほしい？",
-      friendPrefDesc: "ここで選んだ内容は「さがす」でのマッチ度計算に使われます。",
+      friendPrefDesc: "ここで選んだ内容は「さがす」でのマッチ度計算に使われます。ここのチェックした内容は相手に公開されません。一致条件のみ公開されます。",
       labelFriendPreference: "どういうフレンドがほしい？",
       prefSameGender: "同性のフレンドがほしい",
       prefAnyGender: "男女問わずフレンドがほしい",
@@ -151,8 +161,10 @@ document.addEventListener("DOMContentLoaded", () => {
       prefChatOnly: "マルチしない雑談通話でも可",
       prefVcNotNeeded: "VCなしでも大丈夫",
 
-      infoModalTitle: "このサイトについて",
-      infoModalBody: "気になる募集にはまず申請が必要で、相手が承認するまで原神UIDなどは見られません。お互いのことを事前にしっかり知ってからやり取りできるので、長続きするフレンドが見つかりやすくなります。「マイプロフィール」の「どういうフレンドがほしい？」を正しく入力しておくと、「さがす」で相性の良い相手が自動で見つかりやすくなります。",
+      infoModalTitle: "このサイトは承認制です",
+      infoModalBody1: "このサイトは一般的なフレンド募集とは異なり、相手に承認されないとUIDなどの公開されません。",
+      infoModalBody2: "全利用者はマイプロフィールの設定が必須です。気になる人に申請をしたら相手にマイプロフィールが一部公開されます。相手が承認することで、お互いにUIDなど承認後に公開される情報を閲覧でき、ゲーム内でフレンド申請することができるようになります。",
+      infoModalBody3: "お互いのことを事前にしっかり知れるので、挨拶だけで終わらない長続きするフレンドを探すことができます",
 
       visPublic: "公開",
       visHidden: "非公開",
@@ -214,7 +226,9 @@ document.addEventListener("DOMContentLoaded", () => {
       labelGender: "Gender",
       genderMale: "Male",
       genderFemale: "Female",
-      genderSecret: "Prefer not to say",
+      labelAgeGroup: "Age",
+      ageAdult: "Adult",
+      ageMinor: "Minor",
       labelPlatforms: "Platform",
       platformPc: "PC",
       platformPs5: "PS5",
@@ -267,13 +281,21 @@ document.addEventListener("DOMContentLoaded", () => {
       vcAppDiscord: "Discord",
       vcAppLine: "LINE",
       vcAppOther: "Other",
-      labelTwitter: "X (Twitter) ID",
-      twitterPlaceholder: "e.g. @uko_dayo_",
       labelWeekdayTimes: "Weekday availability",
       labelWeekendTimes: "Weekend availability",
 
+      groupSns: "Connect via SNS",
+      labelTwitter: "X (Twitter) ID",
+      twitterPlaceholder: "e.g. @uko_dayo_",
+      labelTiktok: "TikTok ID",
+      tiktokPlaceholder: "e.g. @uko_dayo_",
+      labelLineId: "LINE ID",
+      lineIdPlaceholder: "e.g. uko_dayo_",
+      labelInstagram: "Instagram ID",
+      instagramPlaceholder: "e.g. @uko_dayo_",
+
       groupFriendPref: "What kind of friend are you looking for?",
-      friendPrefDesc: "These selections are used to calculate your match score in Search.",
+      friendPrefDesc: "These selections are used to calculate your match score in Search. What you check here is not shown to the other party — only the match result is disclosed.",
       labelFriendPreference: "What kind of friend are you looking for?",
       prefSameGender: "Looking for a same-gender friend",
       prefAnyGender: "Gender doesn't matter",
@@ -283,8 +305,10 @@ document.addEventListener("DOMContentLoaded", () => {
       prefChatOnly: "OK with just chatting, no multiplayer",
       prefVcNotNeeded: "OK without VC",
 
-      infoModalTitle: "About this site",
-      infoModalBody: "To contact someone you're interested in, you need to apply first — their Genshin UID and other details stay hidden until they accept. This lets you get to know each other before connecting, making it easier to find friendships that last. Fill in \"What kind of friend are you looking for?\" on your My Profile accurately, and Search will automatically surface better-matched candidates for you.",
+      infoModalTitle: "This site is approval-based",
+      infoModalBody1: "Unlike typical friend-recruitment sites, your UID and other details are never shown to someone unless they've been approved by you.",
+      infoModalBody2: "Every user is required to fill out their My Profile. When you apply to someone you're interested in, part of your profile is shown to them. Once they approve, both of you can view each other's UID and any other approval-gated info, and you'll be able to send a friend request in-game.",
+      infoModalBody3: "Because you can get to know each other well beforehand, you can find friendships that last beyond just a greeting.",
 
       visPublic: "Public",
       visHidden: "Hidden",

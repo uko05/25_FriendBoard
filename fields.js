@@ -5,10 +5,11 @@
 // 公開設定(visibility)の対象となる項目一覧。コメントは常に公開のため対象外。
 // フォームの並び順とだいたい揃えている(カードのチップ表示順にも使われる)。
 export const VISIBILITY_FIELDS = [
-  'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'platforms',
+  'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms',
   'oshiChars', 'spending', 'playStyles',
-  'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency', 'twitterId',
+  'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency',
   'vc', 'vcApps', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
+  'twitterId', 'tiktokId', 'lineId', 'instagramId',
   'friendPreference',
 ];
 
@@ -32,6 +33,7 @@ const FIELD_LABELS = {
   adventureRank: { ja: '冒険者ランク', en: 'Adventure Rank' },
   worldLevel: { ja: '世界ランク', en: 'World Level' },
   gender: { ja: '性別', en: 'Gender' },
+  ageGroup: { ja: '年齢', en: 'Age' },
   platforms: { ja: 'ハード', en: 'Platform' },
   oshiChars: { ja: '推しキャラ', en: 'Favorite Characters' },
   spending: { ja: '課金スタンス', en: 'Spending' },
@@ -42,6 +44,9 @@ const FIELD_LABELS = {
   vc: { ja: 'VC(ボイスチャット)', en: 'Voice Chat' },
   vcApps: { ja: 'VC利用アプリ', en: 'VC App' },
   twitterId: { ja: 'ツイッターID', en: 'X (Twitter) ID' },
+  tiktokId: { ja: 'TikTok ID', en: 'TikTok ID' },
+  lineId: { ja: 'LINE ID', en: 'LINE ID' },
+  instagramId: { ja: 'Instagram ID', en: 'Instagram ID' },
   weekdayTimes: { ja: '平日のマルチ可能時間帯', en: 'Weekday availability' },
   weekendTimes: { ja: '休日のマルチ可能時間帯', en: 'Weekend availability' },
   casualOk: { ja: 'タメ口OK', en: 'Casual speech OK' },
@@ -66,7 +71,10 @@ const OPTION_LABELS = {
   gender: {
     male: { ja: '男性', en: 'Male' },
     female: { ja: '女性', en: 'Female' },
-    secret: { ja: '回答しない', en: 'Prefer not to say' },
+  },
+  ageGroup: {
+    adult: { ja: '成人', en: 'Adult' },
+    minor: { ja: '未成年', en: 'Minor' },
   },
   platforms: {
     pc: { ja: 'PC', en: 'PC' },
