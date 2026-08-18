@@ -118,6 +118,7 @@ const workCallOkInput = document.getElementById('input-workCallOk');
 const jokingOkInput = document.getElementById('input-jokingOk');
 const vcNoteInput = document.getElementById('input-vcNote');
 const vcAppsOtherInput = document.getElementById('input-vcAppsOtherText');
+const playStylesOtherInput = document.getElementById('input-playStylesOtherText');
 const sameOshiRejectInput = document.getElementById('input-sameOshiReject');
 const weekdayStartInput = document.getElementById('weekday-start');
 const weekdayEndInput = document.getElementById('weekday-end');
@@ -185,12 +186,12 @@ function updateVcExtraGroupVisibility() {
   const group = document.getElementById('vc-extra-group');
   if (group) group.classList.toggle('hidden', getRadioValue('vc') !== 'yes');
 }
-// VCが「相談」のときだけ詳細入力を有効化する
+// VCが「相談」のときだけ詳細入力欄を表示する
 function updateVcNoteEnabled() {
-  if (!vcNoteInput) return;
+  const row = document.getElementById('row-vcNote');
   const enabled = getRadioValue('vc') === 'maybe';
-  vcNoteInput.disabled = !enabled;
-  if (!enabled) vcNoteInput.value = '';
+  if (row) row.classList.toggle('hidden', !enabled);
+  if (vcNoteInput && !enabled) vcNoteInput.value = '';
 }
 // VC利用アプリで「その他」を選んだときだけアプリ名入力を有効化する
 function updateVcAppsOtherEnabled() {
@@ -199,11 +200,19 @@ function updateVcAppsOtherEnabled() {
   vcAppsOtherInput.disabled = !enabled;
   if (!enabled) vcAppsOtherInput.value = '';
 }
+// プレイスタイルで「その他」を選んだときだけ詳細入力を有効化する
+function updatePlayStylesOtherEnabled() {
+  if (!playStylesOtherInput) return;
+  const enabled = getCheckboxValues('playStyles').includes('other');
+  playStylesOtherInput.disabled = !enabled;
+  if (!enabled) playStylesOtherInput.value = '';
+}
 document.getElementById('group-vc')?.addEventListener('change', () => {
   updateVcExtraGroupVisibility();
   updateVcNoteEnabled();
 });
 document.getElementById('group-vcApps')?.addEventListener('change', updateVcAppsOtherEnabled);
+document.getElementById('group-playStyles')?.addEventListener('change', updatePlayStylesOtherEnabled);
 
 // 「同担拒否あり」にチェックが入っているときだけキャラ選択欄を表示する
 function updateSameOshiCharsVisibility() {
@@ -228,6 +237,7 @@ function fillFormFromProfile() {
   if (sameOshiRejectInput) sameOshiRejectInput.checked = !!store.sameOshiReject;
   if (vcNoteInput && store.vcNote) vcNoteInput.value = store.vcNote;
   if (vcAppsOtherInput && store.vcAppsOtherText) vcAppsOtherInput.value = store.vcAppsOtherText;
+  if (playStylesOtherInput && store.playStylesOtherText) playStylesOtherInput.value = store.playStylesOtherText;
   if (weekdayStartInput) weekdayStartInput.value = store.weekdayTimes?.start || '';
   if (weekdayEndInput) weekdayEndInput.value = store.weekdayTimes?.end || '';
   if (weekendStartInput) weekendStartInput.value = store.weekendTimes?.start || '';
@@ -247,6 +257,7 @@ function fillFormFromProfile() {
   updateVcExtraGroupVisibility();
   updateVcNoteEnabled();
   updateVcAppsOtherEnabled();
+  updatePlayStylesOtherEnabled();
   updateSameOshiCharsVisibility();
 
   oshiPicker.renderSelected();
@@ -436,6 +447,7 @@ function collectFormValues() {
     oshiChars: store.oshiChars,
     spending: getRadioValue('spending'),
     playStyles: getCheckboxValues('playStyles'),
+    playStylesOtherText: getCheckboxValues('playStyles').includes('other') ? (playStylesOtherInput?.value.trim() || '') : '',
     inviteStyle: getRadioValue('inviteStyle'),
     multiFrequency: getRadioValue('multiFrequency'),
     workCallOk: vcOpen && !!workCallOkInput?.checked,

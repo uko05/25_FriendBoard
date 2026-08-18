@@ -10,7 +10,7 @@ import {
   doc, getDoc, setDoc, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { VISIBILITY_FIELDS, defaultVisibility } from './fields.js';
+import { VISIBILITY_FIELDS, defaultVisibility, normalizeVisibility } from './fields.js';
 
 // 14_GenshinOmikujiと同じキーをあえて使う。uko05.github.io配下は全サイト同一オリジンで
 // localStorageを共有しているため、キーを揃えるだけで「Omikuji/AccountCenterで使っている
@@ -80,6 +80,7 @@ export const store = {
   oshiChars: [], // 原神キャラのicon名、最大3件
   spending: '',
   playStyles: [],
+  playStylesOtherText: '',
   inviteStyle: '',
   multiFrequency: '',
   workCallOk: false,
@@ -132,6 +133,7 @@ export async function loadProfileFromFirestore() {
       if (d.tiktokId != null) store.tiktokId = d.tiktokId;
       if (d.lineId != null) store.lineId = d.lineId;
       if (d.instagramId != null) store.instagramId = d.instagramId;
+      if (d.playStylesOtherText != null) store.playStylesOtherText = d.playStylesOtherText;
       ARRAY_FIELDS.forEach((k) => { if (Array.isArray(d[k])) store[k] = d[k]; });
       TIME_RANGE_FIELDS.forEach((k) => {
         if (d[k] && typeof d[k] === 'object') store[k] = { start: d[k].start || '', end: d[k].end || '' };
@@ -141,6 +143,7 @@ export async function loadProfileFromFirestore() {
           if (d.visibility[k]) store.visibility[k] = d.visibility[k];
         });
       }
+      normalizeVisibility(store.visibility);
     }
   } catch (e) {
     console.warn('[userData] profile load failed', e);
@@ -163,6 +166,7 @@ export async function syncProfileToFirestore() {
       oshiChars: store.oshiChars,
       spending: store.spending,
       playStyles: store.playStyles,
+      playStylesOtherText: store.playStylesOtherText,
       inviteStyle: store.inviteStyle,
       multiFrequency: store.multiFrequency,
       workCallOk: store.workCallOk,

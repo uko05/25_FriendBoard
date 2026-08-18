@@ -6,7 +6,7 @@
 // フォームの並び順とだいたい揃えている(カードのチップ表示順にも使われる)。
 export const VISIBILITY_FIELDS = [
   'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms',
-  'oshiChars', 'spending', 'playStyles',
+  'oshiChars', 'spending', 'playStyles', 'playStylesOtherText',
   'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency',
   'vc', 'vcNote', 'vcApps', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
   'twitterId', 'tiktokId', 'lineId', 'instagramId',
@@ -16,18 +16,32 @@ export const VISIBILITY_FIELDS = [
 // SNSは「公開」を選ばせず、非公開/承認後に公開/仲良くなったら の3択にする対象
 export const NO_PUBLIC_FIELDS = ['twitterId', 'tiktokId', 'lineId', 'instagramId'];
 
+// フォームに公開設定セレクトを出さず、常に固定値にする項目
+const FIXED_VISIBILITY = {
+  genshinUid: 'approval',
+  displayName: 'approval',
+  playStyles: 'public',
+  playStylesOtherText: 'public',
+};
+
 // 既定の公開設定。genshinUidは常に承認制で固定(フォームにセレクトを出していない)。
 // 名前も承認後に公開が初期値。性別は非公開始まり、SNSは承認後に公開始まり、他は公開始まり。
 export function defaultVisibility() {
   const v = {};
   VISIBILITY_FIELDS.forEach((k) => {
-    if (k === 'genshinUid') v[k] = 'approval';
-    else if (k === 'displayName') v[k] = 'approval';
+    if (FIXED_VISIBILITY[k]) v[k] = FIXED_VISIBILITY[k];
     else if (k === 'gender') v[k] = 'hidden';
     else if (NO_PUBLIC_FIELDS.includes(k)) v[k] = 'approval';
     else v[k] = 'public';
   });
   return v;
+}
+
+// 固定項目は、以前の入力やFirestore上の古い値に関わらず常にこの値へ矯正する
+// (例: playStylesが以前は選べていた「承認制」等が過去に保存されているケースの救済)。
+export function normalizeVisibility(visibility) {
+  Object.keys(FIXED_VISIBILITY).forEach((k) => { visibility[k] = FIXED_VISIBILITY[k]; });
+  return visibility;
 }
 
 const FIELD_LABELS = {
@@ -42,6 +56,7 @@ const FIELD_LABELS = {
   oshiChars: { ja: '推しキャラ', en: 'Favorite Characters' },
   spending: { ja: '課金スタンス', en: 'Spending' },
   playStyles: { ja: 'マルチで何をしたい？', en: 'What do you want to do in multiplayer?' },
+  playStylesOtherText: { ja: 'マルチその他詳細', en: 'Multiplayer other details' },
   inviteStyle: { ja: 'マルチ自発について', en: 'Taking initiative in multiplayer' },
   multiFrequency: { ja: 'マルチ頻度', en: 'Multiplayer Frequency' },
   workCallOk: { ja: '作業通話のみでもOK', en: 'OK with silent/work call' },
@@ -102,6 +117,7 @@ const OPTION_LABELS = {
     canHelpBuild: { ja: '育成手伝います！', en: "I'll help with character building!" },
     wantAchievements: { ja: 'アチーブ取りしたい！', en: 'Want to hunt achievements!' },
     wantJokeMulti: { ja: 'おふざけマルチしたい！', en: 'Want a goofy multiplayer session!' },
+    other: { ja: 'その他', en: 'Other' },
     needExploreHelp: { ja: '探索手伝って！', en: 'Help me explore!' },
     needFarmHelp: { ja: '育成素材集め手伝って！', en: 'Help me farm ascension materials!' },
     needQuestions: { ja: 'わからないことが多いので質問させて！', en: "I have lots of questions, let me ask!" },
@@ -141,7 +157,6 @@ const OPTION_LABELS = {
     anyGender: { ja: '男女問わずフレンドがほしい', en: "Gender doesn't matter" },
     wantPartner: { ja: '恋人がほしい', en: 'Looking for a romantic partner' },
     wantOshiFriend: { ja: '推し活友達がほしい', en: 'Looking for a fellow fan friend' },
-    vcRequired: { ja: 'VC必須', en: 'VC required' },
     chatOnly: { ja: 'マルチしない雑談通話でも可', en: 'OK with just chatting, no multiplayer' },
     vcNotNeeded: { ja: 'VCなしでも大丈夫', en: 'OK without VC' },
   },
@@ -218,11 +233,6 @@ export function computeFriendMatch(myPrefs, myGender, candidate) {
     if (pref === 'wantPartner' || pref === 'wantOshiFriend') {
       total++;
       if (candidatePrefs.includes(pref)) matched++;
-      return;
-    }
-    if (pref === 'vcRequired') {
-      total++;
-      if (candidate.vc === 'yes') matched++;
       return;
     }
     // anyGender / chatOnly / vcNotNeeded は宣言のみのため採点しない

@@ -227,6 +227,17 @@ body.portal-page {
   flex-shrink: 0;
 }
 
+.board-fixed-public-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: bold;
+  color: #1a6b3c;
+  background: #e2f6ea;
+  border-radius: 999px;
+  padding: 4px 10px;
+  flex-shrink: 0;
+}
+
 .board-tab-panel {
   position: relative;
   border-top-left-radius: 0;

@@ -178,7 +178,7 @@
                 <div class="board-form-row">
                     <div class="board-form-row-head">
                         <span data-i18n="labelPlayStyles">マルチで何をしたい？</span>
-                        <select class="board-visibility-select" id="vis-playStyles" data-field="playStyles"></select>
+                        <span class="board-fixed-public-badge" data-i18n="alwaysPublic">🌐常に公開</span>
                     </div>
                     <div class="board-checkbox-group" id="group-playStyles">
                         <label><input type="checkbox" name="playStyles" value="callOnly" /><span data-i18n="styleCallOnly">通話しながら各々プレイしたい！</span></label>
@@ -188,7 +188,9 @@
                         <label><input type="checkbox" name="playStyles" value="canHelpBuild" /><span data-i18n="styleCanHelpBuild">育成手伝います！</span></label>
                         <label><input type="checkbox" name="playStyles" value="wantAchievements" /><span data-i18n="styleWantAchievements">アチーブ取りしたい！</span></label>
                         <label><input type="checkbox" name="playStyles" value="wantJokeMulti" /><span data-i18n="styleWantJokeMulti">おふざけマルチしたい！</span></label>
+                        <label><input type="checkbox" name="playStyles" value="other" /><span data-i18n="styleOther">その他</span></label>
                     </div>
+                    <input type="text" id="input-playStylesOtherText" name="playStylesOtherText" maxlength="30" disabled data-i18n-placeholder="playStylesOtherPlaceholder" />
                     <div class="board-substyle-framed">
                         <p class="board-substyle-title" data-i18n="styleBeginnerGroupTitle">初心者向け</p>
                         <div class="board-checkbox-group">
@@ -269,12 +271,12 @@
                     </div>
                 </div>
 
-                <div class="board-form-row" id="row-vcNote">
+                <div class="board-form-row hidden" id="row-vcNote">
                     <div class="board-form-row-head">
                         <label for="input-vcNote" data-i18n="labelVcNote">VC相談の詳細</label>
                         <select class="board-visibility-select" id="vis-vcNote" data-field="vcNote"></select>
                     </div>
-                    <input type="text" id="input-vcNote" name="vcNote" maxlength="40" disabled data-i18n-placeholder="vcNotePlaceholder" />
+                    <input type="text" id="input-vcNote" name="vcNote" maxlength="40" data-i18n-placeholder="vcNotePlaceholder" />
                 </div>
 
                 <div id="vc-extra-group">
@@ -377,7 +379,8 @@
 
                 <!-- ===== どういうフレンドがほしい？ ===== -->
                 <h3 class="board-form-group-title" data-i18n="groupFriendPref">どういうフレンドがほしい？</h3>
-                <p class="board-friendpref-desc" data-i18n="friendPrefDesc">ここで選んだ内容は「さがす」でのマッチ度計算に使われます。ここのチェックした内容は相手に公開されません。一致条件のみ公開されます。</p>
+                <p class="board-friendpref-desc" data-i18n="friendPrefDesc">ここで選んだ内容は「さがす」でのマッチ度計算に使われます。</p>
+                <p class="board-friendpref-desc" data-i18n="friendPrefDesc2">ここのチェックした内容は相手に公開されません。一致条件のみ公開されます。</p>
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
@@ -388,7 +391,6 @@
                         <label><input type="checkbox" name="friendPreference" value="anyGender" /><span data-i18n="prefAnyGender">男女問わずフレンドがほしい</span></label>
                         <label><input type="checkbox" name="friendPreference" value="wantPartner" /><span data-i18n="prefWantPartner">恋人がほしい</span></label>
                         <label><input type="checkbox" name="friendPreference" value="wantOshiFriend" /><span data-i18n="prefWantOshiFriend">推し活友達がほしい</span></label>
-                        <label><input type="checkbox" name="friendPreference" value="vcRequired" /><span data-i18n="prefVcRequired">VC必須</span></label>
                         <label><input type="checkbox" name="friendPreference" value="chatOnly" /><span data-i18n="prefChatOnly">マルチしない雑談通話でも可</span></label>
                         <label><input type="checkbox" name="friendPreference" value="vcNotNeeded" /><span data-i18n="prefVcNotNeeded">VCなしでも大丈夫</span></label>
                     </div>
