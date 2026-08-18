@@ -8,7 +8,7 @@ import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
 import { VISIBILITY_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets } from './fields.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
-  collection, addDoc, updateDoc, deleteDoc, doc, getDocs, onSnapshot,
+  collection, setDoc, updateDoc, deleteDoc, doc, onSnapshot,
   query, where, orderBy, limit, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
@@ -27,24 +27,21 @@ const STR = {
     minAgo: (n) => `${n}分前`,
     hourAgo: (n) => `${n}時間前`,
     dayAgo: (n) => `${n}日前`,
-    emptyMy: 'まだ募集を投稿していません',
+    emptyMy: 'まだプロフィールを保存していません',
     emptySearch: '該当する募集がありません',
-    deleteBtn: '削除する',
-    deleteConfirm: 'この募集を削除しますか？',
-    postOk: '募集を投稿しました！',
-    postFail: '投稿に失敗しました。時間をおいて再度お試しください。',
-    deleteFail: '削除に失敗しました。',
+    deleteBtn: '取り下げる',
+    deleteConfirm: 'プロフィールの公開を取り下げますか？「さがす」も使えなくなります。',
+    postOk: '保存しました！',
+    postFail: '保存に失敗しました。時間をおいて再度お試しください。',
+    deleteFail: '取り下げに失敗しました。',
     fillAll: 'UID・サーバー・コメントを入力してください。',
     uidLabel: 'UID',
     applyBtn: '申請する',
     appliedBtn: '申請済み',
     applyOk: '申請しました！相手が承認するとUIDが確認できます。',
     applyFail: '申請に失敗しました。時間をおいて再度お試しください。',
-    applyProfileIncomplete: '先に原神UID・サーバーを入力・保存してください（「募集する」タブから一度投稿するか、フォームに入力してください）。',
+    applyProfileIncomplete: '先に原神UID・サーバーを入力・保存してください（「マイプロフィール」タブから保存してください）。',
     approvalBadge: '承認制',
-    approvalNoticeOn: 'ログイン中：各項目の公開設定で「承認制」が選べます。選んだ項目は、申請を承認した相手にのみ公開されます。',
-    approvalNoticeOffPrefix: '未登録の場合、公開設定は「公開」「非公開」のみ選べます（承認制は使えません）。',
-    approvalNoticeOffLink: '登録すると項目ごとに承認制を選べるようになります',
     visPublic: '公開',
     visHidden: '非公開',
     visApproval: '承認制',
@@ -57,24 +54,21 @@ const STR = {
     minAgo: (n) => `${n}m ago`,
     hourAgo: (n) => `${n}h ago`,
     dayAgo: (n) => `${n}d ago`,
-    emptyMy: "You haven't posted any recruitments yet",
+    emptyMy: "You haven't saved your profile yet",
     emptySearch: 'No matching posts found',
-    deleteBtn: 'Delete',
-    deleteConfirm: 'Delete this post?',
-    postOk: 'Your post has been submitted!',
-    postFail: 'Failed to submit. Please try again later.',
-    deleteFail: 'Failed to delete.',
+    deleteBtn: 'Withdraw',
+    deleteConfirm: "Withdraw your profile from search? You'll lose access to Search until you save again.",
+    postOk: 'Saved!',
+    postFail: 'Failed to save. Please try again later.',
+    deleteFail: 'Failed to withdraw.',
     fillAll: 'Please fill in UID, server, and comment.',
     uidLabel: 'UID',
     applyBtn: 'Apply',
     appliedBtn: 'Applied',
     applyOk: 'Request sent! You can see their UID once they accept.',
     applyFail: 'Failed to apply. Please try again later.',
-    applyProfileIncomplete: 'Please fill in and save your Genshin UID and server first (post once on the "Post" tab, or fill in the form).',
+    applyProfileIncomplete: 'Please fill in and save your Genshin UID and server first (save on the "My Profile" tab).',
     approvalBadge: 'Vetted',
-    approvalNoticeOn: "Logged in: you can set any field's visibility to \"Vetted\". Those fields are only revealed to applicants you accept.",
-    approvalNoticeOffPrefix: "Since you're not registered, visibility can only be set to \"Public\" or \"Hidden\" (Vetted mode isn't available).",
-    approvalNoticeOffLink: 'Register to unlock per-field Vetted mode',
     visPublic: 'Public',
     visHidden: 'Hidden',
     visApproval: 'Vetted',
@@ -229,7 +223,6 @@ function populateVisibilitySelects() {
       const opt = document.createElement('option');
       opt.value = value;
       opt.textContent = label;
-      if (value === 'approval' && !getAuthUid()) opt.disabled = true;
       sel.appendChild(opt);
     });
     sel.value = store.visibility[key] || 'public';
@@ -363,27 +356,6 @@ const sameOshiPicker = createCharPicker({
   fullMessage: () => '',
 });
 
-// ログイン状態に応じて、これから投稿する募集が承認制になるかどうかを案内する
-function updateApprovalNotice() {
-  const el = document.getElementById('post-approval-notice');
-  if (!el) return;
-  el.innerHTML = '';
-  el.classList.toggle('board-approval-notice-on', !!getAuthUid());
-  el.classList.toggle('board-approval-notice-off', !getAuthUid());
-
-  if (getAuthUid()) {
-    el.textContent = s().approvalNoticeOn;
-  } else {
-    el.appendChild(document.createTextNode(s().approvalNoticeOffPrefix + ' '));
-    const link = document.createElement('a');
-    link.href = 'https://uko05.github.io/24_AccountCenter/';
-    link.target = '_blank';
-    link.rel = 'noopener';
-    link.textContent = s().approvalNoticeOffLink;
-    el.appendChild(link);
-  }
-}
-
 // ===== 募集投稿 =====
 const postForm = document.getElementById('post-form');
 const postSubmitBtn = document.getElementById('post-submit-btn');
@@ -447,11 +419,14 @@ postForm?.addEventListener('submit', async (e) => {
     const avatar = await getMyAvatar(getUserId());
 
     // 公開設定(visibility)に応じて、投稿ドキュメントへ含める内容を仕分ける。
-    // 'approval'指定の項目は値を一切書き込まず、項目名だけをsecretFieldKeysへ記録する
-    // (承認された時点で初めてfriendBoardApplicationsへ実際の値を書き込む＝applications.js参照)。
-    const { publicFields, secretFieldKeys } = buildPostFieldBuckets(values, store.visibility, !!getAuthUid());
+    // 'approval'指定の項目(genshinUidは常にこれ)は値を一切書き込まず、項目名だけを
+    // secretFieldKeysへ記録する(承認された時点で初めてfriendBoardApplicationsへ実際の値を
+    // 書き込む＝applications.js参照)。
+    const { publicFields, secretFieldKeys } = buildPostFieldBuckets(values, store.visibility);
 
-    await addDoc(collection(db, 'friendBoardPosts'), {
+    // 1ユーザー = 1リスティング(=マイプロフィール)。ドキュメントIDをuserIdで固定し、
+    // 保存の度に丸ごと上書きする(既存の下書きを部分的に残す必要がないため)。
+    await setDoc(doc(db, 'friendBoardPosts', getUserId()), {
       userId: getUserId(),
       comment,
       avatarGame: avatar.game,
@@ -653,36 +628,43 @@ async function deletePost(postId) {
   }
 }
 
-// ===== 自分の募集一覧 =====
-let latestMyPosts = [];
-function renderMyPosts() {
+// ===== マイプロフィール(=自分のリスティング、1ユーザー1件) =====
+let latestMyListing = null;
+
+function renderMyListing() {
   const list = document.getElementById('my-posts-list');
   if (!list) return;
   list.innerHTML = '';
-  if (!latestMyPosts.length) {
+  if (!latestMyListing) {
     const p = document.createElement('p');
     p.className = 'board-list-empty';
     p.textContent = s().emptyMy;
     list.appendChild(p);
     return;
   }
-  latestMyPosts.forEach((post) => list.appendChild(buildCard(post, { mine: true })));
+  list.appendChild(buildCard(latestMyListing, { mine: true }));
 }
 
-function startMyPostsListener() {
-  const q = query(
-    collection(db, 'friendBoardPosts'),
-    where('userId', '==', getUserId()),
-    orderBy('createdAt', 'desc'),
-    limit(50)
-  );
-  onSnapshot(q, (snap) => {
-    latestMyPosts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    renderMyPosts();
+// プロフィールを保存済み(=friendBoardPostsに自分のドキュメントがある)でなければ
+// 「さがす」タブを使わせない。これが「全員が申請承認式を使う」ための必須ゲートになる。
+function updateSearchTabLock() {
+  const tabBtn = document.getElementById('tab-btn-search');
+  const hint = document.getElementById('tab-lock-hint');
+  const unlocked = !!latestMyListing;
+  if (tabBtn) tabBtn.disabled = !unlocked;
+  if (hint) hint.classList.toggle('hidden', unlocked);
+}
+
+function startMyListingListener() {
+  onSnapshot(doc(db, 'friendBoardPosts', getUserId()), (snap) => {
+    latestMyListing = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+    renderMyListing();
+    updateSearchTabLock();
   }, (err) => {
-    console.error('[board] my posts listen failed', err);
-    latestMyPosts = [];
-    renderMyPosts();
+    console.error('[board] my listing listen failed', err);
+    latestMyListing = null;
+    renderMyListing();
+    updateSearchTabLock();
   });
 }
 
@@ -728,22 +710,15 @@ function startSearchListener() {
 
 filterServerSelect?.addEventListener('change', renderSearchList);
 
-// アバター変更時、直近の自分の募集(投稿時点のアバターを非正規化済み)にも反映する。
-// 14_GenshinOmikuji/feed.js の syncLatestFeedAvatar と同じ考え方：全件は更新せず、
-// 直近1件だけ最新のアバターに合わせる。
+// アバター変更時、自分のリスティング(投稿時点のアバターを非正規化済み)にも反映する。
+// 1ユーザー1件なので対象ドキュメントは常に自分のuserId。まだ保存前(リスティング未作成)
+// なら何もしない(次の保存時に最新のアバターが自然に反映されるため)。
 async function updateLatestOwnPostAvatar({ game, icon }) {
+  if (!latestMyListing) return;
   try {
-    const q = query(
-      collection(db, 'friendBoardPosts'),
-      where('userId', '==', getUserId()),
-      orderBy('createdAt', 'desc'),
-      limit(1)
-    );
-    const snap = await getDocs(q);
-    if (snap.empty) return;
-    await updateDoc(snap.docs[0].ref, { avatarGame: game || null, avatarIcon: icon || null });
+    await updateDoc(doc(db, 'friendBoardPosts', getUserId()), { avatarGame: game || null, avatarIcon: icon || null });
   } catch (e) {
-    console.warn('[board] latest post avatar sync failed', e);
+    console.warn('[board] listing avatar sync failed', e);
   }
 }
 
@@ -753,9 +728,8 @@ async function updateLatestOwnPostAvatar({ game, icon }) {
 document.querySelectorAll('input[name="lang"]').forEach((radio) => {
   radio.addEventListener('change', () => {
     setTimeout(() => {
-      renderMyPosts();
+      renderMyListing();
       renderSearchList();
-      updateApprovalNotice();
       populateVisibilitySelects();
       oshiPicker.renderElemTabs();
       oshiPicker.renderCharList();
@@ -773,11 +747,10 @@ async function init() {
   populateNumberAndTimeSelects();
   await loadProfileFromFirestore();
   fillFormFromProfile();
-  updateApprovalNotice();
   populateVisibilitySelects();
   initAvatarUI({ getUserId, getAuthUid, onChange: updateLatestOwnPostAvatar });
   initApplications({ getUserId, onSentChange: renderSearchList });
-  startMyPostsListener();
+  startMyListingListener();
   startSearchListener();
 }
 

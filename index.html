@@ -41,14 +41,16 @@
     <main class="portal-container board-container">
 
         <nav class="board-tabs" role="tablist">
-            <button type="button" class="board-tab-btn active" id="tab-btn-post" data-tab="post" role="tab" aria-selected="true" data-i18n="tabPost">募集する</button>
-            <button type="button" class="board-tab-btn" id="tab-btn-search" data-tab="search" role="tab" aria-selected="false" data-i18n="tabSearch">さがす</button>
+            <button type="button" class="board-tab-btn active" id="tab-btn-post" data-tab="post" role="tab" aria-selected="true" data-i18n="tabPost">マイプロフィール</button>
+            <button type="button" class="board-tab-btn" id="tab-btn-search" data-tab="search" role="tab" aria-selected="false" data-i18n="tabSearch" disabled>さがす</button>
             <button type="button" class="board-tab-btn" id="tab-btn-requests" data-tab="requests" role="tab" aria-selected="false" data-i18n="tabRequests">申請</button>
         </nav>
+        <p class="board-tab-lock-hint" id="tab-lock-hint" data-i18n="tabLockHint">マイプロフィールを保存すると「さがす」が使えるようになります</p>
 
         <!-- 募集する -->
         <section class="portal-section board-tab-panel" id="tab-panel-post" role="tabpanel">
-            <h2 data-i18n="postFormTitle">募集を出す</h2>
+            <h2 data-i18n="postFormTitle">マイプロフィール</h2>
+            <p class="board-profile-desc" data-i18n="profileDesc">この掲示板を使うには、まずあなたの情報を保存してください。保存すると「さがす」が使えるようになります。</p>
 
             <div class="board-player-row">
                 <img id="player-avatar" class="player-avatar" src="" alt="" title="">
@@ -64,7 +66,7 @@
                     <div class="board-form-row">
                         <div class="board-form-row-head">
                             <label for="input-uid" data-i18n="labelUid">原神UID</label>
-                            <select class="board-visibility-select" id="vis-genshinUid" data-field="genshinUid"></select>
+                            <span class="board-fixed-approval-badge" data-i18n="uidAlwaysApproval">🔒承認制(固定)</span>
                         </div>
                         <input type="text" id="input-uid" name="genshinUid" inputmode="numeric" maxlength="20" data-i18n-placeholder="uidPlaceholder" required />
                     </div>
@@ -310,13 +312,13 @@
                     <textarea id="input-comment" name="comment" rows="3" maxlength="200" data-i18n-placeholder="commentPlaceholder" required></textarea>
                 </div>
 
-                <p class="board-approval-notice" id="post-approval-notice"></p>
-                <button type="submit" class="board-submit-btn" id="post-submit-btn" data-i18n="postSubmitBtn">募集を投稿する</button>
+                <p class="board-approval-notice board-approval-notice-on" data-i18n="approvalNoticeFixed">原神UIDは常に承認制です。あなたが申請を承認した相手にのみ公開されます。他の項目は項目ごとに公開設定を選べます。</p>
+                <button type="submit" class="board-submit-btn" id="post-submit-btn" data-i18n="postSubmitBtn">保存する</button>
                 <p class="board-form-msg" id="post-form-msg"></p>
             </form>
 
             <div class="board-myposts">
-                <h3 data-i18n="myPostsTitle">自分の募集</h3>
+                <h3 data-i18n="myPostsTitle">現在の公開状況</h3>
                 <div class="board-list" id="my-posts-list"></div>
             </div>
         </section>

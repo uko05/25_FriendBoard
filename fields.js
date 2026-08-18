@@ -11,10 +11,15 @@ export const VISIBILITY_FIELDS = [
   'vc', 'vcApps', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
 ];
 
-// 既定の公開設定。性別だけ非公開始まり、他は公開始まり。
+// 既定の公開設定。genshinUidは常に承認制で固定(フォームにセレクトを出していない)。
+// 性別だけ非公開始まり、他は公開始まり。
 export function defaultVisibility() {
   const v = {};
-  VISIBILITY_FIELDS.forEach((k) => { v[k] = k === 'gender' ? 'hidden' : 'public'; });
+  VISIBILITY_FIELDS.forEach((k) => {
+    if (k === 'genshinUid') v[k] = 'approval';
+    else if (k === 'gender') v[k] = 'hidden';
+    else v[k] = 'public';
+  });
   return v;
 }
 
@@ -126,8 +131,8 @@ function isEmptyValue(v) {
 // 投稿用に、公開設定(visibility)に応じて値を振り分ける。
 // values: {key: 現在の入力値, ...}, visibility: {key: 'hidden'|'public'|'approval', ...}
 // 戻り値: { publicFields: {key:value,...}, secretFieldKeys: [key,...] }
-// 'approval'は登録者(isRegistered)だけが使える機能のため、未登録なら'public'として扱う。
-export function buildPostFieldBuckets(values, visibility, isRegistered) {
+// 全ユーザーが'approval'を使える(誰でも承認制の項目を持てる)。genshinUidは常にapproval固定。
+export function buildPostFieldBuckets(values, visibility) {
   const publicFields = {};
   const secretFieldKeys = [];
   VISIBILITY_FIELDS.forEach((key) => {
@@ -135,7 +140,7 @@ export function buildPostFieldBuckets(values, visibility, isRegistered) {
     const value = values[key];
     if (isEmptyValue(value)) return;
     if (vis === 'hidden') return;
-    if (vis === 'approval' && isRegistered) {
+    if (vis === 'approval') {
       secretFieldKeys.push(key);
     } else {
       publicFields[key] = value;

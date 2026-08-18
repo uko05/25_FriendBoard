@@ -142,6 +142,39 @@ body.portal-page {
   border-bottom-color: #ffcc00;
 }
 
+.board-tab-btn:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+}
+.board-tab-btn:disabled:hover { color: #ccc; }
+
+.board-tab-lock-hint {
+  max-width: 480px;
+  margin: 8px auto 0;
+  text-align: center;
+  font-size: 12px;
+  color: #c62828;
+}
+
+.board-profile-desc {
+  max-width: 480px;
+  margin: 0 auto 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+}
+
+.board-fixed-approval-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: bold;
+  color: #8a6d00;
+  background: #fff6d9;
+  border-radius: 999px;
+  padding: 4px 10px;
+  flex-shrink: 0;
+}
+
 .board-tab-panel {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
