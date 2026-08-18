@@ -21,6 +21,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  /* =========================
+     このサイトについて(?)モーダル。
+     初回訪問時は自動で1回だけ表示し、以降はlocalStorageのフラグで抑制する。
+     ========================= */
+  const LS_INFO_SEEN = "friendBoard_infoSeen";
+  const infoModal = document.getElementById("info-modal");
+  function openInfoModal() { if (infoModal) infoModal.style.display = "flex"; }
+  function closeInfoModal() {
+    if (infoModal) infoModal.style.display = "none";
+    localStorage.setItem(LS_INFO_SEEN, "1");
+  }
+  document.getElementById("info-btn")?.addEventListener("click", openInfoModal);
+  document.getElementById("info-modal-close")?.addEventListener("click", closeInfoModal);
+  document.querySelector("#info-modal .col-modal-backdrop")?.addEventListener("click", closeInfoModal);
+  if (!localStorage.getItem(LS_INFO_SEEN)) openInfoModal();
+
   const langRadios = document.querySelectorAll('input[name="lang"]');
   const siteTitle = document.getElementById("site-title");
   if (!siteTitle || !langRadios.length) return;
@@ -40,13 +56,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       postFormTitle: "マイプロフィール",
       profileDesc: "この掲示板を使うには、まずあなたの情報を保存してください。保存すると「さがす」が使えるようになります。",
-      uidAlwaysApproval: "🔒承認制(固定)",
-      approvalNoticeFixed: "原神UIDは常に承認制です。あなたが申請を承認した相手にのみ公開されます。他の項目は項目ごとに公開設定を選べます。",
+      uidAlwaysApproval: "🔒承認後に公開",
+      approvalNoticeFixed: "原神UIDは常に「承認後に公開」です。あなたが申請を承認した相手にのみ公開されます。他の項目は項目ごとに公開設定を選べます。",
       avatarHint: "タップしてアイコンを変更（要アカウント登録）",
       avatarNudgeText: "アカウント登録することでアイコンを設定できます",
       avatarNudgeBtn: "アカウント登録へ",
       labelUid: "原神UID",
       uidPlaceholder: "例）123456789",
+      labelDisplayName: "名前",
+      displayNamePlaceholder: "例）うーこ",
       labelServer: "サーバー",
       serverAsia: "アジア",
       serverAmerica: "北米",
@@ -81,8 +99,6 @@ document.addEventListener("DOMContentLoaded", () => {
       spendingLight: "微課金",
       spendingHeavy: "廃課金",
       labelPlayStyles: "プレイスタイル",
-      styleChill: "まったり勢",
-      styleHardcore: "がっつり勢",
       styleBeginner: "初心者歓迎",
       styleCallOnly: "通話しながら各々プレイしたい！",
       styleCanHelpExplore: "探索手伝います！",
@@ -120,13 +136,27 @@ document.addEventListener("DOMContentLoaded", () => {
       vcAppLine: "LINE",
       vcAppOther: "その他",
       labelTwitter: "ツイッターID",
-      twitterPlaceholder: "例）@your_id",
+      twitterPlaceholder: "例）@uko_dayo_",
       labelWeekdayTimes: "平日のマルチ可能時間帯",
       labelWeekendTimes: "休日のマルチ可能時間帯",
 
+      groupFriendPref: "どういうフレンドがほしい？",
+      friendPrefDesc: "ここで選んだ内容は「さがす」でのマッチ度計算に使われます。",
+      labelFriendPreference: "どういうフレンドがほしい？",
+      prefSameGender: "同性のフレンドがほしい",
+      prefAnyGender: "男女問わずフレンドがほしい",
+      prefWantPartner: "恋人がほしい",
+      prefWantOshiFriend: "推し活友達がほしい",
+      prefVcRequired: "VC必須",
+      prefChatOnly: "マルチしない雑談通話でも可",
+      prefVcNotNeeded: "VCなしでも大丈夫",
+
+      infoModalTitle: "このサイトについて",
+      infoModalBody: "気になる募集にはまず申請が必要で、相手が承認するまで原神UIDなどは見られません。お互いのことを事前にしっかり知ってからやり取りできるので、長続きするフレンドが見つかりやすくなります。「マイプロフィール」の「どういうフレンドがほしい？」を正しく入力しておくと、「さがす」で相性の良い相手が自動で見つかりやすくなります。",
+
       visPublic: "公開",
       visHidden: "非公開",
-      visApproval: "承認制",
+      visApproval: "承認後に公開",
 
       labelComment: "なんでも一言",
       commentPlaceholder: "例）深境螺旋の周回相手を探しています！",
@@ -158,13 +188,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
       postFormTitle: "My Profile",
       profileDesc: "To use this board, save your info first. Once saved, Search will be unlocked.",
-      uidAlwaysApproval: "🔒Vetted (fixed)",
-      approvalNoticeFixed: "Your Genshin UID is always Vetted. It's only revealed to applicants you accept. You can choose the visibility of every other field individually.",
+      uidAlwaysApproval: "🔒Visible after approval",
+      approvalNoticeFixed: "Your Genshin UID is always \"Visible after approval\". It's only revealed to applicants you accept. You can choose the visibility of every other field individually.",
       avatarHint: "Tap to change your icon (account registration required)",
       avatarNudgeText: "Register an account to set a custom icon",
       avatarNudgeBtn: "Go to Account Center",
       labelUid: "Genshin UID",
       uidPlaceholder: "e.g. 123456789",
+      labelDisplayName: "Name",
+      displayNamePlaceholder: "e.g. Uko",
       labelServer: "Server",
       serverAsia: "Asia",
       serverAmerica: "America",
@@ -199,8 +231,6 @@ document.addEventListener("DOMContentLoaded", () => {
       spendingLight: "Light spender",
       spendingHeavy: "Heavy spender",
       labelPlayStyles: "Play Style",
-      styleChill: "Casual",
-      styleHardcore: "Hardcore",
       styleBeginner: "Beginner friendly",
       styleCallOnly: "Want to play separately while on call!",
       styleCanHelpExplore: "I'll help you explore!",
@@ -238,13 +268,27 @@ document.addEventListener("DOMContentLoaded", () => {
       vcAppLine: "LINE",
       vcAppOther: "Other",
       labelTwitter: "X (Twitter) ID",
-      twitterPlaceholder: "e.g. @your_id",
+      twitterPlaceholder: "e.g. @uko_dayo_",
       labelWeekdayTimes: "Weekday availability",
       labelWeekendTimes: "Weekend availability",
 
+      groupFriendPref: "What kind of friend are you looking for?",
+      friendPrefDesc: "These selections are used to calculate your match score in Search.",
+      labelFriendPreference: "What kind of friend are you looking for?",
+      prefSameGender: "Looking for a same-gender friend",
+      prefAnyGender: "Gender doesn't matter",
+      prefWantPartner: "Looking for a romantic partner",
+      prefWantOshiFriend: "Looking for a fellow fan friend",
+      prefVcRequired: "VC required",
+      prefChatOnly: "OK with just chatting, no multiplayer",
+      prefVcNotNeeded: "OK without VC",
+
+      infoModalTitle: "About this site",
+      infoModalBody: "To contact someone you're interested in, you need to apply first — their Genshin UID and other details stay hidden until they accept. This lets you get to know each other before connecting, making it easier to find friendships that last. Fill in \"What kind of friend are you looking for?\" on your My Profile accurately, and Search will automatically surface better-matched candidates for you.",
+
       visPublic: "Public",
       visHidden: "Hidden",
-      visApproval: "Vetted",
+      visApproval: "Visible after approval",
 
       labelComment: "One-liner",
       commentPlaceholder: "e.g. Looking for Spiral Abyss co-op partners!",

@@ -5,18 +5,20 @@
 // 公開設定(visibility)の対象となる項目一覧。コメントは常に公開のため対象外。
 // フォームの並び順とだいたい揃えている(カードのチップ表示順にも使われる)。
 export const VISIBILITY_FIELDS = [
-  'genshinUid', 'server', 'adventureRank', 'worldLevel', 'gender', 'platforms',
+  'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'platforms',
   'oshiChars', 'spending', 'playStyles',
   'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency', 'twitterId',
   'vc', 'vcApps', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
+  'friendPreference',
 ];
 
 // 既定の公開設定。genshinUidは常に承認制で固定(フォームにセレクトを出していない)。
-// 性別だけ非公開始まり、他は公開始まり。
+// 名前も承認後に公開が初期値。性別は非公開始まり、他は公開始まり。
 export function defaultVisibility() {
   const v = {};
   VISIBILITY_FIELDS.forEach((k) => {
     if (k === 'genshinUid') v[k] = 'approval';
+    else if (k === 'displayName') v[k] = 'approval';
     else if (k === 'gender') v[k] = 'hidden';
     else v[k] = 'public';
   });
@@ -25,6 +27,7 @@ export function defaultVisibility() {
 
 const FIELD_LABELS = {
   genshinUid: { ja: '原神UID', en: 'Genshin UID' },
+  displayName: { ja: '名前', en: 'Name' },
   server: { ja: 'サーバー', en: 'Server' },
   adventureRank: { ja: '冒険者ランク', en: 'Adventure Rank' },
   worldLevel: { ja: '世界ランク', en: 'World Level' },
@@ -45,6 +48,7 @@ const FIELD_LABELS = {
   jokingOk: { ja: 'おふざけOK', en: 'Joking around OK' },
   sameOshiReject: { ja: '同担拒否', en: 'Same-favorite rejection' },
   sameOshiChars: { ja: '同担拒否キャラ', en: 'Rejected characters' },
+  friendPreference: { ja: 'どういうフレンドがほしい？', en: 'What kind of friend are you looking for?' },
 };
 
 export function fieldLabel(key, lang) {
@@ -77,8 +81,6 @@ const OPTION_LABELS = {
     heavy: { ja: '廃課金', en: 'Heavy spender' },
   },
   playStyles: {
-    chill: { ja: 'まったり勢', en: 'Casual' },
-    hardcore: { ja: 'がっつり勢', en: 'Hardcore' },
     beginnerFriendly: { ja: '初心者歓迎', en: 'Beginner friendly' },
     callOnly: { ja: '通話しながら各々プレイしたい！', en: 'Want to play separately while on call!' },
     canHelpExplore: { ja: '探索手伝います！', en: "I'll help you explore!" },
@@ -112,6 +114,15 @@ const OPTION_LABELS = {
     discord: { ja: 'Discord', en: 'Discord' },
     line: { ja: 'LINE', en: 'LINE' },
     other: { ja: 'その他', en: 'Other' },
+  },
+  friendPreference: {
+    sameGender: { ja: '同性のフレンドがほしい', en: 'Looking for a same-gender friend' },
+    anyGender: { ja: '男女問わずフレンドがほしい', en: "Gender doesn't matter" },
+    wantPartner: { ja: '恋人がほしい', en: 'Looking for a romantic partner' },
+    wantOshiFriend: { ja: '推し活友達がほしい', en: 'Looking for a fellow fan friend' },
+    vcRequired: { ja: 'VC必須', en: 'VC required' },
+    chatOnly: { ja: 'マルチしない雑談通話でも可', en: 'OK with just chatting, no multiplayer' },
+    vcNotNeeded: { ja: 'VCなしでも大丈夫', en: 'OK without VC' },
   },
 };
 
@@ -161,6 +172,43 @@ export function snapshotVisibleFields(values, visibility) {
     out[key] = value;
   });
   return out;
+}
+
+// 「どういうフレンドがほしい？」のマッチ度を計算する。
+// myPrefs: 自分のfriendPreference配列, myGender: 自分の性別
+// candidate: 相手側の公開フィールド一式相当のオブジェクト(gender/vc/friendPreferenceを含む)
+// 判定できる項目が1つも無ければnullを返す(マッチ度を表示しない)。
+// 「男女問わず」「マルチしない雑談通話でも可」「VCなしでも大丈夫」は制限を課さない
+// 宣言のみの項目なので採点対象にしない。
+export function computeFriendMatch(myPrefs, myGender, candidate) {
+  if (!Array.isArray(myPrefs) || !myPrefs.length) return null;
+  const candidatePrefs = Array.isArray(candidate.friendPreference) ? candidate.friendPreference : [];
+  let total = 0;
+  let matched = 0;
+
+  myPrefs.forEach((pref) => {
+    if (pref === 'sameGender') {
+      if (candidate.gender) {
+        total++;
+        if (candidate.gender === myGender) matched++;
+      }
+      return;
+    }
+    if (pref === 'wantPartner' || pref === 'wantOshiFriend') {
+      total++;
+      if (candidatePrefs.includes(pref)) matched++;
+      return;
+    }
+    if (pref === 'vcRequired') {
+      total++;
+      if (candidate.vc === 'yes') matched++;
+      return;
+    }
+    // anyGender / chatOnly / vcNotNeeded は宣言のみのため採点しない
+  });
+
+  if (total === 0) return null;
+  return Math.round((matched / total) * 100);
 }
 
 // 保存されている値(文字列/配列/真偽値/数値/{start,end})を画面表示用の文字列に整形する。

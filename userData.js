@@ -69,6 +69,7 @@ export function waitForAccountLink() {
 
 export const store = {
   genshinUid: '',
+  displayName: '',
   server: '',
   intro: '', // 募集コメントの既定値（次回の募集フォームにも自動反映される）
   adventureRank: 60,
@@ -90,10 +91,11 @@ export const store = {
   twitterId: '',
   weekdayTimes: { start: '', end: '' },
   weekendTimes: { start: '', end: '' },
+  friendPreference: [],
   visibility: defaultVisibility(), // 項目名 -> 'hidden' | 'public' | 'approval'
 };
 
-const ARRAY_FIELDS = ['platforms', 'oshiChars', 'playStyles', 'vcApps', 'sameOshiChars'];
+const ARRAY_FIELDS = ['platforms', 'oshiChars', 'playStyles', 'vcApps', 'sameOshiChars', 'friendPreference'];
 const TIME_RANGE_FIELDS = ['weekdayTimes', 'weekendTimes'];
 
 export async function loadProfileFromFirestore() {
@@ -103,6 +105,7 @@ export async function loadProfileFromFirestore() {
     if (snap.exists()) {
       const d = snap.data();
       if (d.genshinUid != null) store.genshinUid = d.genshinUid;
+      if (d.displayName != null) store.displayName = d.displayName;
       if (d.server != null) store.server = d.server;
       if (d.intro != null) store.intro = d.intro;
       if (d.adventureRank != null) store.adventureRank = d.adventureRank;
@@ -137,6 +140,7 @@ export async function syncProfileToFirestore() {
     const userId = getUserId();
     await setDoc(doc(db, 'friendBoardProfiles', userId), {
       genshinUid: store.genshinUid,
+      displayName: store.displayName,
       server: store.server,
       intro: store.intro,
       adventureRank: store.adventureRank,
@@ -158,6 +162,7 @@ export async function syncProfileToFirestore() {
       twitterId: store.twitterId,
       weekdayTimes: store.weekdayTimes,
       weekendTimes: store.weekendTimes,
+      friendPreference: store.friendPreference,
       visibility: store.visibility,
       updatedAt: serverTimestamp(),
     }, { merge: true });

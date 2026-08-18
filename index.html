@@ -18,6 +18,8 @@
 
 <body class="portal-page board-page">
 
+    <button type="button" id="info-btn" class="board-info-btn" aria-label="このサイトについて">?</button>
+
     <header class="portal-header">
         <div class="header-topbar">
             <span id="uko-account-status-slot"></span>
@@ -52,12 +54,21 @@
             <h2 data-i18n="postFormTitle">マイプロフィール</h2>
             <p class="board-profile-desc" data-i18n="profileDesc">この掲示板を使うには、まずあなたの情報を保存してください。保存すると「さがす」が使えるようになります。</p>
 
-            <div class="board-player-row">
-                <img id="player-avatar" class="player-avatar" src="" alt="" title="">
-                <span class="board-player-avatar-hint" data-i18n="avatarHint">タップしてアイコンを変更（要アカウント登録）</span>
-            </div>
-
             <form id="post-form" class="board-form">
+
+                <div class="board-player-row">
+                    <div class="board-player-avatar-col">
+                        <img id="player-avatar" class="player-avatar" src="" alt="" title="">
+                        <span class="board-player-avatar-hint" data-i18n="avatarHint">タップしてアイコンを変更（要アカウント登録）</span>
+                    </div>
+                    <div class="board-form-row board-player-name-row">
+                        <div class="board-form-row-head">
+                            <label for="input-displayName" data-i18n="labelDisplayName">名前</label>
+                            <select class="board-visibility-select" id="vis-displayName" data-field="displayName"></select>
+                        </div>
+                        <input type="text" id="input-displayName" name="displayName" maxlength="20" data-i18n-placeholder="displayNamePlaceholder" />
+                    </div>
+                </div>
 
                 <!-- ===== 基本情報 ===== -->
                 <h3 class="board-form-group-title" data-i18n="groupBasic">基本情報</h3>
@@ -66,7 +77,7 @@
                     <div class="board-form-row">
                         <div class="board-form-row-head">
                             <label for="input-uid" data-i18n="labelUid">原神UID</label>
-                            <span class="board-fixed-approval-badge" data-i18n="uidAlwaysApproval">🔒承認制(固定)</span>
+                            <span class="board-fixed-approval-badge" data-i18n="uidAlwaysApproval">🔒承認後に公開</span>
                         </div>
                         <input type="text" id="input-uid" name="genshinUid" inputmode="numeric" maxlength="20" data-i18n-placeholder="uidPlaceholder" required />
                     </div>
@@ -161,8 +172,6 @@
                         <select class="board-visibility-select" id="vis-playStyles" data-field="playStyles"></select>
                     </div>
                     <div class="board-checkbox-group" id="group-playStyles">
-                        <label><input type="checkbox" name="playStyles" value="chill" /><span data-i18n="styleChill">まったり勢</span></label>
-                        <label><input type="checkbox" name="playStyles" value="hardcore" /><span data-i18n="styleHardcore">がっつり勢</span></label>
                         <label><input type="checkbox" name="playStyles" value="beginnerFriendly" /><span data-i18n="styleBeginner">初心者歓迎</span></label>
                         <label><input type="checkbox" name="playStyles" value="callOnly" /><span data-i18n="styleCallOnly">通話しながら各々プレイしたい！</span></label>
                         <label><input type="checkbox" name="playStyles" value="canHelpExplore" /><span data-i18n="styleCanHelpExplore">探索手伝います！</span></label>
@@ -170,8 +179,8 @@
                         <label><input type="checkbox" name="playStyles" value="wantElites" /><span data-i18n="styleWantElites">精鋭狩りしたい！</span></label>
                         <label><input type="checkbox" name="playStyles" value="canHelpBuild" /><span data-i18n="styleCanHelpBuild">育成手伝います！</span></label>
                     </div>
-                    <details class="board-substyle-details">
-                        <summary data-i18n="styleBeginnerGroupTitle">初心者向け</summary>
+                    <div class="board-substyle-framed">
+                        <p class="board-substyle-title" data-i18n="styleBeginnerGroupTitle">初心者向け</p>
                         <div class="board-checkbox-group">
                             <label><input type="checkbox" name="playStyles" value="needExploreHelp" /><span data-i18n="styleNeedExploreHelp">探索手伝って！</span></label>
                             <label><input type="checkbox" name="playStyles" value="needFarmHelp" /><span data-i18n="styleNeedFarmHelp">育成素材集め手伝って！</span></label>
@@ -179,7 +188,7 @@
                             <label><input type="checkbox" name="playStyles" value="needCarry" /><span data-i18n="styleNeedCarry">とにかくキャリーして！</span></label>
                             <label><input type="checkbox" name="playStyles" value="needDomainHelp" /><span data-i18n="styleNeedDomainHelp">秘境周回手伝って！</span></label>
                         </div>
-                    </details>
+                    </div>
                 </div>
 
                 <!-- ===== 連絡・時間帯 ===== -->
@@ -305,6 +314,26 @@
                     </div>
                 </div>
 
+                <!-- ===== どういうフレンドがほしい？ ===== -->
+                <h3 class="board-form-group-title" data-i18n="groupFriendPref">どういうフレンドがほしい？</h3>
+                <p class="board-friendpref-desc" data-i18n="friendPrefDesc">ここで選んだ内容は「さがす」でのマッチ度計算に使われます。</p>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
+                        <span data-i18n="labelFriendPreference">どういうフレンドがほしい？</span>
+                        <select class="board-visibility-select" id="vis-friendPreference" data-field="friendPreference"></select>
+                    </div>
+                    <div class="board-checkbox-group" id="group-friendPreference">
+                        <label><input type="checkbox" name="friendPreference" value="sameGender" /><span data-i18n="prefSameGender">同性のフレンドがほしい</span></label>
+                        <label><input type="checkbox" name="friendPreference" value="anyGender" /><span data-i18n="prefAnyGender">男女問わずフレンドがほしい</span></label>
+                        <label><input type="checkbox" name="friendPreference" value="wantPartner" /><span data-i18n="prefWantPartner">恋人がほしい</span></label>
+                        <label><input type="checkbox" name="friendPreference" value="wantOshiFriend" /><span data-i18n="prefWantOshiFriend">推し活友達がほしい</span></label>
+                        <label><input type="checkbox" name="friendPreference" value="vcRequired" /><span data-i18n="prefVcRequired">VC必須</span></label>
+                        <label><input type="checkbox" name="friendPreference" value="chatOnly" /><span data-i18n="prefChatOnly">マルチしない雑談通話でも可</span></label>
+                        <label><input type="checkbox" name="friendPreference" value="vcNotNeeded" /><span data-i18n="prefVcNotNeeded">VCなしでも大丈夫</span></label>
+                    </div>
+                </div>
+
                 <!-- ===== コメント ===== -->
                 <h3 class="board-form-group-title" data-i18n="groupComment">コメント</h3>
                 <div class="board-form-row">
@@ -312,7 +341,7 @@
                     <textarea id="input-comment" name="comment" rows="3" maxlength="200" data-i18n-placeholder="commentPlaceholder" required></textarea>
                 </div>
 
-                <p class="board-approval-notice board-approval-notice-on" data-i18n="approvalNoticeFixed">原神UIDは常に承認制です。あなたが申請を承認した相手にのみ公開されます。他の項目は項目ごとに公開設定を選べます。</p>
+                <p class="board-approval-notice board-approval-notice-on" data-i18n="approvalNoticeFixed">原神UIDは常に「承認後に公開」です。あなたが申請を承認した相手にのみ公開されます。他の項目は項目ごとに公開設定を選べます。</p>
                 <button type="submit" class="board-submit-btn" id="post-submit-btn" data-i18n="postSubmitBtn">保存する</button>
                 <p class="board-form-msg" id="post-form-msg"></p>
             </form>
@@ -356,6 +385,16 @@
         </section>
 
     </main>
+
+    <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
+    <div id="info-modal" class="col-modal" style="display:none;">
+        <div class="col-modal-backdrop"></div>
+        <div class="col-modal-content info-modal-content">
+            <button type="button" id="info-modal-close" class="col-modal-close" aria-label="close">×</button>
+            <h3 class="info-modal-title" data-i18n="infoModalTitle">このサイトについて</h3>
+            <p class="info-modal-body" data-i18n="infoModalBody">気になる募集にはまず申請が必要で、相手が承認するまで原神UIDなどは見られません。お互いのことを事前にしっかり知ってからやり取りできるので、長続きするフレンドが見つかりやすくなります。「マイプロフィール」の「どういうフレンドがほしい？」を正しく入力しておくと、「さがす」で相性の良い相手が自動で見つかりやすくなります。</p>
+        </div>
+    </div>
 
     <!-- 通知トースト（申請が届いた／結果が出た） -->
     <div id="app-toast" class="app-toast" style="display:none;">

@@ -5,7 +5,7 @@ import { db } from './firebaseConfig.js';
 import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink } from './userData.js';
 import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js';
 import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
-import { VISIBILITY_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets } from './fields.js';
+import { VISIBILITY_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch } from './fields.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
   collection, setDoc, updateDoc, deleteDoc, doc, onSnapshot,
@@ -44,9 +44,10 @@ const STR = {
     approvalBadge: '承認制',
     visPublic: '公開',
     visHidden: '非公開',
-    visApproval: '承認制',
+    visApproval: '承認後に公開',
     oshiPickerFull: '推しキャラは3人まで選べます',
     secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
+    matchLabel: (pct) => `マッチ度 ${pct}%`,
   },
   en: {
     serverLabels: { asia: 'Asia', america: 'America', europe: 'Europe', sar: 'HK/MO/TW' },
@@ -71,9 +72,10 @@ const STR = {
     approvalBadge: 'Vetted',
     visPublic: 'Public',
     visHidden: 'Hidden',
-    visApproval: 'Vetted',
+    visApproval: 'Visible after approval',
     oshiPickerFull: 'You can select up to 3 favorite characters',
     secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
+    matchLabel: (pct) => `${pct}% match`,
   },
 };
 
@@ -98,6 +100,7 @@ function relTime(ts) {
 
 // ===== プロフィール自動反映(募集フォーム) =====
 const uidInput = document.getElementById('input-uid');
+const displayNameInput = document.getElementById('input-displayName');
 const serverInput = document.getElementById('input-server');
 const commentInput = document.getElementById('input-comment');
 const arInput = document.getElementById('input-ar');
@@ -184,6 +187,7 @@ sameOshiRejectInput?.addEventListener('change', updateSameOshiCharsVisibility);
 
 function fillFormFromProfile() {
   if (uidInput && store.genshinUid) uidInput.value = store.genshinUid;
+  if (displayNameInput && store.displayName) displayNameInput.value = store.displayName;
   if (serverInput && store.server) serverInput.value = store.server;
   if (commentInput && store.intro) commentInput.value = store.intro;
   if (arInput) arInput.value = store.adventureRank || 60;
@@ -206,6 +210,7 @@ function fillFormFromProfile() {
   setCheckboxValues('platforms', store.platforms);
   setCheckboxValues('playStyles', store.playStyles);
   setCheckboxValues('vcApps', store.vcApps);
+  setCheckboxValues('friendPreference', store.friendPreference);
   updateVcExtraGroupVisibility();
   updateSameOshiCharsVisibility();
 
@@ -376,6 +381,7 @@ function collectFormValues() {
 
   return {
     genshinUid: uidInput.value.trim(),
+    displayName: displayNameInput?.value.trim() || '',
     server: serverInput.value,
     adventureRank: arInput.value ? Number(arInput.value) : '',
     worldLevel: wlInput.value !== '' ? Number(wlInput.value) : '',
@@ -396,6 +402,7 @@ function collectFormValues() {
     twitterId: twitterInput.value.trim(),
     weekdayTimes: { start: weekdayStartInput?.value || '', end: weekdayEndInput?.value || '' },
     weekendTimes: { start: weekendStartInput?.value || '', end: weekendEndInput?.value || '' },
+    friendPreference: getCheckboxValues('friendPreference'),
   };
 }
 
@@ -455,7 +462,7 @@ function getDisplayFields(post, mine) {
   const lang = currentLang();
   const rows = [];
   const secretLabels = [];
-  const headFields = new Set(['genshinUid', 'server']); // ヘッダー側で個別に描画する項目
+  const headFields = new Set(['genshinUid', 'server', 'displayName']); // ヘッダー側で個別に描画する項目
 
   VISIBILITY_FIELDS.forEach((key) => {
     if (mine) {
@@ -489,7 +496,7 @@ function pushFieldRow(rows, key, value, lang) {
 }
 
 // ===== 募集カード描画 =====
-function buildCard(post, { mine }) {
+function buildCard(post, { mine, matchPercent }) {
   const card = document.createElement('div');
   card.className = 'board-card';
 
@@ -503,6 +510,17 @@ function buildCard(post, { mine }) {
   const body = document.createElement('div');
   body.className = 'board-card-body';
   card.appendChild(body);
+
+  const nameVisible = mine
+    ? (store.visibility.displayName || 'public') !== 'hidden'
+    : (post.publicFields && 'displayName' in post.publicFields);
+  const nameValue = mine ? store.displayName : post.publicFields?.displayName;
+  if (nameVisible && nameValue) {
+    const nameEl = document.createElement('div');
+    nameEl.className = 'board-card-name';
+    nameEl.textContent = nameValue;
+    body.appendChild(nameEl);
+  }
 
   const head = document.createElement('div');
   head.className = 'board-card-head';
@@ -523,6 +541,13 @@ function buildCard(post, { mine }) {
     badge.className = 'board-card-approval-badge';
     badge.textContent = s().approvalBadge;
     head.appendChild(badge);
+  }
+
+  if (!mine && matchPercent != null) {
+    const matchBadge = document.createElement('span');
+    matchBadge.className = 'board-card-match-badge';
+    matchBadge.textContent = s().matchLabel(matchPercent);
+    head.appendChild(matchBadge);
   }
 
   const uidVisible = mine
@@ -678,7 +703,17 @@ function renderSearchList() {
   const myUserId = getUserId();
   const filterServer = filterServerSelect ? filterServerSelect.value : '';
 
-  const filtered = latestSearchPosts.filter((post) => !filterServer || post.publicFields?.server === filterServer);
+  const filtered = latestSearchPosts
+    .filter((post) => !filterServer || post.publicFields?.server === filterServer)
+    .map((post) => ({
+      post,
+      // 自分の「どういうフレンドがほしい？」と相手の公開フィールドを突き合わせてマッチ度を計算する。
+      // 自分の投稿(mine)には表示しないので、そちらは計算しない。
+      matchPercent: post.userId === myUserId
+        ? null
+        : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {}),
+    }))
+    .sort((a, b) => (b.matchPercent ?? -1) - (a.matchPercent ?? -1));
 
   list.innerHTML = '';
   if (!filtered.length) {
@@ -688,7 +723,7 @@ function renderSearchList() {
     list.appendChild(p);
     return;
   }
-  filtered.forEach((post) => list.appendChild(buildCard(post, { mine: post.userId === myUserId })));
+  filtered.forEach(({ post, matchPercent }) => list.appendChild(buildCard(post, { mine: post.userId === myUserId, matchPercent })));
 }
 
 function startSearchListener() {
