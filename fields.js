@@ -8,19 +8,23 @@ export const VISIBILITY_FIELDS = [
   'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms',
   'oshiChars', 'spending', 'playStyles',
   'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency',
-  'vc', 'vcApps', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
+  'vc', 'vcNote', 'vcApps', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
   'twitterId', 'tiktokId', 'lineId', 'instagramId',
   'friendPreference',
 ];
 
+// SNSは「公開」を選ばせず、非公開/承認後に公開/仲良くなったら の3択にする対象
+export const NO_PUBLIC_FIELDS = ['twitterId', 'tiktokId', 'lineId', 'instagramId'];
+
 // 既定の公開設定。genshinUidは常に承認制で固定(フォームにセレクトを出していない)。
-// 名前も承認後に公開が初期値。性別は非公開始まり、他は公開始まり。
+// 名前も承認後に公開が初期値。性別は非公開始まり、SNSは承認後に公開始まり、他は公開始まり。
 export function defaultVisibility() {
   const v = {};
   VISIBILITY_FIELDS.forEach((k) => {
     if (k === 'genshinUid') v[k] = 'approval';
     else if (k === 'displayName') v[k] = 'approval';
     else if (k === 'gender') v[k] = 'hidden';
+    else if (NO_PUBLIC_FIELDS.includes(k)) v[k] = 'approval';
     else v[k] = 'public';
   });
   return v;
@@ -37,19 +41,21 @@ const FIELD_LABELS = {
   platforms: { ja: 'ハード', en: 'Platform' },
   oshiChars: { ja: '推しキャラ', en: 'Favorite Characters' },
   spending: { ja: '課金スタンス', en: 'Spending' },
-  playStyles: { ja: 'プレイスタイル', en: 'Play Style' },
-  inviteStyle: { ja: 'マルチ誘い/誘われタイプ', en: 'Invite Style' },
+  playStyles: { ja: 'マルチで何をしたい？', en: 'What do you want to do in multiplayer?' },
+  inviteStyle: { ja: 'マルチ自発について', en: 'Taking initiative in multiplayer' },
   multiFrequency: { ja: 'マルチ頻度', en: 'Multiplayer Frequency' },
   workCallOk: { ja: '作業通話のみでもOK', en: 'OK with silent/work call' },
   vc: { ja: 'VC(ボイスチャット)', en: 'Voice Chat' },
+  vcNote: { ja: 'VC相談の詳細', en: 'VC details' },
   vcApps: { ja: 'VC利用アプリ', en: 'VC App' },
+  vcAppsOtherText: { ja: 'その他アプリ名', en: 'Other app name' },
   twitterId: { ja: 'ツイッターID', en: 'X (Twitter) ID' },
   tiktokId: { ja: 'TikTok ID', en: 'TikTok ID' },
   lineId: { ja: 'LINE ID', en: 'LINE ID' },
   instagramId: { ja: 'Instagram ID', en: 'Instagram ID' },
   weekdayTimes: { ja: '平日のマルチ可能時間帯', en: 'Weekday availability' },
   weekendTimes: { ja: '休日のマルチ可能時間帯', en: 'Weekend availability' },
-  casualOk: { ja: 'タメ口OK', en: 'Casual speech OK' },
+  casualOk: { ja: 'タメ口について', en: 'Casual speech' },
   jokingOk: { ja: 'おふざけOK', en: 'Joking around OK' },
   sameOshiReject: { ja: '同担拒否', en: 'Same-favorite rejection' },
   sameOshiChars: { ja: '同担拒否キャラ', en: 'Rejected characters' },
@@ -89,12 +95,13 @@ const OPTION_LABELS = {
     heavy: { ja: '廃課金', en: 'Heavy spender' },
   },
   playStyles: {
-    beginnerFriendly: { ja: '初心者歓迎', en: 'Beginner friendly' },
     callOnly: { ja: '通話しながら各々プレイしたい！', en: 'Want to play separately while on call!' },
     canHelpExplore: { ja: '探索手伝います！', en: "I'll help you explore!" },
     wantPhotos: { ja: '写真撮影しよう！', en: "Let's take photos!" },
     wantElites: { ja: '精鋭狩りしたい！', en: 'Want to hunt elites!' },
     canHelpBuild: { ja: '育成手伝います！', en: "I'll help with character building!" },
+    wantAchievements: { ja: 'アチーブ取りしたい！', en: 'Want to hunt achievements!' },
+    wantJokeMulti: { ja: 'おふざけマルチしたい！', en: 'Want a goofy multiplayer session!' },
     needExploreHelp: { ja: '探索手伝って！', en: 'Help me explore!' },
     needFarmHelp: { ja: '育成素材集め手伝って！', en: 'Help me farm ascension materials!' },
     needQuestions: { ja: 'わからないことが多いので質問させて！', en: "I have lots of questions, let me ask!" },
@@ -102,9 +109,15 @@ const OPTION_LABELS = {
     needDomainHelp: { ja: '秘境周回手伝って！', en: 'Help me farm domains!' },
   },
   inviteStyle: {
-    invite: { ja: '誘うタイプ', en: 'I invite' },
-    invited: { ja: '誘われたいタイプ', en: 'I wait to be invited' },
-    either: { ja: 'どちらでも', en: 'Either' },
+    invite: { ja: 'お誘いします！', en: "I'll invite you!" },
+    either: { ja: 'お誘いするしお誘いされたい', en: "I'll invite, and I'm happy to be invited too" },
+    invited: { ja: '自発苦手です', en: "Not great at taking initiative" },
+  },
+  casualOk: {
+    love: { ja: 'タメ口大歓迎', en: 'Love casual speech' },
+    ok: { ja: 'タメ口OK', en: 'Casual speech OK' },
+    either: { ja: 'どっちでもOK', en: 'Either is fine' },
+    no: { ja: 'タメ口なし', en: 'No casual speech' },
   },
   multiFrequency: {
     anytime: { ja: 'オンラインの時ならいつでも可', en: 'Anytime I\'m online' },
@@ -158,7 +171,7 @@ export function buildPostFieldBuckets(values, visibility) {
     const vis = visibility[key] || 'public';
     const value = values[key];
     if (isEmptyValue(value)) return;
-    if (vis === 'hidden') return;
+    if (vis === 'hidden' || vis === 'closeFriend') return;
     if (vis === 'approval') {
       secretFieldKeys.push(key);
     } else {
@@ -176,7 +189,7 @@ export function snapshotVisibleFields(values, visibility) {
   VISIBILITY_FIELDS.forEach((key) => {
     const vis = visibility[key] || 'public';
     const value = values[key];
-    if (vis === 'hidden' || isEmptyValue(value)) return;
+    if (vis === 'hidden' || vis === 'closeFriend' || isEmptyValue(value)) return;
     out[key] = value;
   });
   return out;
@@ -223,7 +236,7 @@ export function computeFriendMatch(myPrefs, myGender, candidate) {
 // oshiCharsだけはアイコン画像なのでここでは扱わず、呼び出し側でアイコン表示する。
 export function formatFieldValue(key, value, lang) {
   if (isEmptyValue(value)) return '';
-  if (key === 'workCallOk' || key === 'casualOk' || key === 'jokingOk') {
+  if (key === 'workCallOk' || key === 'jokingOk') {
     return value ? 'OK' : '';
   }
   if (key === 'sameOshiReject') {

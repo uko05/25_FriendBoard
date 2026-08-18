@@ -5,7 +5,7 @@ import { db } from './firebaseConfig.js';
 import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink } from './userData.js';
 import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js';
 import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
-import { VISIBILITY_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch } from './fields.js';
+import { VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch } from './fields.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
   collection, setDoc, updateDoc, deleteDoc, doc, onSnapshot,
@@ -48,6 +48,7 @@ const STR = {
     visPublic: '公開',
     visHidden: '非公開',
     visApproval: '承認後に公開',
+    visCloseFriend: '仲良くなったら',
     oshiPickerFull: '推しキャラは3人まで選べます',
     secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
     matchLabel: (pct) => `マッチ度 ${pct}%`,
@@ -76,6 +77,7 @@ const STR = {
     visPublic: 'Public',
     visHidden: 'Hidden',
     visApproval: 'Visible after approval',
+    visCloseFriend: "Once we're close",
     oshiPickerFull: 'You can select up to 3 favorite characters',
     secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
     matchLabel: (pct) => `${pct}% match`,
@@ -113,8 +115,9 @@ const tiktokInput = document.getElementById('input-tiktok');
 const lineInput = document.getElementById('input-line');
 const instagramInput = document.getElementById('input-instagram');
 const workCallOkInput = document.getElementById('input-workCallOk');
-const casualOkInput = document.getElementById('input-casualOk');
 const jokingOkInput = document.getElementById('input-jokingOk');
+const vcNoteInput = document.getElementById('input-vcNote');
+const vcAppsOtherInput = document.getElementById('input-vcAppsOtherText');
 const sameOshiRejectInput = document.getElementById('input-sameOshiReject');
 const weekdayStartInput = document.getElementById('weekday-start');
 const weekdayEndInput = document.getElementById('weekday-end');
@@ -182,7 +185,25 @@ function updateVcExtraGroupVisibility() {
   const group = document.getElementById('vc-extra-group');
   if (group) group.classList.toggle('hidden', getRadioValue('vc') !== 'yes');
 }
-document.getElementById('group-vc')?.addEventListener('change', updateVcExtraGroupVisibility);
+// VCが「相談」のときだけ詳細入力を有効化する
+function updateVcNoteEnabled() {
+  if (!vcNoteInput) return;
+  const enabled = getRadioValue('vc') === 'maybe';
+  vcNoteInput.disabled = !enabled;
+  if (!enabled) vcNoteInput.value = '';
+}
+// VC利用アプリで「その他」を選んだときだけアプリ名入力を有効化する
+function updateVcAppsOtherEnabled() {
+  if (!vcAppsOtherInput) return;
+  const enabled = getCheckboxValues('vcApps').includes('other');
+  vcAppsOtherInput.disabled = !enabled;
+  if (!enabled) vcAppsOtherInput.value = '';
+}
+document.getElementById('group-vc')?.addEventListener('change', () => {
+  updateVcExtraGroupVisibility();
+  updateVcNoteEnabled();
+});
+document.getElementById('group-vcApps')?.addEventListener('change', updateVcAppsOtherEnabled);
 
 // 「同担拒否あり」にチェックが入っているときだけキャラ選択欄を表示する
 function updateSameOshiCharsVisibility() {
@@ -203,9 +224,10 @@ function fillFormFromProfile() {
   if (lineInput && store.lineId) lineInput.value = store.lineId;
   if (instagramInput && store.instagramId) instagramInput.value = store.instagramId;
   if (workCallOkInput) workCallOkInput.checked = !!store.workCallOk;
-  if (casualOkInput) casualOkInput.checked = !!store.casualOk;
   if (jokingOkInput) jokingOkInput.checked = !!store.jokingOk;
   if (sameOshiRejectInput) sameOshiRejectInput.checked = !!store.sameOshiReject;
+  if (vcNoteInput && store.vcNote) vcNoteInput.value = store.vcNote;
+  if (vcAppsOtherInput && store.vcAppsOtherText) vcAppsOtherInput.value = store.vcAppsOtherText;
   if (weekdayStartInput) weekdayStartInput.value = store.weekdayTimes?.start || '';
   if (weekdayEndInput) weekdayEndInput.value = store.weekdayTimes?.end || '';
   if (weekendStartInput) weekendStartInput.value = store.weekendTimes?.start || '';
@@ -217,11 +239,14 @@ function fillFormFromProfile() {
   setRadioValue('inviteStyle', store.inviteStyle);
   setRadioValue('multiFrequency', store.multiFrequency);
   setRadioValue('vc', store.vc);
+  setRadioValue('casualOk', store.casualOk);
   setCheckboxValues('platforms', store.platforms);
   setCheckboxValues('playStyles', store.playStyles);
   setCheckboxValues('vcApps', store.vcApps);
   setCheckboxValues('friendPreference', store.friendPreference);
   updateVcExtraGroupVisibility();
+  updateVcNoteEnabled();
+  updateVcAppsOtherEnabled();
   updateSameOshiCharsVisibility();
 
   oshiPicker.renderSelected();
@@ -234,13 +259,23 @@ function populateVisibilitySelects() {
     const sel = document.getElementById(`vis-${key}`);
     if (!sel) return;
     sel.innerHTML = '';
-    [['public', s().visPublic], ['hidden', s().visHidden], ['approval', s().visApproval]].forEach(([value, label]) => {
+    const isNoPublic = NO_PUBLIC_FIELDS.includes(key);
+    const options = isNoPublic
+      ? [['hidden', s().visHidden], ['approval', s().visApproval], ['closeFriend', s().visCloseFriend]]
+      : [['public', s().visPublic], ['hidden', s().visHidden], ['approval', s().visApproval]];
+    options.forEach(([value, label]) => {
       const opt = document.createElement('option');
       opt.value = value;
       opt.textContent = label;
       sel.appendChild(opt);
     });
-    sel.value = store.visibility[key] || 'public';
+    // 過去に保存された値が今回の選択肢に無い場合(例:SNS項目が以前「公開」だった等)は
+    // 表示上の既定値へフォールバックし、ストア側も併せて補正する
+    const allowedValues = options.map(([v]) => v);
+    if (!allowedValues.includes(store.visibility[key])) {
+      store.visibility[key] = isNoPublic ? 'approval' : 'public';
+    }
+    sel.value = store.visibility[key];
     sel.onchange = () => {
       store.visibility[key] = sel.value;
       scheduleSync();
@@ -405,8 +440,10 @@ function collectFormValues() {
     multiFrequency: getRadioValue('multiFrequency'),
     workCallOk: vcOpen && !!workCallOkInput?.checked,
     vc: getRadioValue('vc'),
+    vcNote: getRadioValue('vc') === 'maybe' ? (vcNoteInput?.value.trim() || '') : '',
     vcApps: vcOpen ? getCheckboxValues('vcApps') : [],
-    casualOk: vcOpen && !!casualOkInput?.checked,
+    vcAppsOtherText: (vcOpen && getCheckboxValues('vcApps').includes('other')) ? (vcAppsOtherInput?.value.trim() || '') : '',
+    casualOk: vcOpen ? getRadioValue('casualOk') : '',
     jokingOk: vcOpen && !!jokingOkInput?.checked,
     sameOshiReject,
     sameOshiChars: sameOshiReject ? store.sameOshiChars : [],

@@ -84,8 +84,10 @@ export const store = {
   multiFrequency: '',
   workCallOk: false,
   vc: '',
+  vcNote: '',
   vcApps: [],
-  casualOk: false,
+  vcAppsOtherText: '',
+  casualOk: '',
   jokingOk: false,
   sameOshiReject: false,
   sameOshiChars: [], // 原神キャラのicon名、人数制限なし
@@ -121,7 +123,9 @@ export async function loadProfileFromFirestore() {
       if (d.multiFrequency != null) store.multiFrequency = d.multiFrequency;
       if (d.workCallOk != null) store.workCallOk = !!d.workCallOk;
       if (d.vc != null) store.vc = d.vc;
-      if (d.casualOk != null) store.casualOk = !!d.casualOk;
+      if (d.vcNote != null) store.vcNote = d.vcNote;
+      if (d.vcAppsOtherText != null) store.vcAppsOtherText = d.vcAppsOtherText;
+      if (d.casualOk != null) store.casualOk = d.casualOk;
       if (d.jokingOk != null) store.jokingOk = !!d.jokingOk;
       if (d.sameOshiReject != null) store.sameOshiReject = !!d.sameOshiReject;
       if (d.twitterId != null) store.twitterId = d.twitterId;
@@ -163,7 +167,9 @@ export async function syncProfileToFirestore() {
       multiFrequency: store.multiFrequency,
       workCallOk: store.workCallOk,
       vc: store.vc,
+      vcNote: store.vcNote,
       vcApps: store.vcApps,
+      vcAppsOtherText: store.vcAppsOtherText,
       casualOk: store.casualOk,
       jokingOk: store.jokingOk,
       sameOshiReject: store.sameOshiReject,
