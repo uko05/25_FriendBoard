@@ -176,7 +176,7 @@ body.portal-page {
    このサイトについて(?)ボタン
    ========================= */
 .board-info-btn {
-  position: absolute;
+  position: fixed;
   top: 12px;
   right: 12px;
   z-index: 20;
@@ -693,6 +693,33 @@ body.portal-page {
   margin: 6px 0 0;
   font-size: 11px;
   color: #8a6d00;
+}
+
+.board-card-saved-image {
+  margin: 8px 0 0;
+}
+.board-card-saved-image-img {
+  display: block;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+}
+
+.board-saved-image-preview {
+  margin: 4px 0 12px;
+}
+.board-saved-image-preview-message {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+.board-saved-image-preview-img {
+  display: block;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
 }
 
 .board-card-comment {

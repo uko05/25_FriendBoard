@@ -81,8 +81,11 @@ export const store = {
   spending: '',
   playStyles: [],
   playStylesOtherText: '',
+  showGenshinRanking: false,
+  showGenshinCheck: false,
   inviteStyle: '',
   multiFrequency: '',
+  multiFrequencyNote: '',
   workCallOk: false,
   vc: '',
   vcNote: '',
@@ -122,6 +125,7 @@ export async function loadProfileFromFirestore() {
       if (d.spending != null) store.spending = d.spending;
       if (d.inviteStyle != null) store.inviteStyle = d.inviteStyle;
       if (d.multiFrequency != null) store.multiFrequency = d.multiFrequency;
+      if (d.multiFrequencyNote != null) store.multiFrequencyNote = d.multiFrequencyNote;
       if (d.workCallOk != null) store.workCallOk = !!d.workCallOk;
       if (d.vc != null) store.vc = d.vc;
       if (d.vcNote != null) store.vcNote = d.vcNote;
@@ -134,6 +138,8 @@ export async function loadProfileFromFirestore() {
       if (d.lineId != null) store.lineId = d.lineId;
       if (d.instagramId != null) store.instagramId = d.instagramId;
       if (d.playStylesOtherText != null) store.playStylesOtherText = d.playStylesOtherText;
+      if (d.showGenshinRanking != null) store.showGenshinRanking = !!d.showGenshinRanking;
+      if (d.showGenshinCheck != null) store.showGenshinCheck = !!d.showGenshinCheck;
       ARRAY_FIELDS.forEach((k) => { if (Array.isArray(d[k])) store[k] = d[k]; });
       TIME_RANGE_FIELDS.forEach((k) => {
         if (d[k] && typeof d[k] === 'object') store[k] = { start: d[k].start || '', end: d[k].end || '' };
@@ -167,8 +173,11 @@ export async function syncProfileToFirestore() {
       spending: store.spending,
       playStyles: store.playStyles,
       playStylesOtherText: store.playStylesOtherText,
+      showGenshinRanking: store.showGenshinRanking,
+      showGenshinCheck: store.showGenshinCheck,
       inviteStyle: store.inviteStyle,
       multiFrequency: store.multiFrequency,
+      multiFrequencyNote: store.multiFrequencyNote,
       workCallOk: store.workCallOk,
       vc: store.vc,
       vcNote: store.vcNote,

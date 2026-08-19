@@ -6,6 +6,7 @@ import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, w
 import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js';
 import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
 import { VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch } from './fields.js';
+import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
   collection, setDoc, updateDoc, deleteDoc, doc, onSnapshot,
@@ -50,6 +51,7 @@ const STR = {
     visApproval: '承認後に公開',
     visCloseFriend: '仲良くなったら',
     oshiPickerFull: '推しキャラは3人まで選べます',
+    savedImageNotSavedYet: 'まだ保存された画像がありません。ランキング/チェックシートのサイトで先に保存してください。',
     secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
     matchLabel: (pct) => `マッチ度 ${pct}%`,
   },
@@ -79,6 +81,7 @@ const STR = {
     visApproval: 'Visible after approval',
     visCloseFriend: "Once we're close",
     oshiPickerFull: 'You can select up to 3 favorite characters',
+    savedImageNotSavedYet: 'No saved image found yet. Save one on the ranking/check-sheet site first.',
     secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
     matchLabel: (pct) => `${pct}% match`,
   },
@@ -119,6 +122,9 @@ const jokingOkInput = document.getElementById('input-jokingOk');
 const vcNoteInput = document.getElementById('input-vcNote');
 const vcAppsOtherInput = document.getElementById('input-vcAppsOtherText');
 const playStylesOtherInput = document.getElementById('input-playStylesOtherText');
+const multiFrequencyNoteInput = document.getElementById('input-multiFrequencyNote');
+const showGenshinRankingInput = document.getElementById('input-showGenshinRanking');
+const showGenshinCheckInput = document.getElementById('input-showGenshinCheck');
 const sameOshiRejectInput = document.getElementById('input-sameOshiReject');
 const weekdayStartInput = document.getElementById('weekday-start');
 const weekdayEndInput = document.getElementById('weekday-end');
@@ -200,12 +206,19 @@ function updateVcAppsOtherEnabled() {
   vcAppsOtherInput.disabled = !enabled;
   if (!enabled) vcAppsOtherInput.value = '';
 }
-// プレイスタイルで「その他」を選んだときだけ詳細入力を有効化する
+// プレイスタイルで「その他」を選んだときだけ詳細入力欄を表示する
 function updatePlayStylesOtherEnabled() {
-  if (!playStylesOtherInput) return;
+  const row = document.getElementById('row-playStylesOtherText');
   const enabled = getCheckboxValues('playStyles').includes('other');
-  playStylesOtherInput.disabled = !enabled;
-  if (!enabled) playStylesOtherInput.value = '';
+  if (row) row.classList.toggle('hidden', !enabled);
+  if (playStylesOtherInput && !enabled) playStylesOtherInput.value = '';
+}
+// マルチ頻度が「要相談」のときだけ詳細入力欄を表示する
+function updateMultiFrequencyNoteEnabled() {
+  const row = document.getElementById('row-multiFrequencyNote');
+  const enabled = getRadioValue('multiFrequency') === 'ask';
+  if (row) row.classList.toggle('hidden', !enabled);
+  if (multiFrequencyNoteInput && !enabled) multiFrequencyNoteInput.value = '';
 }
 document.getElementById('group-vc')?.addEventListener('change', () => {
   updateVcExtraGroupVisibility();
@@ -213,6 +226,38 @@ document.getElementById('group-vc')?.addEventListener('change', () => {
 });
 document.getElementById('group-vcApps')?.addEventListener('change', updateVcAppsOtherEnabled);
 document.getElementById('group-playStyles')?.addEventListener('change', updatePlayStylesOtherEnabled);
+document.getElementById('group-multiFrequency')?.addEventListener('change', updateMultiFrequencyNoteEnabled);
+
+// ===== 保存画像(推しキャラランキング/チェックシート)のライブプレビュー =====
+async function refreshSavedImagePreview(siteId, checkboxInput, wrapId, imgId, msgId) {
+  const wrap = document.getElementById(wrapId);
+  const img = document.getElementById(imgId);
+  const msg = document.getElementById(msgId);
+  if (!wrap || !img || !msg || !checkboxInput) return;
+  if (!checkboxInput.checked) {
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  const entry = await getSavedProfileImageFor(siteId, getUserId());
+  if (entry) {
+    img.src = entry.url;
+    img.style.display = 'block';
+    msg.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    msg.style.display = 'block';
+    msg.textContent = s().savedImageNotSavedYet;
+  }
+}
+function refreshGenshinRankingPreview() {
+  refreshSavedImagePreview('genshinRanking', showGenshinRankingInput, 'preview-genshinRanking', 'preview-genshinRanking-img', 'preview-genshinRanking-message');
+}
+function refreshGenshinCheckPreview() {
+  refreshSavedImagePreview('genshinCheck', showGenshinCheckInput, 'preview-genshinCheck', 'preview-genshinCheck-img', 'preview-genshinCheck-message');
+}
+showGenshinRankingInput?.addEventListener('change', refreshGenshinRankingPreview);
+showGenshinCheckInput?.addEventListener('change', refreshGenshinCheckPreview);
 
 // 「同担拒否あり」にチェックが入っているときだけキャラ選択欄を表示する
 function updateSameOshiCharsVisibility() {
@@ -238,6 +283,9 @@ function fillFormFromProfile() {
   if (vcNoteInput && store.vcNote) vcNoteInput.value = store.vcNote;
   if (vcAppsOtherInput && store.vcAppsOtherText) vcAppsOtherInput.value = store.vcAppsOtherText;
   if (playStylesOtherInput && store.playStylesOtherText) playStylesOtherInput.value = store.playStylesOtherText;
+  if (multiFrequencyNoteInput && store.multiFrequencyNote) multiFrequencyNoteInput.value = store.multiFrequencyNote;
+  if (showGenshinRankingInput) showGenshinRankingInput.checked = !!store.showGenshinRanking;
+  if (showGenshinCheckInput) showGenshinCheckInput.checked = !!store.showGenshinCheck;
   if (weekdayStartInput) weekdayStartInput.value = store.weekdayTimes?.start || '';
   if (weekdayEndInput) weekdayEndInput.value = store.weekdayTimes?.end || '';
   if (weekendStartInput) weekendStartInput.value = store.weekendTimes?.start || '';
@@ -258,7 +306,10 @@ function fillFormFromProfile() {
   updateVcNoteEnabled();
   updateVcAppsOtherEnabled();
   updatePlayStylesOtherEnabled();
+  updateMultiFrequencyNoteEnabled();
   updateSameOshiCharsVisibility();
+  refreshGenshinRankingPreview();
+  refreshGenshinCheckPreview();
 
   oshiPicker.renderSelected();
   sameOshiPicker.renderSelected();
@@ -448,8 +499,11 @@ function collectFormValues() {
     spending: getRadioValue('spending'),
     playStyles: getCheckboxValues('playStyles'),
     playStylesOtherText: getCheckboxValues('playStyles').includes('other') ? (playStylesOtherInput?.value.trim() || '') : '',
+    showGenshinRanking: !!showGenshinRankingInput?.checked,
+    showGenshinCheck: !!showGenshinCheckInput?.checked,
     inviteStyle: getRadioValue('inviteStyle'),
     multiFrequency: getRadioValue('multiFrequency'),
+    multiFrequencyNote: getRadioValue('multiFrequency') === 'ask' ? (multiFrequencyNoteInput?.value.trim() || '') : '',
     workCallOk: vcOpen && !!workCallOkInput?.checked,
     vc: getRadioValue('vc'),
     vcNote: getRadioValue('vc') === 'maybe' ? (vcNoteInput?.value.trim() || '') : '',
@@ -526,6 +580,7 @@ function getDisplayFields(post, mine) {
   const rows = [];
   const secretLabels = [];
   const headFields = new Set(['genshinUid', 'server', 'displayName']); // ヘッダー側で個別に描画する項目
+  const ownerUserId = mine ? getUserId() : post.userId;
 
   VISIBILITY_FIELDS.forEach((key) => {
     // どういうフレンドがほしい？はマッチ度計算専用の内部データであり、
@@ -537,7 +592,7 @@ function getDisplayFields(post, mine) {
       const vis = store.visibility[key] || 'public';
       if (vis === 'hidden') return;
       if (headFields.has(key)) return;
-      pushFieldRow(rows, key, store[key], lang);
+      pushFieldRow(rows, key, store[key], lang, ownerUserId);
     } else {
       if (post.secretFieldKeys?.includes(key)) {
         secretLabels.push(fieldLabel(key, lang));
@@ -545,16 +600,22 @@ function getDisplayFields(post, mine) {
       }
       if (headFields.has(key)) return;
       if (post.publicFields && key in post.publicFields) {
-        pushFieldRow(rows, key, post.publicFields[key], lang);
+        pushFieldRow(rows, key, post.publicFields[key], lang, ownerUserId);
       }
     }
   });
   return { rows, secretLabels };
 }
 
-function pushFieldRow(rows, key, value, lang) {
+const SAVED_IMAGE_FIELD_SITE_IDS = { showGenshinRanking: 'genshinRanking', showGenshinCheck: 'genshinCheck' };
+
+function pushFieldRow(rows, key, value, lang, ownerUserId) {
   if (key === 'oshiChars' || key === 'sameOshiChars') {
     if (Array.isArray(value) && value.length) rows.push({ key, oshiIcons: value });
+    return;
+  }
+  if (SAVED_IMAGE_FIELD_SITE_IDS[key]) {
+    if (value === true) rows.push({ key, savedImageSite: SAVED_IMAGE_FIELD_SITE_IDS[key], ownerUserId });
     return;
   }
   const text = formatFieldValue(key, value, lang);
@@ -630,10 +691,12 @@ function buildCard(post, { mine, matchPercent }) {
   body.appendChild(head);
 
   const { rows, secretLabels } = getDisplayFields(post, mine);
-  if (rows.length) {
+  const savedImageRows = rows.filter((row) => row.savedImageSite);
+  const chipRows = rows.filter((row) => !row.savedImageSite);
+  if (chipRows.length) {
     const chips = document.createElement('div');
     chips.className = 'board-card-chips';
-    rows.forEach((row) => {
+    chipRows.forEach((row) => {
       if (row.oshiIcons) {
         row.oshiIcons.forEach((icon) => {
           const img = document.createElement('img');
@@ -652,6 +715,24 @@ function buildCard(post, { mine, matchPercent }) {
     });
     body.appendChild(chips);
   }
+  savedImageRows.forEach((row) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'board-card-saved-image';
+    const img = document.createElement('img');
+    img.className = 'board-card-saved-image-img';
+    img.alt = '';
+    img.loading = 'lazy';
+    wrap.appendChild(img);
+    body.appendChild(wrap);
+    getSavedProfileImageFor(row.savedImageSite, row.ownerUserId).then((entry) => {
+      if (entry) {
+        img.src = entry.url;
+        img.addEventListener('load', () => { img.style.width = `${img.naturalWidth * 0.3}px`; });
+      } else {
+        wrap.remove();
+      }
+    });
+  });
   if (secretLabels.length) {
     const note = document.createElement('p');
     note.className = 'board-card-secret-note';

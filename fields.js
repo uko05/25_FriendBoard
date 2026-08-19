@@ -6,8 +6,8 @@
 // フォームの並び順とだいたい揃えている(カードのチップ表示順にも使われる)。
 export const VISIBILITY_FIELDS = [
   'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms',
-  'oshiChars', 'spending', 'playStyles', 'playStylesOtherText',
-  'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency',
+  'oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck',
+  'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency', 'multiFrequencyNote',
   'vc', 'vcNote', 'vcApps', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
   'twitterId', 'tiktokId', 'lineId', 'instagramId',
   'friendPreference',
@@ -22,6 +22,8 @@ const FIXED_VISIBILITY = {
   displayName: 'approval',
   playStyles: 'public',
   playStylesOtherText: 'public',
+  showGenshinRanking: 'public',
+  showGenshinCheck: 'public',
 };
 
 // 既定の公開設定。genshinUidは常に承認制で固定(フォームにセレクトを出していない)。
@@ -57,8 +59,11 @@ const FIELD_LABELS = {
   spending: { ja: '課金スタンス', en: 'Spending' },
   playStyles: { ja: 'マルチで何をしたい？', en: 'What do you want to do in multiplayer?' },
   playStylesOtherText: { ja: 'マルチその他詳細', en: 'Multiplayer other details' },
+  showGenshinRanking: { ja: '原神推しキャラランキング', en: 'Genshin Character Ranking' },
+  showGenshinCheck: { ja: '原神チェックシート', en: 'Genshin Check Sheet' },
   inviteStyle: { ja: 'マルチ自発について', en: 'Taking initiative in multiplayer' },
   multiFrequency: { ja: 'マルチ頻度', en: 'Multiplayer Frequency' },
+  multiFrequencyNote: { ja: 'マルチ頻度の詳細', en: 'Multiplayer frequency details' },
   workCallOk: { ja: '作業通話のみでもOK', en: 'OK with silent/work call' },
   vc: { ja: 'VC(ボイスチャット)', en: 'Voice Chat' },
   vcNote: { ja: 'VC相談の詳細', en: 'VC details' },

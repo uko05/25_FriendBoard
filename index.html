@@ -149,8 +149,8 @@
                     </div>
                 </div>
 
-                <!-- ===== プレイスタイル ===== -->
-                <h3 class="board-form-group-title" data-i18n="groupStyle">プレイスタイル</h3>
+                <!-- ===== あなたについて ===== -->
+                <h3 class="board-form-group-title" data-i18n="groupStyle">あなたについて</h3>
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
@@ -190,7 +190,9 @@
                         <label><input type="checkbox" name="playStyles" value="wantJokeMulti" /><span data-i18n="styleWantJokeMulti">おふざけマルチしたい！</span></label>
                         <label><input type="checkbox" name="playStyles" value="other" /><span data-i18n="styleOther">その他</span></label>
                     </div>
-                    <input type="text" id="input-playStylesOtherText" name="playStylesOtherText" maxlength="30" disabled data-i18n-placeholder="playStylesOtherPlaceholder" />
+                    <div class="board-form-row hidden" id="row-playStylesOtherText">
+                        <input type="text" id="input-playStylesOtherText" name="playStylesOtherText" maxlength="30" data-i18n-placeholder="playStylesOtherPlaceholder" />
+                    </div>
                     <div class="board-substyle-framed">
                         <p class="board-substyle-title" data-i18n="styleBeginnerGroupTitle">初心者向け</p>
                         <div class="board-checkbox-group">
@@ -201,6 +203,22 @@
                             <label><input type="checkbox" name="playStyles" value="needQuestions" /><span data-i18n="styleNeedQuestions">わからないことが多いので質問させて！</span></label>
                         </div>
                     </div>
+                </div>
+
+                <div class="board-form-row board-form-row-inline">
+                    <label class="board-single-checkbox"><input type="checkbox" id="input-showGenshinRanking" name="showGenshinRanking" /><span data-i18n="showGenshinRankingLabel">原神推しキャラランキングを公開する</span></label>
+                </div>
+                <div class="board-saved-image-preview hidden" id="preview-genshinRanking">
+                    <p class="board-saved-image-preview-message" id="preview-genshinRanking-message"></p>
+                    <img class="board-saved-image-preview-img" id="preview-genshinRanking-img" src="" alt="">
+                </div>
+
+                <div class="board-form-row board-form-row-inline">
+                    <label class="board-single-checkbox"><input type="checkbox" id="input-showGenshinCheck" name="showGenshinCheck" /><span data-i18n="showGenshinCheckLabel">原神チェックシートを公開する</span></label>
+                </div>
+                <div class="board-saved-image-preview hidden" id="preview-genshinCheck">
+                    <p class="board-saved-image-preview-message" id="preview-genshinCheck-message"></p>
+                    <img class="board-saved-image-preview-img" id="preview-genshinCheck-img" src="" alt="">
                 </div>
 
                 <!-- ===== 連絡・時間帯 ===== -->
@@ -254,6 +272,14 @@
                         <label><input type="radio" name="multiFrequency" value="sometimes" /><span data-i18n="freqSometimes">週１～２くらい</span></label>
                         <label><input type="radio" name="multiFrequency" value="ask" /><span data-i18n="freqAsk">要相談</span></label>
                     </div>
+                </div>
+
+                <div class="board-form-row hidden" id="row-multiFrequencyNote">
+                    <div class="board-form-row-head">
+                        <label for="input-multiFrequencyNote" data-i18n="labelMultiFrequencyNote">マルチ頻度の詳細</label>
+                        <select class="board-visibility-select" id="vis-multiFrequencyNote" data-field="multiFrequencyNote"></select>
+                    </div>
+                    <input type="text" id="input-multiFrequencyNote" name="multiFrequencyNote" maxlength="40" data-i18n-placeholder="multiFrequencyNotePlaceholder" />
                 </div>
 
                 <!-- ===== ボイスチャット ===== -->
