@@ -37,6 +37,8 @@ const STR = {
     deleteConfirm: 'プロフィールの公開を取り下げますか？「さがす」も使えなくなります。',
     postOk: '保存しました！',
     postFail: '保存に失敗しました。時間をおいて再度お試しください。',
+    draftSaved: '一時保存しました（この端末のみ）',
+    draftSaveFail: '一時保存に失敗しました。',
     deleteFail: '取り下げに失敗しました。',
     fillAll: 'UID・サーバー・コメントを入力してください。',
     uidLabel: 'UID',
@@ -67,6 +69,8 @@ const STR = {
     deleteConfirm: "Withdraw your profile from search? You'll lose access to Search until you save again.",
     postOk: 'Saved!',
     postFail: 'Failed to save. Please try again later.',
+    draftSaved: 'Draft saved (this device only)',
+    draftSaveFail: 'Failed to save draft.',
     deleteFail: 'Failed to withdraw.',
     fillAll: 'Please fill in UID, server, and comment.',
     uidLabel: 'UID',
@@ -472,11 +476,47 @@ const sameOshiPicker = createCharPicker({
 const postForm = document.getElementById('post-form');
 const postSubmitBtn = document.getElementById('post-submit-btn');
 const postFormMsg = document.getElementById('post-form-msg');
+const draftSaveBtn = document.getElementById('draft-save-btn');
 
 function showMsg(el, text, isError) {
   el.textContent = text;
   el.classList.toggle('error', !!isError);
   el.classList.toggle('ok', !isError);
+}
+
+// ===== 入力内容の一時保存(この端末のlocalStorageのみ、Firestoreには送らない) =====
+// 推しキャラランキング/チェックシートのサイトを開くために離脱しても、
+// 「保存する」まで済ませていない入力が消えてしまわないようにするための下書き機能。
+const DRAFT_LS_KEY = 'friendBoard_draft';
+
+function saveDraft() {
+  try {
+    const draft = collectFormValues();
+    draft.intro = commentInput?.value.trim() || ''; // storeではコメントの既定値はintroという名前
+    localStorage.setItem(DRAFT_LS_KEY, JSON.stringify(draft));
+    showMsg(postFormMsg, s().draftSaved, false);
+  } catch (e) {
+    console.error('[board] draft save failed', e);
+    showMsg(postFormMsg, s().draftSaveFail, true);
+  }
+}
+draftSaveBtn?.addEventListener('click', saveDraft);
+
+// 一時保存した内容をstoreへ重ね書きする(Firestoreの保存済みプロフィールより優先)。
+// 実際のフォーム反映はfillFormFromProfile()が読むstoreを経由するので、ここではstoreを書き換えるだけでよい。
+function applyDraftIfAny() {
+  try {
+    const raw = localStorage.getItem(DRAFT_LS_KEY);
+    if (!raw) return;
+    const draft = JSON.parse(raw);
+    Object.assign(store, draft);
+  } catch (e) {
+    console.error('[board] draft load failed', e);
+  }
+}
+
+function clearDraft() {
+  localStorage.removeItem(DRAFT_LS_KEY);
 }
 
 // フォームの現在値を全項目分集めて{key: value}で返す(genshinUid/serverも含む)
@@ -562,6 +602,7 @@ postForm?.addEventListener('submit', async (e) => {
       createdAt: serverTimestamp(),
     });
 
+    clearDraft();
     showMsg(postFormMsg, s().postOk, false);
   } catch (err) {
     console.error('[board] post failed', err);
@@ -932,6 +973,7 @@ async function init() {
   }
   populateNumberAndTimeSelects();
   await loadProfileFromFirestore();
+  applyDraftIfAny();
   fillFormFromProfile();
   populateVisibilitySelects();
   initAvatarUI({ getUserId, getAuthUid, onChange: updateLatestOwnPostAvatar });

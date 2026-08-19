@@ -191,6 +191,9 @@ document.addEventListener("DOMContentLoaded", () => {
       labelComment: "なんでも一言",
       commentPlaceholder: "別ゲー○○のフレンドも募集中！とか無言加入歓迎！とか腐女子/夢女子です！とか下ネタ/暴言OK NGとか他に書きたいことがあれば書いておこう！",
       postSubmitBtn: "保存する",
+      draftSaveBtn: "一時保存",
+      draftSaved: "一時保存しました（この端末のみ）",
+      draftSaveFail: "一時保存に失敗しました。",
       myPostsTitle: "現在の公開状況",
 
       searchTitle: "募集をさがす",
@@ -353,6 +356,9 @@ document.addEventListener("DOMContentLoaded", () => {
       labelComment: "One-liner",
       commentPlaceholder: "e.g. \"Also looking for friends on [other game]!\", \"silent adds welcome!\", \"into BL/otome fandom!\", \"dirty jokes/cursing OK or NG\" — write anything else you'd like to share!",
       postSubmitBtn: "Save",
+      draftSaveBtn: "Save Draft",
+      draftSaved: "Draft saved (this device only)",
+      draftSaveFail: "Failed to save draft.",
       myPostsTitle: "Current Status",
 
       searchTitle: "Search recruitment posts",

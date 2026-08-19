@@ -49,7 +49,10 @@
 
         <!-- 募集する -->
         <section class="portal-section board-tab-panel" id="tab-panel-post" role="tabpanel">
-            <button type="button" class="board-info-btn" aria-label="このサイトについて">?</button>
+            <div class="board-panel-sticky-actions">
+                <button type="button" class="board-info-btn" aria-label="このサイトについて">?</button>
+                <button type="button" class="board-draft-save-btn" id="draft-save-btn" data-i18n="draftSaveBtn">一時保存</button>
+            </div>
             <h2 data-i18n="postFormTitle">マイプロフィール</h2>
             <p class="board-profile-desc" data-i18n="profileDesc">この掲示板を使うには、まずあなたの情報を保存してください。保存すると「さがす」が使えるようになります。</p>
 
@@ -442,7 +445,9 @@
 
         <!-- さがす -->
         <section class="portal-section board-tab-panel hidden" id="tab-panel-search" role="tabpanel">
-            <button type="button" class="board-info-btn" aria-label="このサイトについて">?</button>
+            <div class="board-panel-sticky-actions">
+                <button type="button" class="board-info-btn" aria-label="このサイトについて">?</button>
+            </div>
             <h2 data-i18n="searchTitle">募集をさがす</h2>
             <div class="board-filter">
                 <label for="filter-server" data-i18n="filterServerLabel">サーバーで絞り込み</label>
@@ -459,7 +464,9 @@
 
         <!-- 申請 -->
         <section class="portal-section board-tab-panel hidden" id="tab-panel-requests" role="tabpanel">
-            <button type="button" class="board-info-btn" aria-label="このサイトについて">?</button>
+            <div class="board-panel-sticky-actions">
+                <button type="button" class="board-info-btn" aria-label="このサイトについて">?</button>
+            </div>
             <h2 data-i18n="requestsTitle">申請の管理</h2>
             <p class="board-requests-desc" data-i18n="requestsDesc">気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。</p>
 
