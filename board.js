@@ -40,7 +40,7 @@ const STR = {
     draftSaved: '一時保存しました（この端末のみ）',
     draftSaveFail: '一時保存に失敗しました。',
     deleteFail: '取り下げに失敗しました。',
-    fillAll: 'UID・サーバー・コメントを入力してください。',
+    fillAll: '必須項目（＊）をすべて入力してください。',
     uidLabel: 'UID',
     applyBtn: '申請する',
     appliedBtn: '申請済み',
@@ -72,7 +72,7 @@ const STR = {
     draftSaved: 'Draft saved (this device only)',
     draftSaveFail: 'Failed to save draft.',
     deleteFail: 'Failed to withdraw.',
-    fillAll: 'Please fill in UID, server, and comment.',
+    fillAll: 'Please fill in all required (＊) fields.',
     uidLabel: 'UID',
     applyBtn: 'Apply',
     appliedBtn: 'Applied',
@@ -588,7 +588,7 @@ postForm?.addEventListener('submit', async (e) => {
   const values = collectFormValues();
   const comment = commentInput.value.trim();
 
-  if (!values.genshinUid || !values.server || !comment) {
+  if (!values.genshinUid || !values.server) {
     showMsg(postFormMsg, s().fillAll, true);
     return;
   }

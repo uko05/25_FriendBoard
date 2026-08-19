@@ -502,6 +502,10 @@ body.portal-page {
   color: #444;
   font-weight: bold;
 }
+.board-required-mark {
+  color: #e53935;
+  margin-left: 2px;
+}
 
 .board-visibility-select {
   font-family: inherit;
