@@ -53,7 +53,6 @@ const STR = {
     visApproval: '承認後に公開',
     visCloseFriend: '仲良くなったら',
     oshiPickerFull: '推しキャラは3人まで選べます',
-    savedImageNotSavedYet: 'まだ保存された画像がありません。ランキング/チェックシートのサイトで先に保存してください。',
     secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
     matchLabel: (pct) => `マッチ度 ${pct}%`,
   },
@@ -85,7 +84,6 @@ const STR = {
     visApproval: 'Visible after approval',
     visCloseFriend: "Once we're close",
     oshiPickerFull: 'You can select up to 3 favorite characters',
-    savedImageNotSavedYet: 'No saved image found yet. Save one on the ranking/check-sheet site first.',
     secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
     matchLabel: (pct) => `${pct}% match`,
   },
@@ -233,6 +231,17 @@ document.getElementById('group-playStyles')?.addEventListener('change', updatePl
 document.getElementById('group-multiFrequency')?.addEventListener('change', updateMultiFrequencyNoteEnabled);
 
 // ===== 保存画像(推しキャラランキング/チェックシート)のライブプレビュー =====
+const SAVED_IMAGE_NOT_SAVED_YET_HTML = {
+  genshinRanking: {
+    ja: 'まだ保存された画像がありません。<a href="https://uko05.github.io/TiersList01/" target="_blank" rel="noopener">原神推しキャラランキング</a>のページで先に保存してください。',
+    en: 'No saved image found yet. Please save one on the <a href="https://uko05.github.io/TiersList01/" target="_blank" rel="noopener">Genshin Character Ranking</a> page first.',
+  },
+  genshinCheck: {
+    ja: 'まだ保存された画像がありません。<a href="https://uko05.github.io/genshinCheck06/" target="_blank" rel="noopener">原神チェックシート</a>のページで先に保存してください。',
+    en: 'No saved image found yet. Please save one on the <a href="https://uko05.github.io/genshinCheck06/" target="_blank" rel="noopener">Genshin Check Sheet</a> page first.',
+  },
+};
+
 async function refreshSavedImagePreview(siteId, checkboxInput, wrapId, imgId, msgId) {
   const wrap = document.getElementById(wrapId);
   const img = document.getElementById(imgId);
@@ -251,7 +260,7 @@ async function refreshSavedImagePreview(siteId, checkboxInput, wrapId, imgId, ms
   } else {
     img.style.display = 'none';
     msg.style.display = 'block';
-    msg.textContent = s().savedImageNotSavedYet;
+    msg.innerHTML = SAVED_IMAGE_NOT_SAVED_YET_HTML[siteId][currentLang()];
   }
 }
 function refreshGenshinRankingPreview() {
@@ -514,6 +523,7 @@ function saveDraft() {
     localStorage.setItem(DRAFT_LS_KEY, JSON.stringify(draft));
     showMsg(postFormMsg, s().draftSaved, false);
     flashDraftSaveBtn(true);
+    formDirty = false;
   } catch (e) {
     console.error('[board] draft save failed', e);
     showMsg(postFormMsg, s().draftSaveFail, true);
@@ -521,6 +531,18 @@ function saveDraft() {
   }
 }
 draftSaveBtn?.addEventListener('click', saveDraft);
+
+// ===== 未保存の変更があるまま離脱しようとしたら警告する =====
+// 「保存する」「一時保存」どちらも済ませていない入力・選択の変更をformDirtyで追跡し、
+// beforeunloadでブラウザ標準の離脱確認ダイアログを出す。
+let formDirty = false;
+postForm?.addEventListener('input', () => { formDirty = true; });
+postForm?.addEventListener('change', () => { formDirty = true; });
+window.addEventListener('beforeunload', (e) => {
+  if (!formDirty) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
 
 // 一時保存した内容をstoreへ重ね書きする(Firestoreの保存済みプロフィールより優先)。
 // 実際のフォーム反映はfillFormFromProfile()が読むstoreを経由するので、ここではstoreを書き換えるだけでよい。
@@ -623,6 +645,7 @@ postForm?.addEventListener('submit', async (e) => {
     });
 
     clearDraft();
+    formDirty = false;
     showMsg(postFormMsg, s().postOk, false);
   } catch (err) {
     console.error('[board] post failed', err);
