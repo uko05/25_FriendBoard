@@ -489,15 +489,35 @@ function showMsg(el, text, isError) {
 // 「保存する」まで済ませていない入力が消えてしまわないようにするための下書き機能。
 const DRAFT_LS_KEY = 'friendBoard_draft';
 
+let draftSaveFlashTimer = null;
+function flashDraftSaveBtn(ok) {
+  if (!draftSaveBtn) return;
+  const originalLabel = draftSaveBtn.dataset.originalLabel || draftSaveBtn.textContent;
+  draftSaveBtn.dataset.originalLabel = originalLabel;
+  draftSaveBtn.classList.toggle('saved', ok);
+  draftSaveBtn.classList.toggle('failed', !ok);
+  draftSaveBtn.textContent = ok
+    ? (currentLang() === 'en' ? '✓ Saved' : '✓ 保存しました')
+    : (currentLang() === 'en' ? '✕ Failed' : '✕ 失敗しました');
+  if (draftSaveFlashTimer) clearTimeout(draftSaveFlashTimer);
+  draftSaveFlashTimer = setTimeout(() => {
+    draftSaveBtn.classList.remove('saved', 'failed');
+    draftSaveBtn.textContent = draftSaveBtn.dataset.originalLabel;
+    draftSaveFlashTimer = null;
+  }, 1500);
+}
+
 function saveDraft() {
   try {
     const draft = collectFormValues();
     draft.intro = commentInput?.value.trim() || ''; // storeではコメントの既定値はintroという名前
     localStorage.setItem(DRAFT_LS_KEY, JSON.stringify(draft));
     showMsg(postFormMsg, s().draftSaved, false);
+    flashDraftSaveBtn(true);
   } catch (e) {
     console.error('[board] draft save failed', e);
     showMsg(postFormMsg, s().draftSaveFail, true);
+    flashDraftSaveBtn(false);
   }
 }
 draftSaveBtn?.addEventListener('click', saveDraft);
