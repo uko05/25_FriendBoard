@@ -204,7 +204,9 @@ function updateVcNoteEnabled() {
 // VC利用アプリで「その他」を選んだときだけアプリ名入力を有効化する
 function updateVcAppsOtherEnabled() {
   if (!vcAppsOtherInput) return;
+  const row = document.getElementById('row-vcAppsOtherText');
   const enabled = getCheckboxValues('vcApps').includes('other');
+  if (row) row.classList.toggle('hidden', !enabled);
   vcAppsOtherInput.disabled = !enabled;
   if (!enabled) vcAppsOtherInput.value = '';
 }
@@ -703,7 +705,19 @@ function pushFieldRow(rows, key, value, lang, ownerUserId) {
     return;
   }
   const text = formatFieldValue(key, value, lang);
-  if (text) rows.push({ key, text: `${fieldLabel(key, lang)}: ${text}` });
+  if (text) rows.push({ key, value, text: `${fieldLabel(key, lang)}: ${text}` });
+}
+
+// 相手のチップの値が自分のプロフィールと一致(配列は重複あり)しているかどうかを判定する。
+// 時間帯({start,end})や数値(AR/WLなど)は曖昧になりすぎるため判定対象外(常にfalse)。
+function isFieldMatch(myValue, otherValue) {
+  if (Array.isArray(myValue) && Array.isArray(otherValue)) {
+    return myValue.some((v) => otherValue.includes(v));
+  }
+  if (Array.isArray(myValue) || Array.isArray(otherValue)) return false;
+  if (typeof myValue === 'object' || typeof otherValue === 'object') return false;
+  if (myValue == null || myValue === '' || otherValue == null || otherValue === '') return false;
+  return myValue === otherValue;
 }
 
 // ===== 募集カード描画 =====
@@ -794,6 +808,9 @@ function buildCard(post, { mine, matchPercent }) {
       }
       const chip = document.createElement('span');
       chip.className = 'board-card-chip';
+      if (!mine && isFieldMatch(store[row.key], row.value)) {
+        chip.classList.add('board-card-chip-matched');
+      }
       chip.textContent = row.text;
       chips.appendChild(chip);
     });

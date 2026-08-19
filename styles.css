@@ -724,6 +724,11 @@ body.portal-page {
   padding: 3px 10px;
 }
 
+.board-card-chip-matched {
+  color: #c2185b;
+  background: #ffe1ec;
+}
+
 .board-card-oshi-icon {
   width: 26px;
   height: 26px;
