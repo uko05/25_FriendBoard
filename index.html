@@ -371,21 +371,31 @@
                             <span data-i18n="labelVcApps">VC利用アプリ</span>
                             <select class="board-visibility-select" id="vis-vcApps" data-field="vcApps"></select>
                         </div>
-                        <div class="board-checkbox-group board-vcapps-group" id="group-vcApps">
-                            <div class="board-vcapp-item">
-                                <label><input type="checkbox" name="vcApps" value="discord" /><span data-i18n="vcAppDiscord">Discord</span></label>
-                                <input type="text" id="input-vcDiscordId" class="board-vcapp-id-input hidden" maxlength="30" disabled data-i18n-placeholder="vcDiscordIdPlaceholder" />
-                            </div>
-                            <div class="board-vcapp-item">
-                                <label><input type="checkbox" name="vcApps" value="line" /><span data-i18n="vcAppLine">LINE</span></label>
-                                <input type="text" id="input-vcLineId" class="board-vcapp-id-input hidden" maxlength="30" disabled data-i18n-placeholder="vcLineIdPlaceholder" />
-                            </div>
-                            <div class="board-vcapp-item">
-                                <label><input type="checkbox" name="vcApps" value="other" /><span data-i18n="vcAppOther">その他</span></label>
-                                <input type="text" id="input-vcAppsOtherText" class="board-vcapp-id-input hidden" maxlength="20" disabled data-i18n-placeholder="vcAppsOtherPlaceholder" />
-                            </div>
+                        <p class="board-vcapps-desc" data-i18n="vcAppsDesc">※IDを入力したアプリが「利用アプリ」として表示されます(IDそのものは承認後に公開)</p>
+                    </div>
+
+                    <div class="board-form-row">
+                        <div class="board-form-row-head">
+                            <label for="input-vcDiscordId" data-i18n="vcAppDiscord">Discord</label>
+                            <span class="board-fixed-approval-badge" data-i18n="uidAlwaysApproval">🔒承認後に公開</span>
                         </div>
-                        <p class="board-vcapps-approval-note" data-i18n="vcAppsIdApprovalNote">🔒 ID・アプリ名は承認後に公開されます</p>
+                        <input type="text" id="input-vcDiscordId" maxlength="30" data-i18n-placeholder="vcDiscordIdPlaceholder" />
+                    </div>
+
+                    <div class="board-form-row">
+                        <div class="board-form-row-head">
+                            <label for="input-vcLineId" data-i18n="vcAppLine">LINE</label>
+                            <span class="board-fixed-approval-badge" data-i18n="uidAlwaysApproval">🔒承認後に公開</span>
+                        </div>
+                        <input type="text" id="input-vcLineId" maxlength="30" data-i18n-placeholder="vcLineIdPlaceholder" />
+                    </div>
+
+                    <div class="board-form-row">
+                        <div class="board-form-row-head">
+                            <label for="input-vcAppsOtherText" data-i18n="vcAppOther">その他</label>
+                            <span class="board-fixed-approval-badge" data-i18n="uidAlwaysApproval">🔒承認後に公開</span>
+                        </div>
+                        <input type="text" id="input-vcAppsOtherText" maxlength="20" data-i18n-placeholder="vcAppsOtherPlaceholder" />
                     </div>
 
                     <h4 class="board-form-subgroup-title" data-i18n="groupCallStyle">通話スタイル</h4>

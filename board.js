@@ -127,7 +127,6 @@ const vcNoteInput = document.getElementById('input-vcNote');
 const vcDiscordIdInput = document.getElementById('input-vcDiscordId');
 const vcLineIdInput = document.getElementById('input-vcLineId');
 const vcAppsOtherInput = document.getElementById('input-vcAppsOtherText');
-const VC_APP_ID_INPUTS = [['discord', vcDiscordIdInput], ['line', vcLineIdInput], ['other', vcAppsOtherInput]];
 const playStylesOtherInput = document.getElementById('input-playStylesOtherText');
 const multiFrequencyNoteInput = document.getElementById('input-multiFrequencyNote');
 const showGenshinRankingInput = document.getElementById('input-showGenshinRanking');
@@ -222,18 +221,6 @@ function updateVcNoteEnabled() {
   if (row) row.classList.toggle('hidden', !enabled);
   if (vcNoteInput && !enabled) vcNoteInput.value = '';
 }
-// VC利用アプリのDiscord/LINE/その他は、それぞれチェックが入っている間だけ
-// 隣のID入力欄を有効化する(チェックを外したら値もクリア)
-function updateVcAppIdInputs() {
-  const selected = getCheckboxValues('vcApps');
-  VC_APP_ID_INPUTS.forEach(([value, input]) => {
-    if (!input) return;
-    const enabled = selected.includes(value);
-    input.classList.toggle('hidden', !enabled);
-    input.disabled = !enabled;
-    if (!enabled) input.value = '';
-  });
-}
 // プレイスタイルで「その他」を選んだときだけ詳細入力欄を表示する
 function updatePlayStylesOtherEnabled() {
   const row = document.getElementById('row-playStylesOtherText');
@@ -252,7 +239,6 @@ document.getElementById('group-vc')?.addEventListener('change', () => {
   updateVcExtraGroupVisibility();
   updateVcNoteEnabled();
 });
-document.getElementById('group-vcApps')?.addEventListener('change', updateVcAppIdInputs);
 document.getElementById('group-playStyles')?.addEventListener('change', updatePlayStylesOtherEnabled);
 document.getElementById('group-multiFrequency')?.addEventListener('change', updateMultiFrequencyNoteEnabled);
 // 「曜日単位」チェックで、平日/休日それぞれ単一の時間帯入力と曜日別の入力を切り替える
@@ -394,11 +380,9 @@ function fillFormFromProfile() {
   setRadioValue('casualOk', store.casualOk);
   setCheckboxValues('platforms', store.platforms);
   setCheckboxValues('playStyles', store.playStyles);
-  setCheckboxValues('vcApps', store.vcApps);
   setCheckboxValues('friendPreference', store.friendPreference);
   updateVcExtraGroupVisibility();
   updateVcNoteEnabled();
-  updateVcAppIdInputs();
   updatePlayStylesOtherEnabled();
   updateMultiFrequencyNoteEnabled();
   updateWeekdayByDayVisibility();
@@ -653,6 +637,17 @@ function collectFormValues() {
   const weekdayByDay = !!weekdayByDayInput?.checked;
   const weekendByDay = !!weekendByDayInput?.checked;
 
+  // 利用アプリの判定はチェックボックスではなく、IDを入力したかどうかで決まる
+  // (「つながれるSNS」と同じ考え方: 入力があるアプリ=使っているアプリ)
+  const vcDiscordId = vcOpen ? (vcDiscordIdInput?.value.trim() || '') : '';
+  const vcLineId = vcOpen ? (vcLineIdInput?.value.trim() || '') : '';
+  const vcAppsOtherText = vcOpen ? (vcAppsOtherInput?.value.trim() || '') : '';
+  const vcApps = [
+    vcDiscordId && 'discord',
+    vcLineId && 'line',
+    vcAppsOtherText && 'other',
+  ].filter(Boolean);
+
   return {
     genshinUid: uidInput.value.trim(),
     displayName: displayNameInput?.value.trim() || '',
@@ -674,10 +669,10 @@ function collectFormValues() {
     workCallOk: vcOpen && !!workCallOkInput?.checked,
     vc: getRadioValue('vc'),
     vcNote: getRadioValue('vc') === 'maybe' ? (vcNoteInput?.value.trim() || '') : '',
-    vcApps: vcOpen ? getCheckboxValues('vcApps') : [],
-    vcDiscordId: (vcOpen && getCheckboxValues('vcApps').includes('discord')) ? (vcDiscordIdInput?.value.trim() || '') : '',
-    vcLineId: (vcOpen && getCheckboxValues('vcApps').includes('line')) ? (vcLineIdInput?.value.trim() || '') : '',
-    vcAppsOtherText: (vcOpen && getCheckboxValues('vcApps').includes('other')) ? (vcAppsOtherInput?.value.trim() || '') : '',
+    vcApps,
+    vcDiscordId,
+    vcLineId,
+    vcAppsOtherText,
     casualOk: vcOpen ? getRadioValue('casualOk') : '',
     jokingOk: vcOpen && !!jokingOkInput?.checked,
     sameOshiReject,
