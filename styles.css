@@ -18,6 +18,16 @@ body.portal-page {
   overflow-x: hidden;
 }
 
+.site-version {
+  position: fixed;
+  right: 8px;
+  bottom: 6px;
+  font-size: 11px;
+  color: rgba(0,0,0,0.2);
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* ヘッダー */
 .portal-header {
   position: relative;
@@ -773,7 +783,6 @@ body.portal-page {
 }
 
 .board-card-secret-note {
-  margin: 6px 0 0;
   font-size: 11px;
   color: #8a6d00;
 }

@@ -878,6 +878,8 @@ function buildCard(post, { mine, matchPercent }) {
     body.appendChild(nameEl);
   }
 
+  const { rows, secretLabels } = getDisplayFields(post, mine);
+
   const head = document.createElement('div');
   head.className = 'board-card-head';
 
@@ -886,6 +888,13 @@ function buildCard(post, { mine, matchPercent }) {
     matchBadge.className = 'board-card-match-badge';
     matchBadge.textContent = s().matchLabel(matchPercent);
     head.appendChild(matchBadge);
+  }
+
+  if (secretLabels.length) {
+    const note = document.createElement('span');
+    note.className = 'board-card-secret-note';
+    note.textContent = s().secretFieldsNote(secretLabels.join(currentLang() === 'en' ? ', ' : '、'));
+    head.appendChild(note);
   }
 
   const uidVisible = mine
@@ -901,7 +910,6 @@ function buildCard(post, { mine, matchPercent }) {
 
   body.appendChild(head);
 
-  const { rows, secretLabels } = getDisplayFields(post, mine);
   const savedImageRows = rows.filter((row) => row.savedImageSite);
   const chipRows = rows.filter((row) => !row.savedImageSite);
   // フォームの見出し(基本情報/あなたについて/連絡・時間帯/ボイスチャット/つながれるSNS)に
@@ -985,12 +993,6 @@ function buildCard(post, { mine, matchPercent }) {
       });
     }, { once: true });
   });
-  if (secretLabels.length) {
-    const note = document.createElement('p');
-    note.className = 'board-card-secret-note';
-    note.textContent = s().secretFieldsNote(secretLabels.join(currentLang() === 'en' ? ', ' : '、'));
-    body.appendChild(note);
-  }
 
   const comment = document.createElement('p');
   comment.className = 'board-card-comment';

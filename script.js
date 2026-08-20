@@ -44,7 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const dict = {
     ja: {
       homeTitle: "フレンド募集掲示板",
-      headerSub: "原神のフレンド募集・co-op相手探しはこちらから",
       accountLink: "アカウント管理（登録は任意です）",
       langJa: "JP",
       langEn: "EN",
@@ -219,7 +218,6 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     en: {
       homeTitle: "Friend Board",
-      headerSub: "Find Genshin Impact friends and co-op partners here",
       accountLink: "Account Center (registration optional)",
       langJa: "JP",
       langEn: "EN",
