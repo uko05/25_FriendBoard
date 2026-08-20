@@ -89,10 +89,10 @@ export function fieldLabel(key, lang) {
 
 const OPTION_LABELS = {
   server: {
-    asia: { ja: 'アジア', en: 'Asia' },
-    america: { ja: '北米', en: 'America' },
-    europe: { ja: '欧州', en: 'Europe' },
-    sar: { ja: '香港・マカオ・台湾', en: 'HK/MO/TW' },
+    asia: { ja: 'Asia', en: 'Asia' },
+    america: { ja: 'America', en: 'America' },
+    europe: { ja: 'Europe', en: 'Europe' },
+    sar: { ja: 'TW,HK,MO', en: 'TW,HK,MO' },
   },
   gender: {
     male: { ja: '男性', en: 'Male' },

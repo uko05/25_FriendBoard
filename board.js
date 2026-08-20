@@ -26,7 +26,7 @@ const ADMIN_UID = 'UPInlRxp2eM8OI3p18UU1d3OzNc2';
 
 const STR = {
   ja: {
-    serverLabels: { asia: 'アジア', america: '北米', europe: '欧州', sar: '香港・マカオ・台湾' },
+    serverLabels: { asia: 'Asia', america: 'America', europe: 'Europe', sar: 'TW,HK,MO' },
     justNow: 'たった今',
     minAgo: (n) => `${n}分前`,
     hourAgo: (n) => `${n}時間前`,
@@ -57,7 +57,7 @@ const STR = {
     matchLabel: (pct) => `マッチ度 ${pct}%`,
   },
   en: {
-    serverLabels: { asia: 'Asia', america: 'America', europe: 'Europe', sar: 'HK/MO/TW' },
+    serverLabels: { asia: 'Asia', america: 'America', europe: 'Europe', sar: 'TW,HK,MO' },
     justNow: 'just now',
     minAgo: (n) => `${n}m ago`,
     hourAgo: (n) => `${n}h ago`,

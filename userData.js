@@ -70,7 +70,7 @@ export function waitForAccountLink() {
 export const store = {
   genshinUid: '',
   displayName: '',
-  server: '',
+  server: 'asia',
   intro: '', // 募集コメントの既定値（次回の募集フォームにも自動反映される）
   adventureRank: 60,
   worldLevel: 9,
