@@ -47,7 +47,6 @@ const STR = {
     applyOk: '申請しました！相手が承認するとUIDが確認できます。',
     applyFail: '申請に失敗しました。時間をおいて再度お試しください。',
     applyProfileIncomplete: '先に原神UID・サーバーを入力・保存してください（「マイプロフィール」タブから保存してください）。',
-    approvalBadge: '承認制',
     visPublic: '公開',
     visHidden: '非公開',
     visApproval: '承認後に公開',
@@ -78,7 +77,6 @@ const STR = {
     applyOk: 'Request sent! You can see their UID once they accept.',
     applyFail: 'Failed to apply. Please try again later.',
     applyProfileIncomplete: 'Please fill in and save your Genshin UID and server first (save on the "My Profile" tab).',
-    approvalBadge: 'Vetted',
     visPublic: 'Public',
     visHidden: 'Hidden',
     visApproval: 'Visible after approval',
@@ -776,7 +774,9 @@ function getDisplayFields(post, mine) {
       pushFieldRow(rows, key, store[key], lang, ownerUserId);
     } else {
       if (post.secretFieldKeys?.includes(key)) {
-        secretLabels.push(fieldLabel(key, lang));
+        // 原神UID・名前は誰でも常に承認後公開のため、都度の注記には出さず
+        // 検索一覧上部の固定の注記(searchApprovalNote)でまとめて案内する
+        if (key !== 'genshinUid' && key !== 'displayName') secretLabels.push(fieldLabel(key, lang));
         return;
       }
       if (headFields.has(key)) return;
@@ -854,13 +854,6 @@ function buildCard(post, { mine, matchPercent }) {
     serverTag.className = 'board-card-server';
     serverTag.textContent = s().serverLabels[serverValue] || serverValue;
     head.appendChild(serverTag);
-  }
-
-  if (post.requiresApproval) {
-    const badge = document.createElement('span');
-    badge.className = 'board-card-approval-badge';
-    badge.textContent = s().approvalBadge;
-    head.appendChild(badge);
   }
 
   if (!mine && matchPercent != null) {
@@ -1037,17 +1030,16 @@ function startMyListingListener() {
 }
 
 // ===== 検索一覧(さがす) =====
+// サーバーが違うと実際にフレンドになれないため、自分と同じサーバーのユーザーのみを表示する(必須の絞り込み)。
 let latestSearchPosts = [];
-const filterServerSelect = document.getElementById('filter-server');
 
 function renderSearchList() {
   const list = document.getElementById('search-list');
   if (!list) return;
   const myUserId = getUserId();
-  const filterServer = filterServerSelect ? filterServerSelect.value : '';
 
   const filtered = latestSearchPosts
-    .filter((post) => !filterServer || post.publicFields?.server === filterServer)
+    .filter((post) => post.userId === myUserId || post.publicFields?.server === store.server)
     .map((post) => ({
       post,
       // 自分の「どういうフレンドがほしい？」と相手の公開フィールドを突き合わせてマッチ度を計算する。
@@ -1085,8 +1077,6 @@ function startSearchListener() {
     renderSearchList();
   });
 }
-
-filterServerSelect?.addEventListener('change', renderSearchList);
 
 // アバター変更時、自分のリスティング(投稿時点のアバターを非正規化済み)にも反映する。
 // 1ユーザー1件なので対象ドキュメントは常に自分のuserId。まだ保存前(リスティング未作成)

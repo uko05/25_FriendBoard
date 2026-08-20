@@ -205,8 +205,8 @@ document.addEventListener("DOMContentLoaded", () => {
       myPostsTitle: "現在の公開状況",
 
       searchTitle: "募集をさがす",
-      filterServerLabel: "サーバーで絞り込み",
-      filterAll: "すべて",
+      searchServerNote: "あなたと同じサーバーのユーザーのみ表示されます",
+      searchApprovalNote: "原神UID・名前は承認後に確認できます",
 
       requestsTitle: "申請の管理",
       requestsDesc: "気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。",
@@ -378,8 +378,8 @@ document.addEventListener("DOMContentLoaded", () => {
       myPostsTitle: "Current Status",
 
       searchTitle: "Search recruitment posts",
-      filterServerLabel: "Filter by server",
-      filterAll: "All",
+      searchServerNote: "Only users on the same server as you are shown",
+      searchApprovalNote: "Genshin UID and name are visible after approval",
 
       requestsTitle: "Manage requests",
       requestsDesc: "Apply to a post you're interested in and the poster gets notified. Once they accept, you'll be able to see their Genshin UID.",
