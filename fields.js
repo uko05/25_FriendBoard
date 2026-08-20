@@ -167,6 +167,16 @@ const OPTION_LABELS = {
   },
 };
 
+const DAY_LABELS = {
+  mon: { ja: '月', en: 'Mon' },
+  tue: { ja: '火', en: 'Tue' },
+  wed: { ja: '水', en: 'Wed' },
+  thu: { ja: '木', en: 'Thu' },
+  fri: { ja: '金', en: 'Fri' },
+  sat: { ja: '土', en: 'Sat' },
+  sun: { ja: '日', en: 'Sun' },
+};
+
 function optionLabel(key, value, lang) {
   const group = OPTION_LABELS[key];
   if (!group) return String(value);
@@ -176,7 +186,11 @@ function optionLabel(key, value, lang) {
 
 function isEmptyValue(v) {
   if (Array.isArray(v)) return v.length === 0;
-  if (v && typeof v === 'object') return !v.start && !v.end;
+  if (v && typeof v === 'object') {
+    if ('start' in v || 'end' in v) return !v.start && !v.end;
+    // 曜日単位の時間帯({月: {start,end}, ...}): 全曜日が未入力なら空
+    return Object.values(v).every((d) => !d || (!d.start && !d.end));
+  }
   return v === '' || v == null;
 }
 
@@ -260,7 +274,15 @@ export function formatFieldValue(key, value, lang) {
   if (key === 'adventureRank') return `AR ${value}`;
   if (key === 'worldLevel') return `WL ${value}`;
   if (key === 'weekdayTimes' || key === 'weekendTimes') {
-    return `${value.start || '?'} ~ ${value.end || '?'}`;
+    if ('start' in value || 'end' in value) {
+      return `${value.start || '?'} ~ ${value.end || '?'}`;
+    }
+    // 曜日単位: 入力済みの曜日だけを「月 20:00~24:00」のように並べる
+    const order = key === 'weekdayTimes' ? ['mon', 'tue', 'wed', 'thu', 'fri'] : ['sat', 'sun'];
+    return order
+      .filter((d) => value[d] && (value[d].start || value[d].end))
+      .map((d) => `${DAY_LABELS[d][lang === 'en' ? 'en' : 'ja']} ${value[d].start || '?'}~${value[d].end || '?'}`)
+      .join(lang === 'en' ? ', ' : '、');
   }
   if (Array.isArray(value)) {
     if (!value.length) return '';

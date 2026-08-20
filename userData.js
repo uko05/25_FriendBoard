@@ -100,13 +100,17 @@ export const store = {
   lineId: '',
   instagramId: '',
   weekdayTimes: { start: '', end: '' },
+  weekdayTimesByDay: false, // trueなら曜日単位({mon:{start,end}, tue:{...}, ...})
   weekendTimes: { start: '', end: '' },
+  weekendTimesByDay: false, // trueなら曜日単位({sat:{start,end}, sun:{...}})
   friendPreference: [],
   visibility: defaultVisibility(), // 項目名 -> 'hidden' | 'public' | 'approval'
 };
 
 const ARRAY_FIELDS = ['platforms', 'oshiChars', 'playStyles', 'vcApps', 'sameOshiChars', 'friendPreference'];
 const TIME_RANGE_FIELDS = ['weekdayTimes', 'weekendTimes'];
+// 曜日単位({曜日: {start,end}})のときに使う曜日キー一覧
+const TIME_RANGE_DAY_KEYS = { weekdayTimes: ['mon', 'tue', 'wed', 'thu', 'fri'], weekendTimes: ['sat', 'sun'] };
 
 export async function loadProfileFromFirestore() {
   try {
@@ -140,9 +144,22 @@ export async function loadProfileFromFirestore() {
       if (d.playStylesOtherText != null) store.playStylesOtherText = d.playStylesOtherText;
       if (d.showGenshinRanking != null) store.showGenshinRanking = !!d.showGenshinRanking;
       if (d.showGenshinCheck != null) store.showGenshinCheck = !!d.showGenshinCheck;
+      if (d.weekdayTimesByDay != null) store.weekdayTimesByDay = !!d.weekdayTimesByDay;
+      if (d.weekendTimesByDay != null) store.weekendTimesByDay = !!d.weekendTimesByDay;
       ARRAY_FIELDS.forEach((k) => { if (Array.isArray(d[k])) store[k] = d[k]; });
       TIME_RANGE_FIELDS.forEach((k) => {
-        if (d[k] && typeof d[k] === 'object') store[k] = { start: d[k].start || '', end: d[k].end || '' };
+        if (!d[k] || typeof d[k] !== 'object') return;
+        const byDay = k === 'weekdayTimes' ? store.weekdayTimesByDay : store.weekendTimesByDay;
+        if (byDay) {
+          const out = {};
+          TIME_RANGE_DAY_KEYS[k].forEach((day) => {
+            const dv = d[k][day] || {};
+            out[day] = { start: dv.start || '', end: dv.end || '' };
+          });
+          store[k] = out;
+        } else {
+          store[k] = { start: d[k].start || '', end: d[k].end || '' };
+        }
       });
       if (d.visibility && typeof d.visibility === 'object') {
         VISIBILITY_FIELDS.forEach((k) => {
@@ -192,7 +209,9 @@ export async function syncProfileToFirestore() {
       lineId: store.lineId,
       instagramId: store.instagramId,
       weekdayTimes: store.weekdayTimes,
+      weekdayTimesByDay: store.weekdayTimesByDay,
       weekendTimes: store.weekendTimes,
+      weekendTimesByDay: store.weekendTimesByDay,
       friendPreference: store.friendPreference,
       visibility: store.visibility,
       updatedAt: serverTimestamp(),

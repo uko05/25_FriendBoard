@@ -132,6 +132,18 @@ const weekdayStartInput = document.getElementById('weekday-start');
 const weekdayEndInput = document.getElementById('weekday-end');
 const weekendStartInput = document.getElementById('weekend-start');
 const weekendEndInput = document.getElementById('weekend-end');
+const weekdayByDayInput = document.getElementById('weekday-by-day');
+const weekendByDayInput = document.getElementById('weekend-by-day');
+const WEEKDAY_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri'];
+const WEEKEND_DAYS = ['sat', 'sun'];
+const weekdayDayInputs = Object.fromEntries(WEEKDAY_DAYS.map((d) => [d, {
+  start: document.getElementById(`weekday-${d}-start`),
+  end: document.getElementById(`weekday-${d}-end`),
+}]));
+const weekendDayInputs = Object.fromEntries(WEEKEND_DAYS.map((d) => [d, {
+  start: document.getElementById(`weekend-${d}-start`),
+  end: document.getElementById(`weekend-${d}-end`),
+}]));
 
 function getRadioValue(name) {
   const el = document.querySelector(`input[name="${name}"]:checked`);
@@ -187,6 +199,8 @@ function populateNumberAndTimeSelects() {
   populateNumberSelect(arInput, 1, 60);
   populateNumberSelect(wlInput, 0, 9);
   [weekdayStartInput, weekdayEndInput, weekendStartInput, weekendEndInput].forEach(populateTimeSelect);
+  WEEKDAY_DAYS.forEach((d) => { populateTimeSelect(weekdayDayInputs[d].start); populateTimeSelect(weekdayDayInputs[d].end); });
+  WEEKEND_DAYS.forEach((d) => { populateTimeSelect(weekendDayInputs[d].start); populateTimeSelect(weekendDayInputs[d].end); });
 }
 
 // VCが「可能」の場合だけVC利用アプリ・通話スタイル一式を表示する
@@ -231,6 +245,19 @@ document.getElementById('group-vc')?.addEventListener('change', () => {
 document.getElementById('group-vcApps')?.addEventListener('change', updateVcAppsOtherEnabled);
 document.getElementById('group-playStyles')?.addEventListener('change', updatePlayStylesOtherEnabled);
 document.getElementById('group-multiFrequency')?.addEventListener('change', updateMultiFrequencyNoteEnabled);
+// 「曜日単位」チェックで、平日/休日それぞれ単一の時間帯入力と曜日別の入力を切り替える
+function updateWeekdayByDayVisibility() {
+  const enabled = !!weekdayByDayInput?.checked;
+  document.getElementById('weekday-range-row')?.classList.toggle('hidden', enabled);
+  document.getElementById('weekday-byday-rows')?.classList.toggle('hidden', !enabled);
+}
+function updateWeekendByDayVisibility() {
+  const enabled = !!weekendByDayInput?.checked;
+  document.getElementById('weekend-range-row')?.classList.toggle('hidden', enabled);
+  document.getElementById('weekend-byday-rows')?.classList.toggle('hidden', !enabled);
+}
+weekdayByDayInput?.addEventListener('change', updateWeekdayByDayVisibility);
+weekendByDayInput?.addEventListener('change', updateWeekendByDayVisibility);
 
 // ===== 保存画像(推しキャラランキング/チェックシート)のライブプレビュー =====
 const SAVED_IMAGE_NOT_SAVED_YET_HTML = {
@@ -301,10 +328,28 @@ function fillFormFromProfile() {
   if (multiFrequencyNoteInput && store.multiFrequencyNote) multiFrequencyNoteInput.value = store.multiFrequencyNote;
   if (showGenshinRankingInput) showGenshinRankingInput.checked = !!store.showGenshinRanking;
   if (showGenshinCheckInput) showGenshinCheckInput.checked = !!store.showGenshinCheck;
-  if (weekdayStartInput) weekdayStartInput.value = store.weekdayTimes?.start || '';
-  if (weekdayEndInput) weekdayEndInput.value = store.weekdayTimes?.end || '';
-  if (weekendStartInput) weekendStartInput.value = store.weekendTimes?.start || '';
-  if (weekendEndInput) weekendEndInput.value = store.weekendTimes?.end || '';
+  if (weekdayByDayInput) weekdayByDayInput.checked = !!store.weekdayTimesByDay;
+  if (store.weekdayTimesByDay) {
+    WEEKDAY_DAYS.forEach((d) => {
+      const dv = store.weekdayTimes?.[d] || {};
+      if (weekdayDayInputs[d].start) weekdayDayInputs[d].start.value = dv.start || '';
+      if (weekdayDayInputs[d].end) weekdayDayInputs[d].end.value = dv.end || '';
+    });
+  } else {
+    if (weekdayStartInput) weekdayStartInput.value = store.weekdayTimes?.start || '';
+    if (weekdayEndInput) weekdayEndInput.value = store.weekdayTimes?.end || '';
+  }
+  if (weekendByDayInput) weekendByDayInput.checked = !!store.weekendTimesByDay;
+  if (store.weekendTimesByDay) {
+    WEEKEND_DAYS.forEach((d) => {
+      const dv = store.weekendTimes?.[d] || {};
+      if (weekendDayInputs[d].start) weekendDayInputs[d].start.value = dv.start || '';
+      if (weekendDayInputs[d].end) weekendDayInputs[d].end.value = dv.end || '';
+    });
+  } else {
+    if (weekendStartInput) weekendStartInput.value = store.weekendTimes?.start || '';
+    if (weekendEndInput) weekendEndInput.value = store.weekendTimes?.end || '';
+  }
 
   setRadioValue('gender', store.gender);
   setRadioValue('ageGroup', store.ageGroup);
@@ -322,6 +367,8 @@ function fillFormFromProfile() {
   updateVcAppsOtherEnabled();
   updatePlayStylesOtherEnabled();
   updateMultiFrequencyNoteEnabled();
+  updateWeekdayByDayVisibility();
+  updateWeekendByDayVisibility();
   updateSameOshiCharsVisibility();
   refreshGenshinRankingPreview();
   refreshGenshinCheckPreview();
@@ -569,6 +616,8 @@ function collectFormValues() {
   // 古い入力値が残っていても投稿には含めない
   const vcOpen = getRadioValue('vc') === 'yes';
   const sameOshiReject = vcOpen && !!sameOshiRejectInput?.checked;
+  const weekdayByDay = !!weekdayByDayInput?.checked;
+  const weekendByDay = !!weekendByDayInput?.checked;
 
   return {
     genshinUid: uidInput.value.trim(),
@@ -601,10 +650,24 @@ function collectFormValues() {
     tiktokId: tiktokInput?.value.trim() || '',
     lineId: lineInput?.value.trim() || '',
     instagramId: instagramInput?.value.trim() || '',
-    weekdayTimes: { start: weekdayStartInput?.value || '', end: weekdayEndInput?.value || '' },
-    weekendTimes: { start: weekendStartInput?.value || '', end: weekendEndInput?.value || '' },
+    weekdayTimes: weekdayByDay
+      ? Object.fromEntries(WEEKDAY_DAYS.map((d) => [d, { start: weekdayDayInputs[d].start?.value || '', end: weekdayDayInputs[d].end?.value || '' }]))
+      : { start: weekdayStartInput?.value || '', end: weekdayEndInput?.value || '' },
+    weekdayTimesByDay: weekdayByDay,
+    weekendTimes: weekendByDay
+      ? Object.fromEntries(WEEKEND_DAYS.map((d) => [d, { start: weekendDayInputs[d].start?.value || '', end: weekendDayInputs[d].end?.value || '' }]))
+      : { start: weekendStartInput?.value || '', end: weekendEndInput?.value || '' },
+    weekendTimesByDay: weekendByDay,
     friendPreference: getCheckboxValues('friendPreference'),
   };
+}
+
+// weekdayTimes/weekendTimesは通常{start,end}だが、曜日単位のときは{mon:{start,end},...}になる。
+// どちらの形でも、最低1つの時間帯(範囲、または曜日のいずれか)が入力されていればOKとする。
+function timesFieldFilled(v) {
+  if (!v || typeof v !== 'object') return false;
+  if ('start' in v || 'end' in v) return !!(v.start && v.end);
+  return Object.values(v).some((d) => d && d.start && d.end);
 }
 
 postForm?.addEventListener('submit', async (e) => {
@@ -612,7 +675,7 @@ postForm?.addEventListener('submit', async (e) => {
   const values = collectFormValues();
   const comment = commentInput.value.trim();
 
-  if (!values.genshinUid || !values.server) {
+  if (!values.genshinUid || !values.server || !timesFieldFilled(values.weekdayTimes) || !timesFieldFilled(values.weekendTimes)) {
     showMsg(postFormMsg, s().fillAll, true);
     return;
   }

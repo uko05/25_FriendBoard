@@ -476,6 +476,25 @@ body.portal-page {
   flex-shrink: 0;
 }
 
+.board-time-byday {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.board-time-byday-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.board-time-byday-label {
+  width: 24px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: bold;
+  color: #666;
+}
+
 .board-substyle-framed {
   margin-top: 10px;
   padding: 10px 12px;
@@ -505,6 +524,17 @@ body.portal-page {
 .board-required-mark {
   color: #e53935;
   margin-left: 2px;
+}
+
+.board-form-row-head-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: normal;
+  color: #666;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .board-visibility-select {

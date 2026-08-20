@@ -232,24 +232,72 @@
                 <div class="board-form-row">
                     <div class="board-form-row-head">
                         <span><span data-i18n="labelWeekdayTimes">平日のマルチ可能時間帯</span><span class="board-required-mark">＊</span></span>
+                        <label class="board-form-row-head-check"><input type="checkbox" id="weekday-by-day" /><span data-i18n="labelByDay">曜日単位</span></label>
                         <select class="board-visibility-select" id="vis-weekdayTimes" data-field="weekdayTimes"></select>
                     </div>
-                    <div class="board-time-range">
-                        <select id="weekday-start" class="board-time-select" required></select>
+                    <div class="board-time-range" id="weekday-range-row">
+                        <select id="weekday-start" class="board-time-select"></select>
                         <span class="board-time-tilde">〜</span>
-                        <select id="weekday-end" class="board-time-select" required></select>
+                        <select id="weekday-end" class="board-time-select"></select>
+                    </div>
+                    <div class="board-time-byday hidden" id="weekday-byday-rows">
+                        <div class="board-time-byday-row">
+                            <span class="board-time-byday-label" data-i18n="dayMon">月</span>
+                            <select id="weekday-mon-start" class="board-time-select"></select>
+                            <span class="board-time-tilde">〜</span>
+                            <select id="weekday-mon-end" class="board-time-select"></select>
+                        </div>
+                        <div class="board-time-byday-row">
+                            <span class="board-time-byday-label" data-i18n="dayTue">火</span>
+                            <select id="weekday-tue-start" class="board-time-select"></select>
+                            <span class="board-time-tilde">〜</span>
+                            <select id="weekday-tue-end" class="board-time-select"></select>
+                        </div>
+                        <div class="board-time-byday-row">
+                            <span class="board-time-byday-label" data-i18n="dayWed">水</span>
+                            <select id="weekday-wed-start" class="board-time-select"></select>
+                            <span class="board-time-tilde">〜</span>
+                            <select id="weekday-wed-end" class="board-time-select"></select>
+                        </div>
+                        <div class="board-time-byday-row">
+                            <span class="board-time-byday-label" data-i18n="dayThu">木</span>
+                            <select id="weekday-thu-start" class="board-time-select"></select>
+                            <span class="board-time-tilde">〜</span>
+                            <select id="weekday-thu-end" class="board-time-select"></select>
+                        </div>
+                        <div class="board-time-byday-row">
+                            <span class="board-time-byday-label" data-i18n="dayFri">金</span>
+                            <select id="weekday-fri-start" class="board-time-select"></select>
+                            <span class="board-time-tilde">〜</span>
+                            <select id="weekday-fri-end" class="board-time-select"></select>
+                        </div>
                     </div>
                 </div>
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
                         <span><span data-i18n="labelWeekendTimes">休日のマルチ可能時間帯</span><span class="board-required-mark">＊</span></span>
+                        <label class="board-form-row-head-check"><input type="checkbox" id="weekend-by-day" /><span data-i18n="labelByDay">曜日単位</span></label>
                         <select class="board-visibility-select" id="vis-weekendTimes" data-field="weekendTimes"></select>
                     </div>
-                    <div class="board-time-range">
-                        <select id="weekend-start" class="board-time-select" required></select>
+                    <div class="board-time-range" id="weekend-range-row">
+                        <select id="weekend-start" class="board-time-select"></select>
                         <span class="board-time-tilde">〜</span>
-                        <select id="weekend-end" class="board-time-select" required></select>
+                        <select id="weekend-end" class="board-time-select"></select>
+                    </div>
+                    <div class="board-time-byday hidden" id="weekend-byday-rows">
+                        <div class="board-time-byday-row">
+                            <span class="board-time-byday-label" data-i18n="daySat">土</span>
+                            <select id="weekend-sat-start" class="board-time-select"></select>
+                            <span class="board-time-tilde">〜</span>
+                            <select id="weekend-sat-end" class="board-time-select"></select>
+                        </div>
+                        <div class="board-time-byday-row">
+                            <span class="board-time-byday-label" data-i18n="daySun">日</span>
+                            <select id="weekend-sun-start" class="board-time-select"></select>
+                            <span class="board-time-tilde">〜</span>
+                            <select id="weekend-sun-end" class="board-time-select"></select>
+                        </div>
                     </div>
                 </div>
 
