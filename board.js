@@ -55,6 +55,7 @@ const STR = {
     secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
     matchLabel: (pct) => `マッチ度 ${pct}%`,
     savedImageShowLabel: { genshinRanking: '推しキャラランキングを表示', genshinCheck: '原神チェックシートを表示' },
+    groupTitles: { basic: '基本情報', style: 'あなたについて', contact: '連絡・時間帯', voice: 'ボイスチャット', sns: 'つながれるSNS' },
   },
   en: {
     justNow: 'just now',
@@ -86,6 +87,7 @@ const STR = {
     secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
     matchLabel: (pct) => `${pct}% match`,
     savedImageShowLabel: { genshinRanking: 'Show Genshin Character Ranking', genshinCheck: 'Show Genshin Check Sheet' },
+    groupTitles: { basic: 'Basic Info', style: 'About You', contact: 'Contact & Availability', voice: 'Voice Chat', sns: 'SNS' },
   },
 };
 
@@ -909,6 +911,10 @@ function buildCard(post, { mine, matchPercent }) {
     if (!groupRows.length) return;
     const box = document.createElement('div');
     box.className = 'board-card-group';
+    const title = document.createElement('p');
+    title.className = 'board-card-group-title';
+    title.textContent = s().groupTitles[group.key] || group.key;
+    box.appendChild(title);
     const chips = document.createElement('div');
     chips.className = 'board-card-chips';
     groupRows.forEach((row) => {
