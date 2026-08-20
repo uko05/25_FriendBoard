@@ -271,7 +271,7 @@ export function formatFieldValue(key, value, lang) {
   if (key === 'sameOshiReject') {
     return value ? (lang === 'en' ? 'Yes' : 'あり') : '';
   }
-  if (key === 'adventureRank') return `AR ${value}`;
+  if (key === 'adventureRank') return String(value);
   if (key === 'worldLevel') return String(value);
   if (key === 'weekdayTimes' || key === 'weekendTimes') {
     if ('start' in value || 'end' in value) {

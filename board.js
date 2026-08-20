@@ -41,6 +41,7 @@ const STR = {
     draftSaveFail: '一時保存に失敗しました。',
     deleteFail: '取り下げに失敗しました。',
     fillAll: '必須項目（＊）をすべて入力してください。',
+    fillAllMissing: (labels) => `必須項目（＊）をすべて入力してください。\n不足している項目: ${labels}`,
     uidLabel: 'UID',
     applyBtn: '申請する',
     appliedBtn: '申請済み',
@@ -54,6 +55,7 @@ const STR = {
     oshiPickerFull: '推しキャラは3人まで選べます',
     secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
     matchLabel: (pct) => `マッチ度 ${pct}%`,
+    savedImageShowLabel: { genshinRanking: '推しキャラランキングを表示', genshinCheck: '原神チェックシートを表示' },
   },
   en: {
     serverLabels: { asia: 'Asia', america: 'America', europe: 'Europe', sar: 'TW,HK,MO' },
@@ -71,6 +73,7 @@ const STR = {
     draftSaveFail: 'Failed to save draft.',
     deleteFail: 'Failed to withdraw.',
     fillAll: 'Please fill in all required (＊) fields.',
+    fillAllMissing: (labels) => `Please fill in all required (＊) fields.\nMissing: ${labels}`,
     uidLabel: 'UID',
     applyBtn: 'Apply',
     appliedBtn: 'Applied',
@@ -84,6 +87,7 @@ const STR = {
     oshiPickerFull: 'You can select up to 3 favorite characters',
     secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
     matchLabel: (pct) => `${pct}% match`,
+    savedImageShowLabel: { genshinRanking: 'Show Genshin Character Ranking', genshinCheck: 'Show Genshin Check Sheet' },
   },
 };
 
@@ -700,13 +704,40 @@ function timesFieldFilled(v) {
   return Object.values(v).some((d) => d && d.active !== false && d.start && d.end);
 }
 
+// 必須項目(＊)一覧。未入力があれば足りない項目名を案内し、最初の1つまでスクロールする。
+const REQUIRED_FIELDS = [
+  { key: 'displayName', el: displayNameInput, filled: (v) => !!v.displayName },
+  { key: 'genshinUid', el: uidInput, filled: (v) => !!v.genshinUid },
+  { key: 'server', el: serverInput, filled: (v) => !!v.server },
+  { key: 'gender', el: document.getElementById('group-gender'), filled: (v) => !!v.gender },
+  { key: 'ageGroup', el: document.getElementById('group-ageGroup'), filled: (v) => !!v.ageGroup },
+  {
+    key: 'weekdayTimes',
+    el: () => document.getElementById(weekdayByDayInput?.checked ? 'weekday-byday-rows' : 'weekday-range-row'),
+    filled: (v) => timesFieldFilled(v.weekdayTimes),
+  },
+  {
+    key: 'weekendTimes',
+    el: () => document.getElementById(weekendByDayInput?.checked ? 'weekend-byday-rows' : 'weekend-range-row'),
+    filled: (v) => timesFieldFilled(v.weekendTimes),
+  },
+  { key: 'inviteStyle', el: document.getElementById('group-inviteStyle'), filled: (v) => !!v.inviteStyle },
+  { key: 'multiFrequency', el: document.getElementById('group-multiFrequency'), filled: (v) => !!v.multiFrequency },
+  { key: 'vc', el: document.getElementById('group-vc'), filled: (v) => !!v.vc },
+];
+
 postForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   const values = collectFormValues();
   const comment = commentInput.value.trim();
 
-  if (!values.genshinUid || !values.server || !timesFieldFilled(values.weekdayTimes) || !timesFieldFilled(values.weekendTimes)) {
-    showMsg(postFormMsg, s().fillAll, true);
+  const missing = REQUIRED_FIELDS.filter((f) => !f.filled(values));
+  if (missing.length) {
+    const lang = currentLang();
+    const labels = missing.map((f) => fieldLabel(f.key, lang)).join(lang === 'en' ? ', ' : '、');
+    showMsg(postFormMsg, s().fillAllMissing(labels), true);
+    const target = typeof missing[0].el === 'function' ? missing[0].el() : missing[0].el;
+    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
@@ -907,20 +938,47 @@ function buildCard(post, { mine, matchPercent }) {
   savedImageRows.forEach((row) => {
     const wrap = document.createElement('div');
     wrap.className = 'board-card-saved-image';
-    const img = document.createElement('img');
-    img.className = 'board-card-saved-image-img';
-    img.alt = '';
-    img.loading = 'lazy';
-    wrap.appendChild(img);
     body.appendChild(wrap);
-    getSavedProfileImageFor(row.savedImageSite, row.ownerUserId).then((entry) => {
-      if (entry) {
-        img.src = entry.url;
-        img.addEventListener('load', () => { img.style.width = `${img.naturalWidth * 0.3}px`; });
-      } else {
-        wrap.remove();
-      }
-    });
+
+    if (mine) {
+      // 自分のプレビュー(マイプロフィールタブ)は従来通り即表示
+      const img = document.createElement('img');
+      img.className = 'board-card-saved-image-img';
+      img.alt = '';
+      img.loading = 'lazy';
+      wrap.appendChild(img);
+      getSavedProfileImageFor(row.savedImageSite, row.ownerUserId).then((entry) => {
+        if (entry) {
+          img.src = entry.url;
+          img.addEventListener('load', () => { img.style.width = `${img.naturalWidth * 0.3}px`; });
+        } else {
+          wrap.remove();
+        }
+      });
+      return;
+    }
+
+    // さがす一覧では、押すまで画像を読み込み・表示しない
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'board-card-saved-image-toggle';
+    toggleBtn.textContent = s().savedImageShowLabel[row.savedImageSite] || row.savedImageSite;
+    wrap.appendChild(toggleBtn);
+    toggleBtn.addEventListener('click', () => {
+      toggleBtn.disabled = true;
+      getSavedProfileImageFor(row.savedImageSite, row.ownerUserId).then((entry) => {
+        if (entry) {
+          const img = document.createElement('img');
+          img.className = 'board-card-saved-image-img';
+          img.alt = '';
+          img.src = entry.url;
+          img.addEventListener('load', () => { img.style.width = `${img.naturalWidth * 0.3}px`; });
+          wrap.replaceChild(img, toggleBtn);
+        } else {
+          wrap.remove();
+        }
+      });
+    }, { once: true });
   });
   if (secretLabels.length) {
     const note = document.createElement('p');

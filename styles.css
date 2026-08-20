@@ -426,6 +426,7 @@ body.portal-page {
   text-align: center;
   font-size: 13px;
   margin: 0;
+  white-space: pre-line;
 }
 .board-form-msg.ok { color: #2e7d32; }
 .board-form-msg.error { color: #c62828; }
@@ -771,6 +772,23 @@ body.portal-page {
   margin: 0 auto;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 6px;
+}
+
+.board-card-saved-image-toggle {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 16px;
+  border: 1px solid #ffcc00;
+  border-radius: 999px;
+  background: #fff;
+  color: #8a6d00;
+  cursor: pointer;
+}
+.board-card-saved-image-toggle:hover { background: #fff6d9; }
+.board-card-saved-image-toggle:disabled {
+  color: #999;
+  border-color: #ddd;
+  cursor: default;
 }
 
 .board-saved-image-preview {

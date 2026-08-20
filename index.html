@@ -68,7 +68,7 @@
                             <label for="input-displayName"><span data-i18n="labelDisplayName">名前</span><span class="board-required-mark">＊</span></label>
                             <span class="board-fixed-approval-badge" data-i18n="uidAlwaysApproval">🔒承認後に公開</span>
                         </div>
-                        <input type="text" id="input-displayName" name="displayName" maxlength="20" data-i18n-placeholder="displayNamePlaceholder" required />
+                        <input type="text" id="input-displayName" name="displayName" maxlength="20" data-i18n-placeholder="displayNamePlaceholder" />
                     </div>
                 </div>
 
@@ -81,7 +81,7 @@
                             <label for="input-uid"><span data-i18n="labelUid">原神UID</span><span class="board-required-mark">＊</span></label>
                             <span class="board-fixed-approval-badge" data-i18n="uidAlwaysApproval">🔒承認後に公開</span>
                         </div>
-                        <input type="text" id="input-uid" name="genshinUid" inputmode="numeric" maxlength="20" data-i18n-placeholder="uidPlaceholder" required />
+                        <input type="text" id="input-uid" name="genshinUid" inputmode="numeric" maxlength="20" data-i18n-placeholder="uidPlaceholder" />
                     </div>
 
                     <div class="board-form-row">
@@ -89,7 +89,7 @@
                             <label for="input-server" data-i18n="labelServer">サーバー</label>
                             <select class="board-visibility-select" id="vis-server" data-field="server"></select>
                         </div>
-                        <select id="input-server" name="server" required>
+                        <select id="input-server" name="server">
                             <option value="america" data-i18n="serverAmerica">America</option>
                             <option value="europe" data-i18n="serverEurope">Europe</option>
                             <option value="asia" data-i18n="serverAsia" selected>Asia</option>
@@ -122,8 +122,8 @@
                         <select class="board-visibility-select" id="vis-gender" data-field="gender"></select>
                     </div>
                     <div class="board-radio-group" id="group-gender">
-                        <label><input type="radio" name="gender" value="male" required /><span data-i18n="genderMale">男性</span></label>
-                        <label><input type="radio" name="gender" value="female" required /><span data-i18n="genderFemale">女性</span></label>
+                        <label><input type="radio" name="gender" value="male" /><span data-i18n="genderMale">男性</span></label>
+                        <label><input type="radio" name="gender" value="female" /><span data-i18n="genderFemale">女性</span></label>
                     </div>
                 </div>
 
@@ -133,8 +133,8 @@
                         <select class="board-visibility-select" id="vis-ageGroup" data-field="ageGroup"></select>
                     </div>
                     <div class="board-radio-group" id="group-ageGroup">
-                        <label><input type="radio" name="ageGroup" value="adult" required /><span data-i18n="ageAdult">成人</span></label>
-                        <label><input type="radio" name="ageGroup" value="minor" required /><span data-i18n="ageMinor">未成年</span></label>
+                        <label><input type="radio" name="ageGroup" value="adult" /><span data-i18n="ageAdult">成人</span></label>
+                        <label><input type="radio" name="ageGroup" value="minor" /><span data-i18n="ageMinor">未成年</span></label>
                     </div>
                 </div>
 
@@ -314,9 +314,9 @@
                         <select class="board-visibility-select" id="vis-inviteStyle" data-field="inviteStyle"></select>
                     </div>
                     <div class="board-radio-group" id="group-inviteStyle">
-                        <label><input type="radio" name="inviteStyle" value="invite" required /><span data-i18n="inviteInvite">お誘いします！</span></label>
-                        <label><input type="radio" name="inviteStyle" value="either" required /><span data-i18n="inviteEither">お誘いするしお誘いされたい</span></label>
-                        <label><input type="radio" name="inviteStyle" value="invited" required /><span data-i18n="inviteInvited">自発苦手です</span></label>
+                        <label><input type="radio" name="inviteStyle" value="invite" /><span data-i18n="inviteInvite">お誘いします！</span></label>
+                        <label><input type="radio" name="inviteStyle" value="either" /><span data-i18n="inviteEither">お誘いするしお誘いされたい</span></label>
+                        <label><input type="radio" name="inviteStyle" value="invited" /><span data-i18n="inviteInvited">自発苦手です</span></label>
                     </div>
                 </div>
 
@@ -326,11 +326,11 @@
                         <select class="board-visibility-select" id="vis-multiFrequency" data-field="multiFrequency"></select>
                     </div>
                     <div class="board-radio-group" id="group-multiFrequency">
-                        <label><input type="radio" name="multiFrequency" value="anytime" required /><span data-i18n="freqAnytime">オンラインの時ならいつでも可</span></label>
-                        <label><input type="radio" name="multiFrequency" value="daily" required /><span data-i18n="freqDaily">ほぼ毎日</span></label>
-                        <label><input type="radio" name="multiFrequency" value="often" required /><span data-i18n="freqOften">週３～５くらい</span></label>
-                        <label><input type="radio" name="multiFrequency" value="sometimes" required /><span data-i18n="freqSometimes">週１～２くらい</span></label>
-                        <label><input type="radio" name="multiFrequency" value="ask" required /><span data-i18n="freqAsk">要相談</span></label>
+                        <label><input type="radio" name="multiFrequency" value="anytime" /><span data-i18n="freqAnytime">オンラインの時ならいつでも可</span></label>
+                        <label><input type="radio" name="multiFrequency" value="daily" /><span data-i18n="freqDaily">ほぼ毎日</span></label>
+                        <label><input type="radio" name="multiFrequency" value="often" /><span data-i18n="freqOften">週３～５くらい</span></label>
+                        <label><input type="radio" name="multiFrequency" value="sometimes" /><span data-i18n="freqSometimes">週１～２くらい</span></label>
+                        <label><input type="radio" name="multiFrequency" value="ask" /><span data-i18n="freqAsk">要相談</span></label>
                     </div>
                 </div>
 
@@ -351,9 +351,9 @@
                         <select class="board-visibility-select" id="vis-vc" data-field="vc"></select>
                     </div>
                     <div class="board-radio-group" id="group-vc">
-                        <label><input type="radio" name="vc" value="yes" required /><span data-i18n="vcYes">可能</span></label>
-                        <label><input type="radio" name="vc" value="no" required /><span data-i18n="vcNo">不可</span></label>
-                        <label><input type="radio" name="vc" value="maybe" required /><span data-i18n="vcMaybe">相談</span></label>
+                        <label><input type="radio" name="vc" value="yes" /><span data-i18n="vcYes">可能</span></label>
+                        <label><input type="radio" name="vc" value="no" /><span data-i18n="vcNo">不可</span></label>
+                        <label><input type="radio" name="vc" value="maybe" /><span data-i18n="vcMaybe">相談</span></label>
                     </div>
                 </div>
 
