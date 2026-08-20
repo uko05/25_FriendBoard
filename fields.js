@@ -8,7 +8,7 @@ export const VISIBILITY_FIELDS = [
   'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms',
   'oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck',
   'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency', 'multiFrequencyNote',
-  'vc', 'vcNote', 'vcApps', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
+  'vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
   'twitterId', 'tiktokId', 'lineId', 'instagramId',
   'friendPreference',
 ];
@@ -24,6 +24,9 @@ const FIXED_VISIBILITY = {
   playStylesOtherText: 'public',
   showGenshinRanking: 'public',
   showGenshinCheck: 'public',
+  vcDiscordId: 'approval',
+  vcLineId: 'approval',
+  vcAppsOtherText: 'approval',
 };
 
 // 既定の公開設定。genshinUidは常に承認制で固定(フォームにセレクトを出していない)。
@@ -68,6 +71,8 @@ const FIELD_LABELS = {
   vc: { ja: 'VC(ボイスチャット)', en: 'Voice Chat' },
   vcNote: { ja: 'VC相談の詳細', en: 'VC details' },
   vcApps: { ja: 'VC利用アプリ', en: 'VC App' },
+  vcDiscordId: { ja: 'Discord ID', en: 'Discord ID' },
+  vcLineId: { ja: 'LINE ID', en: 'LINE ID' },
   vcAppsOtherText: { ja: 'その他アプリ名', en: 'Other app name' },
   twitterId: { ja: 'ツイッターID', en: 'X (Twitter) ID' },
   tiktokId: { ja: 'TikTok ID', en: 'TikTok ID' },

@@ -90,6 +90,8 @@ export const store = {
   vc: '',
   vcNote: '',
   vcApps: [],
+  vcDiscordId: '',
+  vcLineId: '',
   vcAppsOtherText: '',
   casualOk: '',
   jokingOk: false,
@@ -133,6 +135,8 @@ export async function loadProfileFromFirestore() {
       if (d.workCallOk != null) store.workCallOk = !!d.workCallOk;
       if (d.vc != null) store.vc = d.vc;
       if (d.vcNote != null) store.vcNote = d.vcNote;
+      if (d.vcDiscordId != null) store.vcDiscordId = d.vcDiscordId;
+      if (d.vcLineId != null) store.vcLineId = d.vcLineId;
       if (d.vcAppsOtherText != null) store.vcAppsOtherText = d.vcAppsOtherText;
       if (d.casualOk != null) store.casualOk = d.casualOk;
       if (d.jokingOk != null) store.jokingOk = !!d.jokingOk;
@@ -199,6 +203,8 @@ export async function syncProfileToFirestore() {
       vc: store.vc,
       vcNote: store.vcNote,
       vcApps: store.vcApps,
+      vcDiscordId: store.vcDiscordId,
+      vcLineId: store.vcLineId,
       vcAppsOtherText: store.vcAppsOtherText,
       casualOk: store.casualOk,
       jokingOk: store.jokingOk,

@@ -124,7 +124,10 @@ const instagramInput = document.getElementById('input-instagram');
 const workCallOkInput = document.getElementById('input-workCallOk');
 const jokingOkInput = document.getElementById('input-jokingOk');
 const vcNoteInput = document.getElementById('input-vcNote');
+const vcDiscordIdInput = document.getElementById('input-vcDiscordId');
+const vcLineIdInput = document.getElementById('input-vcLineId');
 const vcAppsOtherInput = document.getElementById('input-vcAppsOtherText');
+const VC_APP_ID_INPUTS = [['discord', vcDiscordIdInput], ['line', vcLineIdInput], ['other', vcAppsOtherInput]];
 const playStylesOtherInput = document.getElementById('input-playStylesOtherText');
 const multiFrequencyNoteInput = document.getElementById('input-multiFrequencyNote');
 const showGenshinRankingInput = document.getElementById('input-showGenshinRanking');
@@ -219,14 +222,17 @@ function updateVcNoteEnabled() {
   if (row) row.classList.toggle('hidden', !enabled);
   if (vcNoteInput && !enabled) vcNoteInput.value = '';
 }
-// VC利用アプリで「その他」を選んだときだけアプリ名入力を有効化する
-function updateVcAppsOtherEnabled() {
-  if (!vcAppsOtherInput) return;
-  const row = document.getElementById('row-vcAppsOtherText');
-  const enabled = getCheckboxValues('vcApps').includes('other');
-  if (row) row.classList.toggle('hidden', !enabled);
-  vcAppsOtherInput.disabled = !enabled;
-  if (!enabled) vcAppsOtherInput.value = '';
+// VC利用アプリのDiscord/LINE/その他は、それぞれチェックが入っている間だけ
+// 隣のID入力欄を有効化する(チェックを外したら値もクリア)
+function updateVcAppIdInputs() {
+  const selected = getCheckboxValues('vcApps');
+  VC_APP_ID_INPUTS.forEach(([value, input]) => {
+    if (!input) return;
+    const enabled = selected.includes(value);
+    input.classList.toggle('hidden', !enabled);
+    input.disabled = !enabled;
+    if (!enabled) input.value = '';
+  });
 }
 // プレイスタイルで「その他」を選んだときだけ詳細入力欄を表示する
 function updatePlayStylesOtherEnabled() {
@@ -246,7 +252,7 @@ document.getElementById('group-vc')?.addEventListener('change', () => {
   updateVcExtraGroupVisibility();
   updateVcNoteEnabled();
 });
-document.getElementById('group-vcApps')?.addEventListener('change', updateVcAppsOtherEnabled);
+document.getElementById('group-vcApps')?.addEventListener('change', updateVcAppIdInputs);
 document.getElementById('group-playStyles')?.addEventListener('change', updatePlayStylesOtherEnabled);
 document.getElementById('group-multiFrequency')?.addEventListener('change', updateMultiFrequencyNoteEnabled);
 // 「曜日単位」チェックで、平日/休日それぞれ単一の時間帯入力と曜日別の入力を切り替える
@@ -343,6 +349,8 @@ function fillFormFromProfile() {
   if (jokingOkInput) jokingOkInput.checked = !!store.jokingOk;
   if (sameOshiRejectInput) sameOshiRejectInput.checked = !!store.sameOshiReject;
   if (vcNoteInput && store.vcNote) vcNoteInput.value = store.vcNote;
+  if (vcDiscordIdInput && store.vcDiscordId) vcDiscordIdInput.value = store.vcDiscordId;
+  if (vcLineIdInput && store.vcLineId) vcLineIdInput.value = store.vcLineId;
   if (vcAppsOtherInput && store.vcAppsOtherText) vcAppsOtherInput.value = store.vcAppsOtherText;
   if (playStylesOtherInput && store.playStylesOtherText) playStylesOtherInput.value = store.playStylesOtherText;
   if (multiFrequencyNoteInput && store.multiFrequencyNote) multiFrequencyNoteInput.value = store.multiFrequencyNote;
@@ -390,7 +398,7 @@ function fillFormFromProfile() {
   setCheckboxValues('friendPreference', store.friendPreference);
   updateVcExtraGroupVisibility();
   updateVcNoteEnabled();
-  updateVcAppsOtherEnabled();
+  updateVcAppIdInputs();
   updatePlayStylesOtherEnabled();
   updateMultiFrequencyNoteEnabled();
   updateWeekdayByDayVisibility();
@@ -667,6 +675,8 @@ function collectFormValues() {
     vc: getRadioValue('vc'),
     vcNote: getRadioValue('vc') === 'maybe' ? (vcNoteInput?.value.trim() || '') : '',
     vcApps: vcOpen ? getCheckboxValues('vcApps') : [],
+    vcDiscordId: (vcOpen && getCheckboxValues('vcApps').includes('discord')) ? (vcDiscordIdInput?.value.trim() || '') : '',
+    vcLineId: (vcOpen && getCheckboxValues('vcApps').includes('line')) ? (vcLineIdInput?.value.trim() || '') : '',
     vcAppsOtherText: (vcOpen && getCheckboxValues('vcApps').includes('other')) ? (vcAppsOtherInput?.value.trim() || '') : '',
     casualOk: vcOpen ? getRadioValue('casualOk') : '',
     jokingOk: vcOpen && !!jokingOkInput?.checked,

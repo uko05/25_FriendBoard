@@ -594,6 +594,29 @@ body.portal-page {
   gap: 8px;
 }
 
+.board-vcapps-group {
+  row-gap: 10px;
+}
+.board-vcapp-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.board-vcapp-id-input {
+  font-family: inherit;
+  font-size: 13px;
+  width: 130px;
+  max-width: 40vw;
+  padding: 5px 8px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 8px;
+}
+.board-vcapps-approval-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #8a6d00;
+}
+
 .board-oshi-picker {
   display: flex;
   align-items: center;
