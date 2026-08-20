@@ -640,6 +640,11 @@ body.portal-page {
   margin: 0 auto;
 }
 
+/* さがす一覧は表示項目が多く縦に伸びやすいため、横幅いっぱいまで広げる */
+#search-list {
+  max-width: none;
+}
+
 .board-card {
   display: flex;
   align-items: flex-start;
