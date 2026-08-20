@@ -13,6 +13,18 @@ export const VISIBILITY_FIELDS = [
   'friendPreference',
 ];
 
+// カード上でチップをカテゴリー別の枠で区切って表示するためのグループ分け。
+// フォームの見出し(基本情報/あなたについて/連絡・時間帯/ボイスチャット/つながれるSNS)と対応させている。
+// genshinUid/displayName/serverはヘッダー側で個別描画、friendPreferenceはチップに出さないため、
+// どちらもここには含めない。
+export const FIELD_GROUPS = [
+  { key: 'basic', fields: ['adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms'] },
+  { key: 'style', fields: ['oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck'] },
+  { key: 'contact', fields: ['weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency', 'multiFrequencyNote'] },
+  { key: 'voice', fields: ['vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk'] },
+  { key: 'sns', fields: ['twitterId', 'tiktokId', 'lineId', 'instagramId'] },
+];
+
 // SNSは「公開」を選ばせず、非公開/承認後に公開/仲良くなったら の3択にする対象
 export const NO_PUBLIC_FIELDS = ['twitterId', 'tiktokId', 'lineId', 'instagramId'];
 

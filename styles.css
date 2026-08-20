@@ -709,16 +709,6 @@ body.portal-page {
   flex-wrap: wrap;
 }
 
-.board-card-server {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: bold;
-  color: #8a6d00;
-  background: #fff6d9;
-  border-radius: 999px;
-  padding: 3px 10px;
-}
-
 .board-card-uid {
   font-size: 13px;
   color: #888;
@@ -734,12 +724,19 @@ body.portal-page {
   padding: 3px 10px;
 }
 
+.board-card-group {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.02);
+}
+
 .board-card-chips {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
-  margin: 8px 0 0;
 }
 
 .board-card-chip {

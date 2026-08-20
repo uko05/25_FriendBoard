@@ -5,7 +5,7 @@ import { db } from './firebaseConfig.js';
 import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink } from './userData.js';
 import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js';
 import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
-import { VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch } from './fields.js';
+import { VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch } from './fields.js';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
@@ -26,7 +26,6 @@ const ADMIN_UID = 'UPInlRxp2eM8OI3p18UU1d3OzNc2';
 
 const STR = {
   ja: {
-    serverLabels: { asia: 'Asia', america: 'America', europe: 'Europe', sar: 'TW,HK,MO' },
     justNow: 'たった今',
     minAgo: (n) => `${n}分前`,
     hourAgo: (n) => `${n}時間前`,
@@ -58,7 +57,6 @@ const STR = {
     savedImageShowLabel: { genshinRanking: '推しキャラランキングを表示', genshinCheck: '原神チェックシートを表示' },
   },
   en: {
-    serverLabels: { asia: 'Asia', america: 'America', europe: 'Europe', sar: 'TW,HK,MO' },
     justNow: 'just now',
     minAgo: (n) => `${n}m ago`,
     hourAgo: (n) => `${n}h ago`,
@@ -881,17 +879,6 @@ function buildCard(post, { mine, matchPercent }) {
   const head = document.createElement('div');
   head.className = 'board-card-head';
 
-  const serverVisible = mine
-    ? (store.visibility.server || 'public') !== 'hidden'
-    : (post.publicFields && 'server' in post.publicFields);
-  const serverValue = mine ? store.server : post.publicFields?.server;
-  if (serverVisible && serverValue) {
-    const serverTag = document.createElement('span');
-    serverTag.className = 'board-card-server';
-    serverTag.textContent = s().serverLabels[serverValue] || serverValue;
-    head.appendChild(serverTag);
-  }
-
   if (!mine && matchPercent != null) {
     const matchBadge = document.createElement('span');
     matchBadge.className = 'board-card-match-badge';
@@ -915,10 +902,16 @@ function buildCard(post, { mine, matchPercent }) {
   const { rows, secretLabels } = getDisplayFields(post, mine);
   const savedImageRows = rows.filter((row) => row.savedImageSite);
   const chipRows = rows.filter((row) => !row.savedImageSite);
-  if (chipRows.length) {
+  // フォームの見出し(基本情報/あなたについて/連絡・時間帯/ボイスチャット/つながれるSNS)に
+  // 対応するカテゴリーごとに枠で区切って表示する(項目が多く雑然として見えるのを防ぐため)
+  FIELD_GROUPS.forEach((group) => {
+    const groupRows = chipRows.filter((row) => group.fields.includes(row.key));
+    if (!groupRows.length) return;
+    const box = document.createElement('div');
+    box.className = 'board-card-group';
     const chips = document.createElement('div');
     chips.className = 'board-card-chips';
-    chipRows.forEach((row) => {
+    groupRows.forEach((row) => {
       if (row.oshiIcons) {
         row.oshiIcons.forEach((icon) => {
           const img = document.createElement('img');
@@ -938,8 +931,9 @@ function buildCard(post, { mine, matchPercent }) {
       chip.textContent = row.text;
       chips.appendChild(chip);
     });
-    body.appendChild(chips);
-  }
+    box.appendChild(chips);
+    body.appendChild(box);
+  });
   savedImageRows.forEach((row) => {
     const wrap = document.createElement('div');
     wrap.className = 'board-card-saved-image';
