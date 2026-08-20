@@ -188,8 +188,8 @@ function isEmptyValue(v) {
   if (Array.isArray(v)) return v.length === 0;
   if (v && typeof v === 'object') {
     if ('start' in v || 'end' in v) return !v.start && !v.end;
-    // 曜日単位の時間帯({月: {start,end}, ...}): 全曜日が未入力なら空
-    return Object.values(v).every((d) => !d || (!d.start && !d.end));
+    // 曜日単位の時間帯({月: {start,end,active}, ...}): 有効な曜日が1つも無ければ空
+    return Object.values(v).every((d) => !d || d.active === false || (!d.start && !d.end));
   }
   return v === '' || v == null;
 }
@@ -280,7 +280,7 @@ export function formatFieldValue(key, value, lang) {
     // 曜日単位: 入力済みの曜日だけを「月 20:00~24:00」のように並べる
     const order = key === 'weekdayTimes' ? ['mon', 'tue', 'wed', 'thu', 'fri'] : ['sat', 'sun'];
     return order
-      .filter((d) => value[d] && (value[d].start || value[d].end))
+      .filter((d) => value[d] && value[d].active !== false && (value[d].start || value[d].end))
       .map((d) => `${DAY_LABELS[d][lang === 'en' ? 'en' : 'ja']} ${value[d].start || '?'}~${value[d].end || '?'}`)
       .join(lang === 'en' ? ', ' : '、');
   }

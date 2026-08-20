@@ -494,6 +494,12 @@ body.portal-page {
   font-weight: bold;
   color: #666;
 }
+.board-time-byday-active {
+  flex-shrink: 0;
+}
+.board-time-byday-row:has(.board-time-byday-active:not(:checked)) .board-time-byday-label {
+  color: #bbb;
+}
 
 .board-substyle-framed {
   margin-top: 10px;

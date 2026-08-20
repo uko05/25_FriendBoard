@@ -137,10 +137,12 @@ const weekendByDayInput = document.getElementById('weekend-by-day');
 const WEEKDAY_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri'];
 const WEEKEND_DAYS = ['sat', 'sun'];
 const weekdayDayInputs = Object.fromEntries(WEEKDAY_DAYS.map((d) => [d, {
+  active: document.getElementById(`weekday-${d}-active`),
   start: document.getElementById(`weekday-${d}-start`),
   end: document.getElementById(`weekday-${d}-end`),
 }]));
 const weekendDayInputs = Object.fromEntries(WEEKEND_DAYS.map((d) => [d, {
+  active: document.getElementById(`weekend-${d}-active`),
   start: document.getElementById(`weekend-${d}-start`),
   end: document.getElementById(`weekend-${d}-end`),
 }]));
@@ -259,6 +261,22 @@ function updateWeekendByDayVisibility() {
 weekdayByDayInput?.addEventListener('change', updateWeekdayByDayVisibility);
 weekendByDayInput?.addEventListener('change', updateWeekendByDayVisibility);
 
+// 曜日単位の各曜日チェック(有効/無効)。外すとその曜日の時間帯入力を非活性化・クリアする
+// (「水・金だけ都合が良い」のように、曜日ごとに全く不可の日があるケースに対応)
+function updateDayActiveState(dayInput) {
+  if (!dayInput?.active) return;
+  const active = dayInput.active.checked;
+  if (dayInput.start) dayInput.start.disabled = !active;
+  if (dayInput.end) dayInput.end.disabled = !active;
+  if (!active) {
+    if (dayInput.start) dayInput.start.value = '';
+    if (dayInput.end) dayInput.end.value = '';
+  }
+}
+[...WEEKDAY_DAYS.map((d) => weekdayDayInputs[d]), ...WEEKEND_DAYS.map((d) => weekendDayInputs[d])].forEach((dayInput) => {
+  dayInput.active?.addEventListener('change', () => updateDayActiveState(dayInput));
+});
+
 // ===== 保存画像(推しキャラランキング/チェックシート)のライブプレビュー =====
 const SAVED_IMAGE_NOT_SAVED_YET_HTML = {
   genshinRanking: {
@@ -332,8 +350,11 @@ function fillFormFromProfile() {
   if (store.weekdayTimesByDay) {
     WEEKDAY_DAYS.forEach((d) => {
       const dv = store.weekdayTimes?.[d] || {};
-      if (weekdayDayInputs[d].start) weekdayDayInputs[d].start.value = dv.start || '';
-      if (weekdayDayInputs[d].end) weekdayDayInputs[d].end.value = dv.end || '';
+      const input = weekdayDayInputs[d];
+      if (input.active) input.active.checked = dv.active !== false;
+      if (input.start) input.start.value = dv.start || '';
+      if (input.end) input.end.value = dv.end || '';
+      updateDayActiveState(input);
     });
   } else {
     if (weekdayStartInput) weekdayStartInput.value = store.weekdayTimes?.start || '';
@@ -343,8 +364,11 @@ function fillFormFromProfile() {
   if (store.weekendTimesByDay) {
     WEEKEND_DAYS.forEach((d) => {
       const dv = store.weekendTimes?.[d] || {};
-      if (weekendDayInputs[d].start) weekendDayInputs[d].start.value = dv.start || '';
-      if (weekendDayInputs[d].end) weekendDayInputs[d].end.value = dv.end || '';
+      const input = weekendDayInputs[d];
+      if (input.active) input.active.checked = dv.active !== false;
+      if (input.start) input.start.value = dv.start || '';
+      if (input.end) input.end.value = dv.end || '';
+      updateDayActiveState(input);
     });
   } else {
     if (weekendStartInput) weekendStartInput.value = store.weekendTimes?.start || '';
@@ -651,11 +675,19 @@ function collectFormValues() {
     lineId: lineInput?.value.trim() || '',
     instagramId: instagramInput?.value.trim() || '',
     weekdayTimes: weekdayByDay
-      ? Object.fromEntries(WEEKDAY_DAYS.map((d) => [d, { start: weekdayDayInputs[d].start?.value || '', end: weekdayDayInputs[d].end?.value || '' }]))
+      ? Object.fromEntries(WEEKDAY_DAYS.map((d) => [d, {
+        active: weekdayDayInputs[d].active?.checked !== false,
+        start: weekdayDayInputs[d].start?.value || '',
+        end: weekdayDayInputs[d].end?.value || '',
+      }]))
       : { start: weekdayStartInput?.value || '', end: weekdayEndInput?.value || '' },
     weekdayTimesByDay: weekdayByDay,
     weekendTimes: weekendByDay
-      ? Object.fromEntries(WEEKEND_DAYS.map((d) => [d, { start: weekendDayInputs[d].start?.value || '', end: weekendDayInputs[d].end?.value || '' }]))
+      ? Object.fromEntries(WEEKEND_DAYS.map((d) => [d, {
+        active: weekendDayInputs[d].active?.checked !== false,
+        start: weekendDayInputs[d].start?.value || '',
+        end: weekendDayInputs[d].end?.value || '',
+      }]))
       : { start: weekendStartInput?.value || '', end: weekendEndInput?.value || '' },
     weekendTimesByDay: weekendByDay,
     friendPreference: getCheckboxValues('friendPreference'),
@@ -667,7 +699,7 @@ function collectFormValues() {
 function timesFieldFilled(v) {
   if (!v || typeof v !== 'object') return false;
   if ('start' in v || 'end' in v) return !!(v.start && v.end);
-  return Object.values(v).some((d) => d && d.start && d.end);
+  return Object.values(v).some((d) => d && d.active !== false && d.start && d.end);
 }
 
 postForm?.addEventListener('submit', async (e) => {

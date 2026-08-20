@@ -154,7 +154,7 @@ export async function loadProfileFromFirestore() {
           const out = {};
           TIME_RANGE_DAY_KEYS[k].forEach((day) => {
             const dv = d[k][day] || {};
-            out[day] = { start: dv.start || '', end: dv.end || '' };
+            out[day] = { active: dv.active !== false, start: dv.start || '', end: dv.end || '' };
           });
           store[k] = out;
         } else {
