@@ -312,6 +312,13 @@ export function formatFieldValue(key, value, lang) {
       .map((d) => `${DAY_LABELS[d][lang === 'en' ? 'en' : 'ja']} ${value[d].start || '?'}~${value[d].end || '?'}`)
       .join(lang === 'en' ? ', ' : '、');
   }
+  if (key === 'multiFrequency' && Array.isArray(value)) {
+    // 曜日単位: 選んだ曜日だけを「月、水、金」のように並べる
+    return ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+      .filter((d) => value.includes(d))
+      .map((d) => DAY_LABELS[d][lang === 'en' ? 'en' : 'ja'])
+      .join(lang === 'en' ? ', ' : '、');
+  }
   if (Array.isArray(value)) {
     if (!value.length) return '';
     return value.map((v) => optionLabel(key, v, lang)).join(lang === 'en' ? ', ' : '、');

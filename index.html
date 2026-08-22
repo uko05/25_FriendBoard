@@ -240,6 +240,7 @@
                 <div class="board-form-row">
                     <div class="board-form-row-head">
                         <span><span data-i18n="labelMultiFrequency">マルチ頻度</span><span class="board-required-mark">＊</span></span>
+                        <label class="board-form-row-head-check"><input type="checkbox" id="multiFrequency-by-day" /><span data-i18n="labelByDay">曜日単位</span></label>
                         <select class="board-visibility-select" id="vis-multiFrequency" data-field="multiFrequency"></select>
                     </div>
                     <select id="input-multiFrequency" name="multiFrequency">
@@ -251,6 +252,15 @@
                         <option value="daily" data-i18n="freqDaily">毎日やりたい！</option>
                         <option value="ask" data-i18n="freqAsk">要相談</option>
                     </select>
+                    <div class="board-checkbox-group hidden" id="multiFrequency-byday-days">
+                        <label><input type="checkbox" name="multiFrequencyDays" value="mon" /><span data-i18n="dayMon">月</span></label>
+                        <label><input type="checkbox" name="multiFrequencyDays" value="tue" /><span data-i18n="dayTue">火</span></label>
+                        <label><input type="checkbox" name="multiFrequencyDays" value="wed" /><span data-i18n="dayWed">水</span></label>
+                        <label><input type="checkbox" name="multiFrequencyDays" value="thu" /><span data-i18n="dayThu">木</span></label>
+                        <label><input type="checkbox" name="multiFrequencyDays" value="fri" /><span data-i18n="dayFri">金</span></label>
+                        <label><input type="checkbox" name="multiFrequencyDays" value="sat" /><span data-i18n="daySat">土</span></label>
+                        <label><input type="checkbox" name="multiFrequencyDays" value="sun" /><span data-i18n="daySun">日</span></label>
+                    </div>
                 </div>
 
                 <div class="board-form-row hidden" id="row-multiFrequencyNote">
@@ -554,7 +564,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v2.3</span>
+    <span id="site-version" class="site-version">v2.4</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

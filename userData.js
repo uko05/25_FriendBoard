@@ -85,6 +85,7 @@ export const store = {
   showGenshinCheck: false,
   inviteStyle: '',
   multiFrequency: '',
+  multiFrequencyByDay: false, // trueなら曜日単位(multiFrequencyが配列['mon','wed',...]になる)
   multiFrequencyNote: '',
   workCallOk: false,
   vc: '',
@@ -131,6 +132,7 @@ export async function loadProfileFromFirestore() {
       if (d.spending != null) store.spending = d.spending;
       if (d.inviteStyle != null) store.inviteStyle = d.inviteStyle;
       if (d.multiFrequency != null) store.multiFrequency = d.multiFrequency;
+      if (d.multiFrequencyByDay != null) store.multiFrequencyByDay = !!d.multiFrequencyByDay;
       if (d.multiFrequencyNote != null) store.multiFrequencyNote = d.multiFrequencyNote;
       if (d.workCallOk != null) store.workCallOk = !!d.workCallOk;
       if (d.vc != null) store.vc = d.vc;
@@ -198,6 +200,7 @@ export async function syncProfileToFirestore() {
       showGenshinCheck: store.showGenshinCheck,
       inviteStyle: store.inviteStyle,
       multiFrequency: store.multiFrequency,
+      multiFrequencyByDay: store.multiFrequencyByDay,
       multiFrequencyNote: store.multiFrequencyNote,
       workCallOk: store.workCallOk,
       vc: store.vc,
