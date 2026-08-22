@@ -848,7 +848,6 @@ const COMPLEMENTARY_VALUE_PAIRS = {
     ['needExploreHelp', 'canHelpExplore'],
     ['needFarmHelp', 'canHelpBuild'],
     ['needDomainHelp', 'canHelpDomain'],
-    ['needCarry', 'canCarry'],
     ['needIllusiveHelp', 'canHelpIllusive'],
     ['wantAchievements', 'canHelpAchievements'],
   ],
