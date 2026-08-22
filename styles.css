@@ -760,6 +760,16 @@ body.portal-page {
   font-weight: bold;
   color: #a08000;
 }
+.board-card-group-nested {
+  margin: 16px 0 0;
+}
+.board-card-group-request {
+  border-color: rgba(46,125,50,0.25);
+  background: rgba(46,125,50,0.06);
+}
+.board-card-group-title-request {
+  color: #2e7d32;
+}
 
 .board-card-chips {
   display: flex;

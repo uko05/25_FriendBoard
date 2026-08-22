@@ -5,7 +5,10 @@ import { db } from './firebaseConfig.js';
 import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink } from './userData.js';
 import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js';
 import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
-import { VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch } from './fields.js';
+import {
+  VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
+  fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch,
+} from './fields.js';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
@@ -56,6 +59,8 @@ const STR = {
     matchLabel: (pct) => `マッチ度 ${pct}%`,
     savedImageShowLabel: { genshinRanking: '推しキャラランキングを表示', genshinCheck: '原神チェックシートを表示' },
     groupTitles: { basic: '基本情報', style: 'あなたについて', contact: '連絡・時間帯', voice: 'ボイスチャット', sns: 'つながれるSNS' },
+    playStyleOfferTitle: '手伝います！',
+    playStyleRequestTitle: '手伝ってください！',
   },
   en: {
     justNow: 'just now',
@@ -88,6 +93,8 @@ const STR = {
     matchLabel: (pct) => `${pct}% match`,
     savedImageShowLabel: { genshinRanking: 'Show Genshin Character Ranking', genshinCheck: 'Show Genshin Check Sheet' },
     groupTitles: { basic: 'Basic Info', style: 'About You', contact: 'Contact & Availability', voice: 'Voice Chat', sns: 'SNS' },
+    playStyleOfferTitle: 'I can help with...',
+    playStyleRequestTitle: 'Please help me with...',
   },
 };
 
@@ -875,6 +882,18 @@ function fieldMatchKind(myValue, otherValue, key) {
   return isComplementary ? 'complementary' : null;
 }
 
+// playStylesを個別の値(1つ1つのチップ)単位で判定する版。相手の1つの値が、
+// 自分のplayStyles配列のどれかと完全一致するか、相性ペアの相手側を持っているかを見る。
+function playStyleValueMatchKind(otherValue) {
+  const myValues = store.playStyles || [];
+  if (myValues.includes(otherValue)) return 'exact';
+  const pairs = COMPLEMENTARY_VALUE_PAIRS.playStyles || [];
+  const isComplementary = pairs.some(([a, b]) => (
+    (otherValue === a && myValues.includes(b)) || (otherValue === b && myValues.includes(a))
+  ));
+  return isComplementary ? 'complementary' : null;
+}
+
 // ===== 募集カード描画 =====
 function buildCard(post, { mine, matchPercent }) {
   const card = document.createElement('div');
@@ -949,7 +968,9 @@ function buildCard(post, { mine, matchPercent }) {
     box.appendChild(title);
     const chips = document.createElement('div');
     chips.className = 'board-card-chips';
-    groupRows.forEach((row) => {
+    const playStylesRow = groupRows.find((row) => row.key === 'playStyles');
+    const otherRows = groupRows.filter((row) => row.key !== 'playStyles');
+    otherRows.forEach((row) => {
       if (row.oshiIcons) {
         row.oshiIcons.forEach((icon) => {
           const img = document.createElement('img');
@@ -971,7 +992,55 @@ function buildCard(post, { mine, matchPercent }) {
       chip.textContent = row.text;
       chips.appendChild(chip);
     });
+    // playStylesは「手伝います！」「手伝ってください！」を別枠に分け、値ごとに個別チップで
+    // 表示する(まとめて1チップにすると、どの項目が一致/相性なのか分からなくなるため)。
+    let offerBox = null;
+    let requestBox = null;
+    if (playStylesRow) {
+      const lang = currentLang();
+      const generalValues = playStylesRow.value.filter((v) => !PLAYSTYLE_OFFER_VALUES.includes(v) && !PLAYSTYLE_REQUEST_VALUES.includes(v));
+      const offerValues = playStylesRow.value.filter((v) => PLAYSTYLE_OFFER_VALUES.includes(v));
+      const requestValues = playStylesRow.value.filter((v) => PLAYSTYLE_REQUEST_VALUES.includes(v));
+      const appendValueChip = (parent, v) => {
+        const chip = document.createElement('span');
+        chip.className = 'board-card-chip';
+        if (!mine) {
+          const matchKind = playStyleValueMatchKind(v);
+          if (matchKind === 'exact') chip.classList.add('board-card-chip-matched');
+          else if (matchKind === 'complementary') chip.classList.add('board-card-chip-complementary');
+        }
+        chip.textContent = formatFieldValue('playStyles', [v], lang);
+        parent.appendChild(chip);
+      };
+      generalValues.forEach((v) => appendValueChip(chips, v));
+      if (offerValues.length) {
+        offerBox = document.createElement('div');
+        offerBox.className = 'board-card-group board-card-group-nested';
+        const offerTitle = document.createElement('p');
+        offerTitle.className = 'board-card-group-title';
+        offerTitle.textContent = s().playStyleOfferTitle;
+        offerBox.appendChild(offerTitle);
+        const offerChips = document.createElement('div');
+        offerChips.className = 'board-card-chips';
+        offerValues.forEach((v) => appendValueChip(offerChips, v));
+        offerBox.appendChild(offerChips);
+      }
+      if (requestValues.length) {
+        requestBox = document.createElement('div');
+        requestBox.className = 'board-card-group board-card-group-nested board-card-group-request';
+        const requestTitle = document.createElement('p');
+        requestTitle.className = 'board-card-group-title board-card-group-title-request';
+        requestTitle.textContent = s().playStyleRequestTitle;
+        requestBox.appendChild(requestTitle);
+        const requestChips = document.createElement('div');
+        requestChips.className = 'board-card-chips';
+        requestValues.forEach((v) => appendValueChip(requestChips, v));
+        requestBox.appendChild(requestChips);
+      }
+    }
     box.appendChild(chips);
+    if (offerBox) box.appendChild(offerBox);
+    if (requestBox) box.appendChild(requestBox);
     body.appendChild(box);
   });
   savedImageRows.forEach((row) => {

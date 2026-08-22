@@ -25,6 +25,11 @@ export const FIELD_GROUPS = [
   { key: 'sns', fields: ['twitterId', 'tiktokId', 'lineId', 'instagramId'] },
 ];
 
+// playStylesの値のうち「手伝います！」「手伝ってください！」枠に属するもの一覧。
+// フォーム側の枠分け(index.html)・カード表示側の枠分け(board.js)の両方で使う。
+export const PLAYSTYLE_OFFER_VALUES = ['canHelpExplore', 'canHelpBuild', 'canHelpDomain', 'canHelpIllusive', 'canHelpAchievements', 'canHelpQuestions'];
+export const PLAYSTYLE_REQUEST_VALUES = ['needExploreHelp', 'needFarmHelp', 'needDomainHelp', 'needIllusiveHelp', 'wantAchievements', 'needQuestions'];
+
 // SNSは「公開」を選ばせず、非公開/承認後に公開/仲良くなったら の3択にする対象
 export const NO_PUBLIC_FIELDS = ['twitterId', 'tiktokId', 'lineId', 'instagramId'];
 
