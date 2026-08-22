@@ -239,6 +239,32 @@
 
                 <div class="board-form-row">
                     <div class="board-form-row-head">
+                        <span><span data-i18n="labelMultiFrequency">マルチ頻度</span><span class="board-required-mark">＊</span></span>
+                        <select class="board-visibility-select" id="vis-multiFrequency" data-field="multiFrequency"></select>
+                    </div>
+                    <select id="input-multiFrequency" name="multiFrequency">
+                        <option value="" data-i18n="freqPlaceholder">選択してください</option>
+                        <option value="week1" data-i18n="freqWeek1">週1</option>
+                        <option value="week2" data-i18n="freqWeek2">週2</option>
+                        <option value="week3" data-i18n="freqWeek3">週3</option>
+                        <option value="week4" data-i18n="freqWeek4">週4</option>
+                        <option value="week5" data-i18n="freqWeek5">週5</option>
+                        <option value="week6" data-i18n="freqWeek6">週6</option>
+                        <option value="week7" data-i18n="freqWeek7">週7</option>
+                        <option value="ask" data-i18n="freqAsk">要相談</option>
+                    </select>
+                </div>
+
+                <div class="board-form-row hidden" id="row-multiFrequencyNote">
+                    <div class="board-form-row-head">
+                        <label for="input-multiFrequencyNote" data-i18n="labelMultiFrequencyNote">マルチ頻度の詳細</label>
+                        <select class="board-visibility-select" id="vis-multiFrequencyNote" data-field="multiFrequencyNote"></select>
+                    </div>
+                    <input type="text" id="input-multiFrequencyNote" name="multiFrequencyNote" maxlength="40" data-i18n-placeholder="multiFrequencyNotePlaceholder" />
+                </div>
+
+                <div class="board-form-row">
+                    <div class="board-form-row-head">
                         <span><span data-i18n="labelWeekdayTimes">平日のマルチ可能時間帯</span><span class="board-required-mark">＊</span></span>
                         <label class="board-form-row-head-check"><input type="checkbox" id="weekday-by-day" /><span data-i18n="labelByDay">曜日単位</span></label>
                         <select class="board-visibility-select" id="vis-weekdayTimes" data-field="weekdayTimes"></select>
@@ -326,28 +352,6 @@
                         <label><input type="radio" name="inviteStyle" value="either" /><span data-i18n="inviteEither">お誘いするしお誘いされたい</span></label>
                         <label><input type="radio" name="inviteStyle" value="invited" /><span data-i18n="inviteInvited">自発苦手です</span></label>
                     </div>
-                </div>
-
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <span><span data-i18n="labelMultiFrequency">マルチ頻度</span><span class="board-required-mark">＊</span></span>
-                        <select class="board-visibility-select" id="vis-multiFrequency" data-field="multiFrequency"></select>
-                    </div>
-                    <div class="board-radio-group" id="group-multiFrequency">
-                        <label><input type="radio" name="multiFrequency" value="anytime" /><span data-i18n="freqAnytime">オンラインの時ならいつでも可</span></label>
-                        <label><input type="radio" name="multiFrequency" value="daily" /><span data-i18n="freqDaily">ほぼ毎日</span></label>
-                        <label><input type="radio" name="multiFrequency" value="often" /><span data-i18n="freqOften">週３～５くらい</span></label>
-                        <label><input type="radio" name="multiFrequency" value="sometimes" /><span data-i18n="freqSometimes">週１～２くらい</span></label>
-                        <label><input type="radio" name="multiFrequency" value="ask" /><span data-i18n="freqAsk">要相談</span></label>
-                    </div>
-                </div>
-
-                <div class="board-form-row hidden" id="row-multiFrequencyNote">
-                    <div class="board-form-row-head">
-                        <label for="input-multiFrequencyNote" data-i18n="labelMultiFrequencyNote">マルチ頻度の詳細</label>
-                        <select class="board-visibility-select" id="vis-multiFrequencyNote" data-field="multiFrequencyNote"></select>
-                    </div>
-                    <input type="text" id="input-multiFrequencyNote" name="multiFrequencyNote" maxlength="40" data-i18n-placeholder="multiFrequencyNotePlaceholder" />
                 </div>
 
                 <!-- ===== ボイスチャット ===== -->
@@ -552,7 +556,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v2.1</span>
+    <span id="site-version" class="site-version">v2.2</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

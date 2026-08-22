@@ -7,7 +7,7 @@
 export const VISIBILITY_FIELDS = [
   'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms',
   'oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck',
-  'weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency', 'multiFrequencyNote',
+  'multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle',
   'vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
   'twitterId', 'tiktokId', 'lineId', 'instagramId',
   'friendPreference',
@@ -20,7 +20,7 @@ export const VISIBILITY_FIELDS = [
 export const FIELD_GROUPS = [
   { key: 'basic', fields: ['adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms'] },
   { key: 'style', fields: ['oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck'] },
-  { key: 'contact', fields: ['weekdayTimes', 'weekendTimes', 'inviteStyle', 'multiFrequency', 'multiFrequencyNote'] },
+  { key: 'contact', fields: ['multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle'] },
   { key: 'voice', fields: ['vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk'] },
   { key: 'sns', fields: ['twitterId', 'tiktokId', 'lineId', 'instagramId'] },
 ];
@@ -167,10 +167,13 @@ const OPTION_LABELS = {
     no: { ja: 'タメ口なし', en: 'No casual speech' },
   },
   multiFrequency: {
-    anytime: { ja: 'オンラインの時ならいつでも可', en: 'Anytime I\'m online' },
-    daily: { ja: 'ほぼ毎日', en: 'Almost every day' },
-    often: { ja: '週３～５くらい', en: '3-5 times/week' },
-    sometimes: { ja: '週１～２くらい', en: '1-2 times/week' },
+    week1: { ja: '週1', en: '1x/week' },
+    week2: { ja: '週2', en: '2x/week' },
+    week3: { ja: '週3', en: '3x/week' },
+    week4: { ja: '週4', en: '4x/week' },
+    week5: { ja: '週5', en: '5x/week' },
+    week6: { ja: '週6', en: '6x/week' },
+    week7: { ja: '週7', en: '7x/week' },
     ask: { ja: '要相談', en: 'Ask me' },
   },
   vc: {

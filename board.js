@@ -135,6 +135,7 @@ const vcDiscordIdInput = document.getElementById('input-vcDiscordId');
 const vcLineIdInput = document.getElementById('input-vcLineId');
 const vcAppsOtherInput = document.getElementById('input-vcAppsOtherText');
 const playStylesOtherInput = document.getElementById('input-playStylesOtherText');
+const multiFrequencyInput = document.getElementById('input-multiFrequency');
 const multiFrequencyNoteInput = document.getElementById('input-multiFrequencyNote');
 const showGenshinRankingInput = document.getElementById('input-showGenshinRanking');
 const showGenshinCheckInput = document.getElementById('input-showGenshinCheck');
@@ -238,7 +239,7 @@ function updatePlayStylesOtherEnabled() {
 // マルチ頻度が「要相談」のときだけ詳細入力欄を表示する
 function updateMultiFrequencyNoteEnabled() {
   const row = document.getElementById('row-multiFrequencyNote');
-  const enabled = getRadioValue('multiFrequency') === 'ask';
+  const enabled = multiFrequencyInput?.value === 'ask';
   if (row) row.classList.toggle('hidden', !enabled);
   if (multiFrequencyNoteInput && !enabled) multiFrequencyNoteInput.value = '';
 }
@@ -247,7 +248,7 @@ document.getElementById('group-vc')?.addEventListener('change', () => {
   updateVcNoteEnabled();
 });
 document.getElementById('group-playStyles')?.addEventListener('change', updatePlayStylesOtherEnabled);
-document.getElementById('group-multiFrequency')?.addEventListener('change', updateMultiFrequencyNoteEnabled);
+multiFrequencyInput?.addEventListener('change', updateMultiFrequencyNoteEnabled);
 // 「曜日単位」チェックで、平日/休日それぞれ単一の時間帯入力と曜日別の入力を切り替える
 function updateWeekdayByDayVisibility() {
   const enabled = !!weekdayByDayInput?.checked;
@@ -382,7 +383,7 @@ function fillFormFromProfile() {
   setRadioValue('ageGroup', store.ageGroup);
   setRadioValue('spending', store.spending);
   setRadioValue('inviteStyle', store.inviteStyle);
-  setRadioValue('multiFrequency', store.multiFrequency);
+  if (multiFrequencyInput) multiFrequencyInput.value = store.multiFrequency || '';
   setRadioValue('vc', store.vc);
   setRadioValue('casualOk', store.casualOk);
   setCheckboxValues('platforms', store.platforms);
@@ -671,8 +672,8 @@ function collectFormValues() {
     showGenshinRanking: !!showGenshinRankingInput?.checked,
     showGenshinCheck: !!showGenshinCheckInput?.checked,
     inviteStyle: getRadioValue('inviteStyle'),
-    multiFrequency: getRadioValue('multiFrequency'),
-    multiFrequencyNote: getRadioValue('multiFrequency') === 'ask' ? (multiFrequencyNoteInput?.value.trim() || '') : '',
+    multiFrequency: multiFrequencyInput?.value || '',
+    multiFrequencyNote: multiFrequencyInput?.value === 'ask' ? (multiFrequencyNoteInput?.value.trim() || '') : '',
     workCallOk: vcOpen && !!workCallOkInput?.checked,
     vc: getRadioValue('vc'),
     vcNote: getRadioValue('vc') === 'maybe' ? (vcNoteInput?.value.trim() || '') : '',
@@ -734,7 +735,7 @@ const REQUIRED_FIELDS = [
     filled: (v) => timesFieldFilled(v.weekendTimes),
   },
   { key: 'inviteStyle', el: document.getElementById('group-inviteStyle'), filled: (v) => !!v.inviteStyle },
-  { key: 'multiFrequency', el: document.getElementById('group-multiFrequency'), filled: (v) => !!v.multiFrequency },
+  { key: 'multiFrequency', el: multiFrequencyInput, filled: (v) => !!v.multiFrequency },
   { key: 'vc', el: document.getElementById('group-vc'), filled: (v) => !!v.vc },
 ];
 
