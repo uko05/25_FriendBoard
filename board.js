@@ -844,6 +844,13 @@ function pushFieldRow(rows, key, value, lang, ownerUserId) {
 // 同じ値ではないが、誘う側と誘われたい側でちょうど噛み合うため好相性として扱う。
 const COMPLEMENTARY_VALUE_PAIRS = {
   inviteStyle: [['invite', 'invited']],
+  playStyles: [
+    ['needExploreHelp', 'canHelpExplore'],
+    ['needFarmHelp', 'canHelpBuild'],
+    ['needDomainHelp', 'canHelpDomain'],
+    ['needCarry', 'canCarry'],
+    ['needIllusiveHelp', 'canHelpIllusive'],
+  ],
 };
 
 // 相手のチップの値が自分のプロフィールと一致(配列は重複あり)しているか、上記の
@@ -851,14 +858,18 @@ const COMPLEMENTARY_VALUE_PAIRS = {
 // 呼び出し側で色分け表示に使う。
 // 時間帯({start,end})や数値(AR/WLなど)は曖昧になりすぎるため判定対象外(常にnull)。
 function fieldMatchKind(myValue, otherValue, key) {
+  const pairs = COMPLEMENTARY_VALUE_PAIRS[key];
   if (Array.isArray(myValue) && Array.isArray(otherValue)) {
-    return myValue.some((v) => otherValue.includes(v)) ? 'exact' : null;
+    if (myValue.some((v) => otherValue.includes(v))) return 'exact';
+    const isComplementary = !!pairs && pairs.some(([a, b]) => (
+      (myValue.includes(a) && otherValue.includes(b)) || (myValue.includes(b) && otherValue.includes(a))
+    ));
+    return isComplementary ? 'complementary' : null;
   }
   if (Array.isArray(myValue) || Array.isArray(otherValue)) return null;
   if (typeof myValue === 'object' || typeof otherValue === 'object') return null;
   if (myValue == null || myValue === '' || otherValue == null || otherValue === '') return null;
   if (myValue === otherValue) return 'exact';
-  const pairs = COMPLEMENTARY_VALUE_PAIRS[key];
   const isComplementary = !!pairs && pairs.some(([a, b]) => (myValue === a && otherValue === b) || (myValue === b && otherValue === a));
   return isComplementary ? 'complementary' : null;
 }
