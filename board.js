@@ -839,16 +839,26 @@ function pushFieldRow(rows, key, value, lang, ownerUserId) {
   if (text) rows.push({ key, value, text: `${fieldLabel(key, lang)}: ${text}` });
 }
 
-// 相手のチップの値が自分のプロフィールと一致(配列は重複あり)しているかどうかを判定する。
+// 値としては違うが相性が良い(非対称に噛み合う)組み合わせ。
+// 例: マルチ自発について「お誘いします！」⇔「自発苦手です(誘われたい)」は
+// 同じ値ではないが、誘う側と誘われたい側でちょうど噛み合うため好相性として扱う。
+const COMPLEMENTARY_VALUE_PAIRS = {
+  inviteStyle: [['invite', 'invited']],
+};
+
+// 相手のチップの値が自分のプロフィールと一致(配列は重複あり)、または上記の
+// 相性ペアに該当しているかどうかを判定する。
 // 時間帯({start,end})や数値(AR/WLなど)は曖昧になりすぎるため判定対象外(常にfalse)。
-function isFieldMatch(myValue, otherValue) {
+function isFieldMatch(myValue, otherValue, key) {
   if (Array.isArray(myValue) && Array.isArray(otherValue)) {
     return myValue.some((v) => otherValue.includes(v));
   }
   if (Array.isArray(myValue) || Array.isArray(otherValue)) return false;
   if (typeof myValue === 'object' || typeof otherValue === 'object') return false;
   if (myValue == null || myValue === '' || otherValue == null || otherValue === '') return false;
-  return myValue === otherValue;
+  if (myValue === otherValue) return true;
+  const pairs = COMPLEMENTARY_VALUE_PAIRS[key];
+  return !!pairs && pairs.some(([a, b]) => (myValue === a && otherValue === b) || (myValue === b && otherValue === a));
 }
 
 // ===== 募集カード描画 =====
@@ -939,7 +949,7 @@ function buildCard(post, { mine, matchPercent }) {
       }
       const chip = document.createElement('span');
       chip.className = 'board-card-chip';
-      if (!mine && isFieldMatch(store[row.key], row.value)) {
+      if (!mine && isFieldMatch(store[row.key], row.value, row.key)) {
         chip.classList.add('board-card-chip-matched');
       }
       chip.textContent = row.text;
