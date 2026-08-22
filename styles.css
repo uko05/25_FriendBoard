@@ -774,6 +774,11 @@ body.portal-page {
   background: #ffe1ec;
 }
 
+.board-card-chip-complementary {
+  color: #1565c0;
+  background: #e1f0ff;
+}
+
 .board-card-oshi-icon {
   width: 26px;
   height: 26px;

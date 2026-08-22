@@ -846,19 +846,21 @@ const COMPLEMENTARY_VALUE_PAIRS = {
   inviteStyle: [['invite', 'invited']],
 };
 
-// 相手のチップの値が自分のプロフィールと一致(配列は重複あり)、または上記の
-// 相性ペアに該当しているかどうかを判定する。
-// 時間帯({start,end})や数値(AR/WLなど)は曖昧になりすぎるため判定対象外(常にfalse)。
-function isFieldMatch(myValue, otherValue, key) {
+// 相手のチップの値が自分のプロフィールと一致(配列は重複あり)しているか、上記の
+// 相性ペアに該当しているかを判定する。戻り値は 'exact' | 'complementary' | null で、
+// 呼び出し側で色分け表示に使う。
+// 時間帯({start,end})や数値(AR/WLなど)は曖昧になりすぎるため判定対象外(常にnull)。
+function fieldMatchKind(myValue, otherValue, key) {
   if (Array.isArray(myValue) && Array.isArray(otherValue)) {
-    return myValue.some((v) => otherValue.includes(v));
+    return myValue.some((v) => otherValue.includes(v)) ? 'exact' : null;
   }
-  if (Array.isArray(myValue) || Array.isArray(otherValue)) return false;
-  if (typeof myValue === 'object' || typeof otherValue === 'object') return false;
-  if (myValue == null || myValue === '' || otherValue == null || otherValue === '') return false;
-  if (myValue === otherValue) return true;
+  if (Array.isArray(myValue) || Array.isArray(otherValue)) return null;
+  if (typeof myValue === 'object' || typeof otherValue === 'object') return null;
+  if (myValue == null || myValue === '' || otherValue == null || otherValue === '') return null;
+  if (myValue === otherValue) return 'exact';
   const pairs = COMPLEMENTARY_VALUE_PAIRS[key];
-  return !!pairs && pairs.some(([a, b]) => (myValue === a && otherValue === b) || (myValue === b && otherValue === a));
+  const isComplementary = !!pairs && pairs.some(([a, b]) => (myValue === a && otherValue === b) || (myValue === b && otherValue === a));
+  return isComplementary ? 'complementary' : null;
 }
 
 // ===== 募集カード描画 =====
@@ -949,8 +951,10 @@ function buildCard(post, { mine, matchPercent }) {
       }
       const chip = document.createElement('span');
       chip.className = 'board-card-chip';
-      if (!mine && isFieldMatch(store[row.key], row.value, row.key)) {
-        chip.classList.add('board-card-chip-matched');
+      if (!mine) {
+        const matchKind = fieldMatchKind(store[row.key], row.value, row.key);
+        if (matchKind === 'exact') chip.classList.add('board-card-chip-matched');
+        else if (matchKind === 'complementary') chip.classList.add('board-card-chip-complementary');
       }
       chip.textContent = row.text;
       chips.appendChild(chip);
