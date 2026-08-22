@@ -383,7 +383,7 @@ function fillFormFromProfile() {
   setRadioValue('ageGroup', store.ageGroup);
   setRadioValue('spending', store.spending);
   setRadioValue('inviteStyle', store.inviteStyle);
-  if (multiFrequencyInput) multiFrequencyInput.value = store.multiFrequency || '';
+  if (multiFrequencyInput && store.multiFrequency) multiFrequencyInput.value = store.multiFrequency;
   setRadioValue('vc', store.vc);
   setRadioValue('casualOk', store.casualOk);
   setCheckboxValues('platforms', store.platforms);
