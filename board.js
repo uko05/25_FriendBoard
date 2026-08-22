@@ -1015,9 +1015,9 @@ function buildCard(post, { mine, matchPercent }) {
       generalValues.forEach((v) => appendValueChip(chips, v));
       if (offerValues.length) {
         offerBox = document.createElement('div');
-        offerBox.className = 'board-card-group board-card-group-nested';
+        offerBox.className = 'board-card-group board-card-group-nested board-card-group-offer';
         const offerTitle = document.createElement('p');
-        offerTitle.className = 'board-card-group-title';
+        offerTitle.className = 'board-card-group-title board-card-group-title-offer';
         offerTitle.textContent = s().playStyleOfferTitle;
         offerBox.appendChild(offerTitle);
         const offerChips = document.createElement('div');
