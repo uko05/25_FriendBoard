@@ -140,6 +140,7 @@ const OPTION_LABELS = {
     canHelpDomain: { ja: '秘境周回', en: 'Farm domains' },
     canHelpIllusive: { ja: '幽境の激戦', en: "Illusive Realm's Trounce Domain" },
     canHelpAchievements: { ja: 'アチーブ取り', en: 'Achievements' },
+    canHelpQuestions: { ja: '相談', en: 'Questions' },
     needIllusiveHelp: { ja: '幽境の激戦', en: "Illusive Realm's Trounce Domain" },
     wantAchievements: { ja: 'アチーブ取り', en: 'Achievements' },
     wantJokeMulti: { ja: 'おふざけマルチしたい！', en: 'Want a goofy multiplayer session!' },
