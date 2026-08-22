@@ -184,15 +184,8 @@
                     </div>
                     <div class="board-checkbox-group" id="group-playStyles">
                         <label><input type="checkbox" name="playStyles" value="callOnly" /><span data-i18n="styleCallOnly">通話しながら各々プレイしたい！</span></label>
-                        <label><input type="checkbox" name="playStyles" value="canHelpExplore" /><span data-i18n="styleCanHelpExplore">探索手伝います！</span></label>
                         <label><input type="checkbox" name="playStyles" value="wantPhotos" /><span data-i18n="styleWantPhotos">写真撮影しよう！</span></label>
                         <label><input type="checkbox" name="playStyles" value="wantElites" /><span data-i18n="styleWantElites">精鋭狩りしたい！</span></label>
-                        <label><input type="checkbox" name="playStyles" value="canHelpBuild" /><span data-i18n="styleCanHelpBuild">育成手伝います！</span></label>
-                        <label><input type="checkbox" name="playStyles" value="canHelpDomain" /><span data-i18n="styleCanHelpDomain">秘境周回手伝います！</span></label>
-                        <label><input type="checkbox" name="playStyles" value="canCarry" /><span data-i18n="styleCanCarry">キャリーします！</span></label>
-                        <label><input type="checkbox" name="playStyles" value="canHelpIllusive" /><span data-i18n="styleCanHelpIllusive">幽境の激戦手伝います！</span></label>
-                        <label><input type="checkbox" name="playStyles" value="needIllusiveHelp" /><span data-i18n="styleNeedIllusiveHelp">幽境の激戦手伝って！</span></label>
-                        <label><input type="checkbox" name="playStyles" value="wantAchievements" /><span data-i18n="styleWantAchievements">アチーブ取りしたい！</span></label>
                         <label><input type="checkbox" name="playStyles" value="wantJokeMulti" /><span data-i18n="styleWantJokeMulti">おふざけマルチしたい！</span></label>
                         <label><input type="checkbox" name="playStyles" value="other" /><span data-i18n="styleOther">その他</span></label>
                     </div>
@@ -200,12 +193,25 @@
                         <input type="text" id="input-playStylesOtherText" name="playStylesOtherText" maxlength="30" data-i18n-placeholder="playStylesOtherPlaceholder" />
                     </div>
                     <div class="board-substyle-framed">
-                        <p class="board-substyle-title" data-i18n="styleBeginnerGroupTitle">初心者向け</p>
+                        <p class="board-substyle-title" data-i18n="styleHelpOfferGroupTitle">手伝います！</p>
                         <div class="board-checkbox-group">
-                            <label><input type="checkbox" name="playStyles" value="needExploreHelp" /><span data-i18n="styleNeedExploreHelp">探索手伝って！</span></label>
-                            <label><input type="checkbox" name="playStyles" value="needFarmHelp" /><span data-i18n="styleNeedFarmHelp">育成素材集め手伝って！</span></label>
-                            <label><input type="checkbox" name="playStyles" value="needDomainHelp" /><span data-i18n="styleNeedDomainHelp">秘境周回手伝って！</span></label>
+                            <label><input type="checkbox" name="playStyles" value="canHelpExplore" /><span data-i18n="styleCanHelpExplore">探索</span></label>
+                            <label><input type="checkbox" name="playStyles" value="canHelpBuild" /><span data-i18n="styleCanHelpBuild">育成</span></label>
+                            <label><input type="checkbox" name="playStyles" value="canHelpDomain" /><span data-i18n="styleCanHelpDomain">秘境周回</span></label>
+                            <label><input type="checkbox" name="playStyles" value="canCarry" /><span data-i18n="styleCanCarry">キャリーします！</span></label>
+                            <label><input type="checkbox" name="playStyles" value="canHelpIllusive" /><span data-i18n="styleCanHelpIllusive">幽境の激戦</span></label>
+                            <label><input type="checkbox" name="playStyles" value="canHelpAchievements" /><span data-i18n="styleCanHelpAchievements">アチーブ取り</span></label>
+                        </div>
+                    </div>
+                    <div class="board-substyle-framed">
+                        <p class="board-substyle-title" data-i18n="styleHelpRequestGroupTitle">手伝ってください！</p>
+                        <div class="board-checkbox-group">
+                            <label><input type="checkbox" name="playStyles" value="needExploreHelp" /><span data-i18n="styleNeedExploreHelp">探索</span></label>
+                            <label><input type="checkbox" name="playStyles" value="needFarmHelp" /><span data-i18n="styleNeedFarmHelp">育成素材集め</span></label>
+                            <label><input type="checkbox" name="playStyles" value="needDomainHelp" /><span data-i18n="styleNeedDomainHelp">秘境周回</span></label>
                             <label><input type="checkbox" name="playStyles" value="needCarry" /><span data-i18n="styleNeedCarry">とにかくキャリーして！</span></label>
+                            <label><input type="checkbox" name="playStyles" value="needIllusiveHelp" /><span data-i18n="styleNeedIllusiveHelp">幽境の激戦</span></label>
+                            <label><input type="checkbox" name="playStyles" value="wantAchievements" /><span data-i18n="styleWantAchievements">アチーブ取りしたい！</span></label>
                             <label><input type="checkbox" name="playStyles" value="needQuestions" /><span data-i18n="styleNeedQuestions">わからないことが多いので質問させて！</span></label>
                         </div>
                     </div>
@@ -547,7 +553,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v1.3</span>
+    <span id="site-version" class="site-version">v1.4</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">
