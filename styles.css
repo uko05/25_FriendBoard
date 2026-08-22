@@ -539,6 +539,13 @@ body.portal-page {
   font-weight: bold;
   color: #8a6d00;
 }
+.board-substyle-framed-request {
+  border-color: rgba(21,101,192,0.25);
+  background: rgba(21,101,192,0.06);
+}
+.board-substyle-title-request {
+  color: #1565c0;
+}
 
 .board-form-row-head {
   display: flex;
