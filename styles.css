@@ -540,11 +540,11 @@ body.portal-page {
   color: #8a6d00;
 }
 .board-substyle-framed-request {
-  border-color: rgba(21,101,192,0.25);
-  background: rgba(21,101,192,0.06);
+  border-color: rgba(46,125,50,0.25);
+  background: rgba(46,125,50,0.06);
 }
 .board-substyle-title-request {
-  color: #1565c0;
+  color: #2e7d32;
 }
 
 .board-form-row-head {
