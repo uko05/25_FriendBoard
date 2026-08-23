@@ -180,6 +180,17 @@ body.portal-page {
   color: #c62828;
 }
 
+.board-search-match-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin: -6px 0 14px;
+  font-size: 12px;
+  color: #666;
+}
+
 .board-profile-desc {
   max-width: 480px;
   margin: 0 auto 16px;

@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
       labelMultiFrequencyNote: "マルチ頻度の詳細",
       multiFrequencyNotePlaceholder: "例）土日なら頻度高めです",
       optUnspecified: "未回答",
-      labelCasualOk: "タメ口について",
+      labelCasualOk: "タメ口",
       casualLove: "タメ口大歓迎",
       casualOkLabel: "タメ口OK",
       casualEither: "どっちでもOK",
@@ -224,6 +224,9 @@ document.addEventListener("DOMContentLoaded", () => {
       searchTitle: "募集をさがす",
       searchServerNote: "あなたと同じサーバーのユーザーのみ表示されます",
       searchApprovalNote: "原神UID・名前は承認後に確認できます",
+      matchLegendLabel: "チップの色について:",
+      matchLegendExact: "一致",
+      matchLegendComplementary: "相性◎",
 
       requestsTitle: "申請の管理",
       requestsDesc: "気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。",
@@ -414,6 +417,9 @@ document.addEventListener("DOMContentLoaded", () => {
       searchTitle: "Search recruitment posts",
       searchServerNote: "Only users on the same server as you are shown",
       searchApprovalNote: "Genshin UID and name are visible after approval",
+      matchLegendLabel: "Chip colors:",
+      matchLegendExact: "Match",
+      matchLegendComplementary: "Good match",
 
       requestsTitle: "Manage requests",
       requestsDesc: "Apply to a post you're interested in and the poster gets notified. Once they accept, you'll be able to see their Genshin UID.",

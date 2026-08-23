@@ -104,7 +104,7 @@ const FIELD_LABELS = {
   instagramId: { ja: 'Instagram ID', en: 'Instagram ID' },
   weekdayTimes: { ja: '平日のマルチ可能時間帯', en: 'Weekday availability' },
   weekendTimes: { ja: '休日のマルチ可能時間帯', en: 'Weekend availability' },
-  casualOk: { ja: 'タメ口について', en: 'Casual speech' },
+  casualOk: { ja: 'タメ口', en: 'Casual speech' },
   jokingOk: { ja: 'おふざけOK', en: 'Joking around OK' },
   yuriOk: { ja: '百合いけます', en: 'OK with yuri (girls’ love)' },
   fujoshiOk: { ja: '腐いけます', en: 'OK with BL (boys’ love)' },
@@ -313,6 +313,11 @@ export function formatFieldValue(key, value, lang) {
   }
   if (key === 'ageGroup') {
     return value ? (lang === 'en' ? "Adult (confirmed)" : '成人済') : '';
+  }
+  if (key === 'sameOshiReject' && typeof value === 'boolean') {
+    // 過去は真偽値で保存されていたため(まだ再保存していない他ユーザーの投稿に残る)、
+    // ここでも新しい選択肢の文言に変換して表示する
+    return value ? optionLabel(key, 'yes', lang) : '';
   }
   if (key === 'adventureRank') return String(value);
   if (key === 'worldLevel') return String(value);

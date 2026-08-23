@@ -419,7 +419,7 @@
                 </div>
 
                 <div class="board-checkbox-group" id="group-attrToggles">
-                    <label><input type="checkbox" id="attr-toggle-casualOk" /><span data-i18n="labelCasualOk">タメ口について</span></label>
+                    <label><input type="checkbox" id="attr-toggle-casualOk" /><span data-i18n="labelCasualOk">タメ口</span></label>
                     <label><input type="checkbox" id="attr-toggle-jokingOk" /><span data-i18n="labelJokingOk">おふざけ</span></label>
                     <label><input type="checkbox" id="attr-toggle-yuriOk" /><span data-i18n="labelYuriOk">百合</span></label>
                     <label><input type="checkbox" id="attr-toggle-fujoshiOk" /><span data-i18n="labelFujoshiOk">腐</span></label>
@@ -428,7 +428,7 @@
                 </div>
 
                 <div class="board-form-row board-form-row-inline board-attr-list-row hidden" id="row-casualOk">
-                    <label data-i18n="labelCasualOk">タメ口について</label>
+                    <label data-i18n="labelCasualOk">タメ口</label>
                     <select id="input-casualOk" name="casualOk" class="board-compact-select">
                         <option value="" data-i18n="optUnspecified">未回答</option>
                         <option value="love" data-i18n="casualLove">タメ口大歓迎</option>
@@ -571,6 +571,11 @@
             <h2 data-i18n="searchTitle">募集をさがす</h2>
             <p class="board-search-server-note" data-i18n="searchServerNote">あなたと同じサーバーのユーザーのみ表示されます</p>
             <p class="board-search-approval-note" data-i18n="searchApprovalNote">原神UID・名前は承認後に確認できます</p>
+            <div class="board-search-match-legend">
+                <span data-i18n="matchLegendLabel">チップの色について:</span>
+                <span class="board-card-chip board-card-chip-matched" data-i18n="matchLegendExact">一致</span>
+                <span class="board-card-chip board-card-chip-complementary" data-i18n="matchLegendComplementary">相性◎</span>
+            </div>
             <div class="board-list" id="search-list"></div>
         </section>
 
@@ -595,7 +600,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v3.2</span>
+    <span id="site-version" class="site-version">v3.3</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">
