@@ -7,12 +7,12 @@ import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js';
 import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
 import {
   VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
-  fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch,
+  fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch, fieldOptions,
 } from './fields.js';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
-  collection, setDoc, updateDoc, deleteDoc, doc, onSnapshot,
+  collection, setDoc, updateDoc, deleteDoc, doc, getDoc, onSnapshot,
   query, where, orderBy, limit, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
@@ -61,6 +61,10 @@ const STR = {
     groupTitles: { basic: '基本情報', style: 'あなたについて', contact: '連絡・時間帯', voice: 'ボイスチャット', sns: 'つながれるSNS' },
     playStyleOfferTitle: '手伝います！',
     playStyleRequestTitle: '手伝ってください！',
+    filterBarTitle: '🔍 絞り込み',
+    filterResetBtn: 'リセット',
+    filterGroupAttrTitle: 'あなたの追加属性',
+    filterAdminTitle: '管理者用フィルター(非表示項目も含む)',
   },
   en: {
     justNow: 'just now',
@@ -95,6 +99,10 @@ const STR = {
     groupTitles: { basic: 'Basic Info', style: 'About You', contact: 'Contact & Availability', voice: 'Voice Chat', sns: 'SNS' },
     playStyleOfferTitle: 'I can help with...',
     playStyleRequestTitle: 'Please help me with...',
+    filterBarTitle: '🔍 Filter',
+    filterResetBtn: 'Reset',
+    filterGroupAttrTitle: 'Additional traits',
+    filterAdminTitle: 'Admin filters (includes hidden fields)',
   },
 };
 
@@ -1266,13 +1274,163 @@ function startMyListingListener() {
 // サーバーが違うと実際にフレンドになれないため、自分と同じサーバーのユーザーのみを表示する(必須の絞り込み)。
 let latestSearchPosts = [];
 
+// ===== さがす一覧のフィルター =====
+// OPTION_LABELSに選択肢が無い真偽値項目は、チェックひとつ("yes")のみのフィルターにする。
+const BOOLEAN_ONLY_FILTER_FIELDS = ['jokingOk', 'yuriOk', 'fujoshiOk', 'ageGroup', 'showGenshinRanking', 'showGenshinCheck'];
+function booleanFilterLabel(key, lang) {
+  // ageGroupは「年齢」だけだと分かりにくいため、実際の表示文言(成人済)を使う
+  if (key === 'ageGroup') return formatFieldValue('ageGroup', true, lang);
+  return fieldLabel(key, lang);
+}
+function filterFieldOptions(key, lang) {
+  if (BOOLEAN_ONLY_FILTER_FIELDS.includes(key)) {
+    return [{ value: 'yes', label: booleanFilterLabel(key, lang) }];
+  }
+  return fieldOptions(key, lang);
+}
+
+// フィールドキー -> 選択中の値のSet。値が1つも無いフィールドは絞り込み対象外(=全件通す)。
+const searchFilters = {};
+// 管理者専用: userId -> friendBoardProfilesの生データ(非表示項目を含む全項目)
+const adminProfileCache = new Map();
+
+function isAdminViewer() {
+  return getAuthUid() === ADMIN_UID;
+}
+
+// 配列なら選択値のいずれかと重なるか、真偽値なら'yes'選択時のみtrue必須、
+// それ以外(文字列)は選択値に含まれるかを見る。
+function matchesFieldFilter(value, checkedValues) {
+  if (Array.isArray(value)) return value.some((v) => checkedValues.has(v));
+  if (typeof value === 'boolean') return checkedValues.has('yes') ? value === true : true;
+  return checkedValues.has(value);
+}
+
+// 管理者は非表示項目も含めてfriendBoardProfilesの生データを参照して判定する。
+// 非管理者は今まで通りpost.publicFields(公開設定を反映済み)のみを参照する。
+function matchesSearchFilters(post) {
+  const source = isAdminViewer()
+    ? (adminProfileCache.get(post.userId) || post.publicFields || {})
+    : (post.publicFields || {});
+  return Object.entries(searchFilters).every(([key, checked]) => {
+    if (!checked || !checked.size) return true;
+    return matchesFieldFilter(source[key], checked);
+  });
+}
+
+// 表示中の投稿ぶんだけ、未取得のプロフィールを遅延取得する(コレクション全体は購読しない)。
+async function ensureAdminProfilesLoaded(posts) {
+  if (!isAdminViewer()) return;
+  const missing = [...new Set(posts.map((p) => p.userId))].filter((uid) => uid && !adminProfileCache.has(uid));
+  if (!missing.length) return;
+  await Promise.all(missing.map(async (uid) => {
+    try {
+      const snap = await getDoc(doc(db, 'friendBoardProfiles', uid));
+      adminProfileCache.set(uid, snap.exists() ? snap.data() : {});
+    } catch (e) {
+      console.warn('[board] admin profile fetch failed', uid, e);
+    }
+  }));
+  renderSearchList();
+}
+
+function appendFilterGroup(parent, titleText, entries) {
+  if (!entries.length) return;
+  const group = document.createElement('div');
+  group.className = 'board-filter-field-group';
+  const groupTitle = document.createElement('p');
+  groupTitle.className = 'board-filter-field-title';
+  groupTitle.textContent = titleText;
+  group.appendChild(groupTitle);
+  const checks = document.createElement('div');
+  checks.className = 'board-checkbox-group';
+  entries.forEach(({ fieldKey, value, label }) => {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !!searchFilters[fieldKey]?.has(value);
+    cb.addEventListener('change', () => {
+      if (!searchFilters[fieldKey]) searchFilters[fieldKey] = new Set();
+      if (cb.checked) searchFilters[fieldKey].add(value);
+      else searchFilters[fieldKey].delete(value);
+      renderSearchList();
+    });
+    const span = document.createElement('span');
+    span.textContent = label;
+    lbl.appendChild(cb);
+    lbl.appendChild(span);
+    checks.appendChild(lbl);
+  });
+  group.appendChild(checks);
+  parent.appendChild(group);
+}
+
+function renderSearchFilterBar() {
+  const container = document.getElementById('search-filter-bar');
+  if (!container) return;
+  const lang = currentLang();
+  const toEntries = (fieldKey, options) => options.map((o) => ({ fieldKey, ...o }));
+
+  container.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'board-filter-bar-header';
+  const title = document.createElement('span');
+  title.className = 'board-filter-bar-title';
+  title.textContent = s().filterBarTitle;
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.className = 'board-filter-reset-btn';
+  resetBtn.textContent = s().filterResetBtn;
+  resetBtn.addEventListener('click', () => {
+    Object.values(searchFilters).forEach((set) => set.clear());
+    renderSearchFilterBar();
+    renderSearchList();
+  });
+  header.appendChild(title);
+  header.appendChild(resetBtn);
+  container.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'board-filter-bar-body';
+  appendFilterGroup(body, fieldLabel('vc', lang), toEntries('vc', filterFieldOptions('vc', lang)));
+  const psOptions = filterFieldOptions('playStyles', lang);
+  const generalPs = psOptions.filter((o) => !PLAYSTYLE_OFFER_VALUES.includes(o.value) && !PLAYSTYLE_REQUEST_VALUES.includes(o.value));
+  const offerPs = psOptions.filter((o) => PLAYSTYLE_OFFER_VALUES.includes(o.value));
+  const requestPs = psOptions.filter((o) => PLAYSTYLE_REQUEST_VALUES.includes(o.value));
+  appendFilterGroup(body, fieldLabel('playStyles', lang), toEntries('playStyles', generalPs));
+  appendFilterGroup(body, s().playStyleOfferTitle, toEntries('playStyles', offerPs));
+  appendFilterGroup(body, s().playStyleRequestTitle, toEntries('playStyles', requestPs));
+  appendFilterGroup(body, fieldLabel('inviteStyle', lang), toEntries('inviteStyle', filterFieldOptions('inviteStyle', lang)));
+  appendFilterGroup(body, fieldLabel('vcApps', lang), toEntries('vcApps', filterFieldOptions('vcApps', lang)));
+  const attrEntries = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject']
+    .flatMap((fk) => toEntries(fk, filterFieldOptions(fk, lang)));
+  appendFilterGroup(body, s().filterGroupAttrTitle, attrEntries);
+  container.appendChild(body);
+
+  if (isAdminViewer()) {
+    const details = document.createElement('details');
+    details.className = 'board-filter-admin-details';
+    const summary = document.createElement('summary');
+    summary.textContent = s().filterAdminTitle;
+    details.appendChild(summary);
+    const adminBody = document.createElement('div');
+    adminBody.className = 'board-filter-bar-body';
+    ['gender', 'ageGroup', 'platforms', 'spending', 'multiFrequency', 'showGenshinRanking', 'showGenshinCheck'].forEach((fk) => {
+      appendFilterGroup(adminBody, fieldLabel(fk, lang), toEntries(fk, filterFieldOptions(fk, lang)));
+    });
+    details.appendChild(adminBody);
+    container.appendChild(details);
+  }
+}
+
 function renderSearchList() {
   const list = document.getElementById('search-list');
   if (!list) return;
   const myUserId = getUserId();
 
   const filtered = latestSearchPosts
-    .filter((post) => post.userId === myUserId || post.publicFields?.server === store.server)
+    .filter((post) => post.userId === myUserId || (post.publicFields?.server === store.server && matchesSearchFilters(post)))
     .map((post) => ({
       post,
       // 自分の「どういうフレンドがほしい？」と相手の公開フィールドを突き合わせてマッチ度を計算する。
@@ -1304,6 +1462,7 @@ function startSearchListener() {
   onSnapshot(q, (snap) => {
     latestSearchPosts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderSearchList();
+    ensureAdminProfilesLoaded(latestSearchPosts);
   }, (err) => {
     console.error('[board] search listen failed', err);
     latestSearchPosts = [];
@@ -1330,6 +1489,7 @@ document.querySelectorAll('input[name="lang"]').forEach((radio) => {
   radio.addEventListener('change', () => {
     setTimeout(() => {
       renderMyListing();
+      renderSearchFilterBar();
       renderSearchList();
       populateVisibilitySelects();
       oshiPicker.renderElemTabs();
@@ -1349,6 +1509,7 @@ async function init() {
     const infoModal = document.getElementById('info-modal');
     if (infoModal) infoModal.style.display = 'flex';
   }
+  renderSearchFilterBar();
   populateNumberAndTimeSelects();
   await loadProfileFromFirestore();
   applyDraftIfAny();

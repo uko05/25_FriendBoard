@@ -227,6 +227,14 @@ function optionLabel(key, value, lang) {
   return l ? (lang === 'en' ? l.en : l.ja) : String(value);
 }
 
+// 項目の選択肢一覧を{value, label}の配列で返す(検索フィルターUIの動的生成用)。
+// 選択肢が無い項目(OPTION_LABELSに定義が無い)には空配列を返す。
+export function fieldOptions(key, lang) {
+  const group = OPTION_LABELS[key];
+  if (!group) return [];
+  return Object.keys(group).map((value) => ({ value, label: optionLabel(key, value, lang) }));
+}
+
 function isEmptyValue(v) {
   if (Array.isArray(v)) return v.length === 0;
   if (v && typeof v === 'object') {
