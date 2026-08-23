@@ -1039,6 +1039,10 @@ function buildCard(post, { mine, matchPercent }) {
     if (oshiCharsRow) {
       const oshiBadge = document.createElement('div');
       oshiBadge.className = 'board-card-group-oshi-badge';
+      const oshiLabel = document.createElement('span');
+      oshiLabel.className = 'board-card-group-oshi-label';
+      oshiLabel.textContent = `${fieldLabel('oshiChars', currentLang())}: `;
+      oshiBadge.appendChild(oshiLabel);
       oshiCharsRow.oshiIcons.forEach((icon) => {
         const img = document.createElement('img');
         img.className = 'board-card-oshi-icon-lg';
