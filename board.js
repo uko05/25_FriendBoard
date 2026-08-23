@@ -1429,7 +1429,7 @@ function renderSearchFilterBar() {
     adminDetails.appendChild(adminSummary);
     const adminBody = document.createElement('div');
     adminBody.className = 'board-filter-bar-body';
-    ['gender', 'ageGroup', 'platforms', 'spending', 'multiFrequency', 'showGenshinRanking', 'showGenshinCheck'].forEach((fk) => {
+    ['gender', 'ageGroup', 'platforms', 'spending', 'multiFrequency', 'showGenshinRanking', 'showGenshinCheck', 'friendPreference'].forEach((fk) => {
       appendFilterGroup(adminBody, fieldLabel(fk, lang), toEntries(fk, filterFieldOptions(fk, lang)));
     });
     adminDetails.appendChild(adminBody);
