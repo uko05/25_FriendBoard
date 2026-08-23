@@ -65,6 +65,7 @@ const STR = {
     filterResetBtn: 'リセット',
     filterGroupAttrTitle: 'あなたの追加属性',
     filterAdminTitle: '管理者用フィルター(非表示項目も含む)',
+    resultCount: (n) => `${n}件`,
   },
   en: {
     justNow: 'just now',
@@ -103,6 +104,7 @@ const STR = {
     filterResetBtn: 'Reset',
     filterGroupAttrTitle: 'Additional traits',
     filterAdminTitle: 'Admin filters (includes hidden fields)',
+    resultCount: (n) => `${n} result${n === 1 ? '' : 's'}`,
   },
 };
 
@@ -1291,6 +1293,8 @@ function filterFieldOptions(key, lang) {
 
 // フィールドキー -> 選択中の値のSet。値が1つも無いフィールドは絞り込み対象外(=全件通す)。
 const searchFilters = {};
+// フィルターは基本閉じておき、開閉状態は再描画(言語切替など)をまたいで保持する
+let filterBarOpen = false;
 // 管理者専用: userId -> friendBoardProfilesの生データ(非表示項目を含む全項目)
 const adminProfileCache = new Map();
 
@@ -1373,11 +1377,17 @@ function renderSearchFilterBar() {
 
   container.innerHTML = '';
 
+  const rootDetails = document.createElement('details');
+  rootDetails.className = 'board-filter-details';
+  rootDetails.open = filterBarOpen;
+  rootDetails.addEventListener('toggle', () => { filterBarOpen = rootDetails.open; });
+  const summary = document.createElement('summary');
+  summary.className = 'board-filter-bar-title';
+  summary.textContent = s().filterBarTitle;
+  rootDetails.appendChild(summary);
+
   const header = document.createElement('div');
   header.className = 'board-filter-bar-header';
-  const title = document.createElement('span');
-  title.className = 'board-filter-bar-title';
-  title.textContent = s().filterBarTitle;
   const resetBtn = document.createElement('button');
   resetBtn.type = 'button';
   resetBtn.className = 'board-filter-reset-btn';
@@ -1387,9 +1397,8 @@ function renderSearchFilterBar() {
     renderSearchFilterBar();
     renderSearchList();
   });
-  header.appendChild(title);
   header.appendChild(resetBtn);
-  container.appendChild(header);
+  rootDetails.appendChild(header);
 
   const body = document.createElement('div');
   body.className = 'board-filter-bar-body';
@@ -1406,22 +1415,23 @@ function renderSearchFilterBar() {
   const attrEntries = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject']
     .flatMap((fk) => toEntries(fk, filterFieldOptions(fk, lang)));
   appendFilterGroup(body, s().filterGroupAttrTitle, attrEntries);
-  container.appendChild(body);
+  rootDetails.appendChild(body);
 
   if (isAdminViewer()) {
-    const details = document.createElement('details');
-    details.className = 'board-filter-admin-details';
-    const summary = document.createElement('summary');
-    summary.textContent = s().filterAdminTitle;
-    details.appendChild(summary);
+    const adminDetails = document.createElement('details');
+    adminDetails.className = 'board-filter-admin-details';
+    const adminSummary = document.createElement('summary');
+    adminSummary.textContent = s().filterAdminTitle;
+    adminDetails.appendChild(adminSummary);
     const adminBody = document.createElement('div');
     adminBody.className = 'board-filter-bar-body';
     ['gender', 'ageGroup', 'platforms', 'spending', 'multiFrequency', 'showGenshinRanking', 'showGenshinCheck'].forEach((fk) => {
       appendFilterGroup(adminBody, fieldLabel(fk, lang), toEntries(fk, filterFieldOptions(fk, lang)));
     });
-    details.appendChild(adminBody);
-    container.appendChild(details);
+    adminDetails.appendChild(adminBody);
+    rootDetails.appendChild(adminDetails);
   }
+  container.appendChild(rootDetails);
 }
 
 function renderSearchList() {
@@ -1440,6 +1450,9 @@ function renderSearchList() {
         : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {}),
     }))
     .sort((a, b) => (b.matchPercent ?? -1) - (a.matchPercent ?? -1));
+
+  const countEl = document.getElementById('search-result-count');
+  if (countEl) countEl.textContent = s().resultCount(filtered.length);
 
   list.innerHTML = '';
   if (!filtered.length) {
