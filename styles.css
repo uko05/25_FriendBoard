@@ -593,6 +593,10 @@ body.portal-page {
   color: #666;
   flex-shrink: 0;
 }
+.board-compact-select {
+  background: #fff;
+  color: #333;
+}
 
 .board-radio-group,
 .board-checkbox-group {
@@ -625,6 +629,9 @@ body.portal-page {
 .board-form-row.board-form-row-inline select:not(.board-visibility-select) {
   width: auto;
   min-width: 0;
+}
+.board-form-row.board-form-row-inline.board-attr-list-row {
+  justify-content: flex-start;
 }
 
 .board-vcapps-desc {
