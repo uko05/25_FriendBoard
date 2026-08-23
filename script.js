@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
       groupStyle: "あなたについて",
       groupContact: "連絡・時間帯",
       groupVoice: "ボイスチャット",
-      groupCallStyle: "通話スタイル",
+      groupCallStyle: "あなたの属性",
       groupComment: "コメント",
 
       labelAdventureRank: "冒険者ランク",
@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
       groupStyle: "About You",
       groupContact: "Contact & Availability",
       groupVoice: "Voice Chat",
-      groupCallStyle: "Call Style",
+      groupCallStyle: "Your Traits",
       groupComment: "Comment",
 
       labelAdventureRank: "Adventure Rank",

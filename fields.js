@@ -44,6 +44,11 @@ const FIXED_VISIBILITY = {
   vcDiscordId: 'approval',
   vcLineId: 'approval',
   vcAppsOtherText: 'approval',
+  casualOk: 'public',
+  jokingOk: 'public',
+  sameOshiReject: 'public',
+  sameOshiChars: 'public',
+  workCallOk: 'public',
 };
 
 // 既定の公開設定。genshinUidは常に承認制で固定(フォームにセレクトを出していない)。
