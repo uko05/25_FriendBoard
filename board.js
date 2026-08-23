@@ -128,11 +128,11 @@ const twitterInput = document.getElementById('input-twitter');
 const tiktokInput = document.getElementById('input-tiktok');
 const lineInput = document.getElementById('input-line');
 const instagramInput = document.getElementById('input-instagram');
-const workCallOkInput = document.getElementById('input-workCallOk');
 const jokingOkInput = document.getElementById('input-jokingOk');
 const yuriOkInput = document.getElementById('input-yuriOk');
 const fujoshiOkInput = document.getElementById('input-fujoshiOk');
 const ageGroupInput = document.getElementById('input-ageGroup');
+const casualOkInput = document.getElementById('input-casualOk');
 const vcNoteInput = document.getElementById('input-vcNote');
 const vcDiscordIdInput = document.getElementById('input-vcDiscordId');
 const vcLineIdInput = document.getElementById('input-vcLineId');
@@ -353,7 +353,6 @@ function fillFormFromProfile() {
   if (tiktokInput && store.tiktokId) tiktokInput.value = store.tiktokId;
   if (lineInput && store.lineId) lineInput.value = store.lineId;
   if (instagramInput && store.instagramId) instagramInput.value = store.instagramId;
-  if (workCallOkInput) workCallOkInput.checked = !!store.workCallOk;
   if (jokingOkInput) jokingOkInput.checked = !!store.jokingOk;
   if (yuriOkInput) yuriOkInput.checked = !!store.yuriOk;
   if (fujoshiOkInput) fujoshiOkInput.checked = !!store.fujoshiOk;
@@ -406,7 +405,7 @@ function fillFormFromProfile() {
     multiFrequencyInput.value = store.multiFrequency;
   }
   setRadioValue('vc', store.vc);
-  setRadioValue('casualOk', store.casualOk);
+  if (casualOkInput) casualOkInput.value = store.casualOk || '';
   setCheckboxValues('platforms', store.platforms);
   setCheckboxValues('playStyles', store.playStyles);
   setCheckboxValues('friendPreference', store.friendPreference);
@@ -697,14 +696,13 @@ function collectFormValues() {
     multiFrequency: multiFrequencyByDay ? getCheckboxValues('multiFrequencyDays') : (multiFrequencyInput?.value || ''),
     multiFrequencyByDay,
     multiFrequencyNote: (!multiFrequencyByDay && multiFrequencyInput?.value === 'ask') ? (multiFrequencyNoteInput?.value.trim() || '') : '',
-    workCallOk: !!workCallOkInput?.checked,
     vc: getRadioValue('vc'),
     vcNote: getRadioValue('vc') === 'maybe' ? (vcNoteInput?.value.trim() || '') : '',
     vcApps,
     vcDiscordId,
     vcLineId,
     vcAppsOtherText,
-    casualOk: getRadioValue('casualOk'),
+    casualOk: casualOkInput?.value || '',
     jokingOk: !!jokingOkInput?.checked,
     yuriOk: !!yuriOkInput?.checked,
     fujoshiOk: !!fujoshiOkInput?.checked,

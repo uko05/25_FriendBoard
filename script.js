@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
       groupStyle: "あなたについて",
       groupContact: "連絡・時間帯",
       groupVoice: "ボイスチャット",
-      groupCallStyle: "あなたの属性",
+      groupCallStyle: "あなたの追加属性",
       groupComment: "コメント",
 
       labelAdventureRank: "冒険者ランク",
@@ -136,8 +136,8 @@ document.addEventListener("DOMContentLoaded", () => {
       freqAsk: "要相談",
       labelMultiFrequencyNote: "マルチ頻度の詳細",
       multiFrequencyNotePlaceholder: "例）土日なら頻度高めです",
-      workCallOkLabel: "作業通話だけの参加でもOK",
       labelCasualOk: "タメ口について",
+      casualUnspecified: "未回答",
       casualLove: "タメ口大歓迎",
       casualOkLabel: "タメ口OK",
       casualEither: "どっちでもOK",
@@ -193,6 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
       prefWantOshiFriend: "推し活友達がほしい",
       prefChatOnly: "マルチしない雑談通話でも可",
       prefVcNotNeeded: "VCなしでも大丈夫",
+      prefWorkCallOk: "作業通話だけの参加でもOK",
 
       infoModalTitle: "このサイトは承認制です",
       infoModalBody1: "このサイトは一般的なフレンド募集とは異なり、相手に承認されないとUIDなどの公開されません。",
@@ -254,7 +255,7 @@ document.addEventListener("DOMContentLoaded", () => {
       groupStyle: "About You",
       groupContact: "Contact & Availability",
       groupVoice: "Voice Chat",
-      groupCallStyle: "Your Traits",
+      groupCallStyle: "More About You",
       groupComment: "Comment",
 
       labelAdventureRank: "Adventure Rank",
@@ -317,8 +318,8 @@ document.addEventListener("DOMContentLoaded", () => {
       freqAsk: "Ask me",
       labelMultiFrequencyNote: "Multiplayer frequency details",
       multiFrequencyNotePlaceholder: "e.g. More often on weekends",
-      workCallOkLabel: "OK to just hang out on call without playing together",
       labelCasualOk: "Casual speech",
+      casualUnspecified: "Unspecified",
       casualLove: "Love casual speech",
       casualOkLabel: "Casual speech OK",
       casualEither: "Either is fine",
@@ -374,6 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
       prefWantOshiFriend: "Looking for a fellow fan friend",
       prefChatOnly: "OK with just chatting, no multiplayer",
       prefVcNotNeeded: "OK without VC",
+      prefWorkCallOk: "OK with just hanging out on call without playing",
 
       infoModalTitle: "This site is approval-based",
       infoModalBody1: "Unlike typical friend-recruitment sites, your UID and other details are never shown to someone unless they've been approved by you.",

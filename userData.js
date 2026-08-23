@@ -87,7 +87,6 @@ export const store = {
   multiFrequency: '',
   multiFrequencyByDay: false, // trueなら曜日単位(multiFrequencyが配列['mon','wed',...]になる)
   multiFrequencyNote: '',
-  workCallOk: false,
   vc: '',
   vcNote: '',
   vcApps: [],
@@ -137,7 +136,6 @@ export async function loadProfileFromFirestore() {
       if (d.multiFrequency != null) store.multiFrequency = d.multiFrequency;
       if (d.multiFrequencyByDay != null) store.multiFrequencyByDay = !!d.multiFrequencyByDay;
       if (d.multiFrequencyNote != null) store.multiFrequencyNote = d.multiFrequencyNote;
-      if (d.workCallOk != null) store.workCallOk = !!d.workCallOk;
       if (d.vc != null) store.vc = d.vc;
       if (d.vcNote != null) store.vcNote = d.vcNote;
       if (d.vcDiscordId != null) store.vcDiscordId = d.vcDiscordId;
@@ -158,6 +156,10 @@ export async function loadProfileFromFirestore() {
       if (d.weekdayTimesByDay != null) store.weekdayTimesByDay = !!d.weekdayTimesByDay;
       if (d.weekendTimesByDay != null) store.weekendTimesByDay = !!d.weekendTimesByDay;
       ARRAY_FIELDS.forEach((k) => { if (Array.isArray(d[k])) store[k] = d[k]; });
+      // 過去は独立フィールドだったため、どういうフレンドがほしい？の一項目として移行する
+      if (d.workCallOk === true && !store.friendPreference.includes('workCallOk')) {
+        store.friendPreference = [...store.friendPreference, 'workCallOk'];
+      }
       TIME_RANGE_FIELDS.forEach((k) => {
         if (!d[k] || typeof d[k] !== 'object') return;
         const byDay = k === 'weekdayTimes' ? store.weekdayTimesByDay : store.weekendTimesByDay;
@@ -207,7 +209,6 @@ export async function syncProfileToFirestore() {
       multiFrequency: store.multiFrequency,
       multiFrequencyByDay: store.multiFrequencyByDay,
       multiFrequencyNote: store.multiFrequencyNote,
-      workCallOk: store.workCallOk,
       vc: store.vc,
       vcNote: store.vcNote,
       vcApps: store.vcApps,
