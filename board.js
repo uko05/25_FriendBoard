@@ -1023,10 +1023,26 @@ function buildCard(post, { mine, matchPercent }) {
     title.className = 'board-card-group-title';
     title.textContent = s().groupTitles[group.key] || group.key;
     box.appendChild(title);
+    // 推しキャラ(oshiChars)は他のチップと一緒だと小さくて見づらいため、
+    // 枠の右上に大きめのアイコンとして別枠表示する(同担拒否キャラ=sameOshiCharsは対象外)
+    const oshiCharsRow = groupRows.find((row) => row.key === 'oshiChars');
+    if (oshiCharsRow) {
+      const oshiBadge = document.createElement('div');
+      oshiBadge.className = 'board-card-group-oshi-badge';
+      oshiCharsRow.oshiIcons.forEach((icon) => {
+        const img = document.createElement('img');
+        img.className = 'board-card-oshi-icon-lg';
+        img.src = GENSHIN_ICON_BASE + icon;
+        img.alt = '';
+        img.loading = 'lazy';
+        oshiBadge.appendChild(img);
+      });
+      box.appendChild(oshiBadge);
+    }
     const chips = document.createElement('div');
     chips.className = 'board-card-chips';
     const playStylesRow = groupRows.find((row) => row.key === 'playStyles');
-    const otherRows = groupRows.filter((row) => row.key !== 'playStyles');
+    const otherRows = groupRows.filter((row) => row.key !== 'playStyles' && row.key !== 'oshiChars');
     otherRows.forEach((row) => {
       if (row.oshiIcons) {
         row.oshiIcons.forEach((icon) => {
