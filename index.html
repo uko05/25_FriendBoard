@@ -418,12 +418,10 @@
                     <span class="board-fixed-public-badge" data-i18n="alwaysPublic">🌐常に公開</span>
                 </div>
 
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <span data-i18n="labelCasualOk">タメ口について</span>
-                    </div>
+                <div class="board-form-row board-form-row-inline">
+                    <label data-i18n="labelCasualOk">タメ口について</label>
                     <select id="input-casualOk" name="casualOk">
-                        <option value="" data-i18n="casualUnspecified">未回答</option>
+                        <option value="" data-i18n="optUnspecified">未回答</option>
                         <option value="love" data-i18n="casualLove">タメ口大歓迎</option>
                         <option value="ok" data-i18n="casualOkLabel">タメ口OK</option>
                         <option value="either" data-i18n="casualEither">どっちでもOK</option>
@@ -432,19 +430,35 @@
                 </div>
 
                 <div class="board-form-row board-form-row-inline">
-                    <label class="board-single-checkbox"><input type="checkbox" id="input-jokingOk" name="jokingOk" /><span data-i18n="jokingOkLabel">おふざけします</span></label>
+                    <label data-i18n="labelJokingOk">おふざけ</label>
+                    <select id="input-jokingOk" name="jokingOk">
+                        <option value="" data-i18n="optUnspecified">未回答</option>
+                        <option value="yes" data-i18n="jokingOkLabel">おふざけします</option>
+                    </select>
                 </div>
 
                 <div class="board-form-row board-form-row-inline">
-                    <label class="board-single-checkbox"><input type="checkbox" id="input-yuriOk" name="yuriOk" /><span data-i18n="yuriOkLabel">百合いけます</span></label>
+                    <label data-i18n="labelYuriOk">百合</label>
+                    <select id="input-yuriOk" name="yuriOk">
+                        <option value="" data-i18n="optUnspecified">未回答</option>
+                        <option value="yes" data-i18n="yuriOkLabel">百合いけます</option>
+                    </select>
                 </div>
 
                 <div class="board-form-row board-form-row-inline">
-                    <label class="board-single-checkbox"><input type="checkbox" id="input-fujoshiOk" name="fujoshiOk" /><span data-i18n="fujoshiOkLabel">腐いけます</span></label>
+                    <label data-i18n="labelFujoshiOk">腐</label>
+                    <select id="input-fujoshiOk" name="fujoshiOk">
+                        <option value="" data-i18n="optUnspecified">未回答</option>
+                        <option value="yes" data-i18n="fujoshiOkLabel">腐いけます</option>
+                    </select>
                 </div>
 
                 <div class="board-form-row board-form-row-inline">
-                    <label class="board-single-checkbox"><input type="checkbox" id="input-sameOshiReject" name="sameOshiReject" /><span data-i18n="sameOshiRejectLabel">同担拒否あり</span></label>
+                    <label data-i18n="labelSameOshiReject">同担拒否</label>
+                    <select id="input-sameOshiReject" name="sameOshiReject">
+                        <option value="" data-i18n="optUnspecified">未回答</option>
+                        <option value="yes" data-i18n="sameOshiRejectLabel">同担拒否あり</option>
+                    </select>
                 </div>
 
                 <div class="board-form-row" id="row-sameOshiChars">
@@ -562,7 +576,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v2.8</span>
+    <span id="site-version" class="site-version">v2.9</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

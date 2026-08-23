@@ -617,6 +617,14 @@ body.portal-page {
   justify-content: space-between;
   gap: 8px;
 }
+.board-form-row.board-form-row-inline > label {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.board-form-row.board-form-row-inline select:not(.board-visibility-select) {
+  width: auto;
+  min-width: 0;
+}
 
 .board-vcapps-desc {
   margin: 6px 0 0;

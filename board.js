@@ -335,10 +335,10 @@ function refreshGenshinCheckPreview() {
 showGenshinRankingInput?.addEventListener('change', refreshGenshinRankingPreview);
 showGenshinCheckInput?.addEventListener('change', refreshGenshinCheckPreview);
 
-// 「同担拒否あり」にチェックが入っているときだけキャラ選択欄を表示する
+// 「同担拒否あり」が選ばれているときだけキャラ選択欄を表示する
 function updateSameOshiCharsVisibility() {
   const row = document.getElementById('row-sameOshiChars');
-  if (row) row.classList.toggle('hidden', !sameOshiRejectInput?.checked);
+  if (row) row.classList.toggle('hidden', sameOshiRejectInput?.value !== 'yes');
 }
 sameOshiRejectInput?.addEventListener('change', updateSameOshiCharsVisibility);
 
@@ -353,10 +353,10 @@ function fillFormFromProfile() {
   if (tiktokInput && store.tiktokId) tiktokInput.value = store.tiktokId;
   if (lineInput && store.lineId) lineInput.value = store.lineId;
   if (instagramInput && store.instagramId) instagramInput.value = store.instagramId;
-  if (jokingOkInput) jokingOkInput.checked = !!store.jokingOk;
-  if (yuriOkInput) yuriOkInput.checked = !!store.yuriOk;
-  if (fujoshiOkInput) fujoshiOkInput.checked = !!store.fujoshiOk;
-  if (sameOshiRejectInput) sameOshiRejectInput.checked = !!store.sameOshiReject;
+  if (jokingOkInput) jokingOkInput.value = store.jokingOk ? 'yes' : '';
+  if (yuriOkInput) yuriOkInput.value = store.yuriOk ? 'yes' : '';
+  if (fujoshiOkInput) fujoshiOkInput.value = store.fujoshiOk ? 'yes' : '';
+  if (sameOshiRejectInput) sameOshiRejectInput.value = store.sameOshiReject ? 'yes' : '';
   if (vcNoteInput && store.vcNote) vcNoteInput.value = store.vcNote;
   if (vcDiscordIdInput && store.vcDiscordId) vcDiscordIdInput.value = store.vcDiscordId;
   if (vcLineIdInput && store.vcLineId) vcLineIdInput.value = store.vcLineId;
@@ -661,7 +661,7 @@ function collectFormValues() {
   // VCが「可能」以外のときはVC利用アプリ一式は非表示にしているため、
   // 古い入力値が残っていても投稿には含めない(あなたの属性一式はVCの可否と関係ないため対象外)
   const vcOpen = getRadioValue('vc') === 'yes';
-  const sameOshiReject = !!sameOshiRejectInput?.checked;
+  const sameOshiReject = sameOshiRejectInput?.value === 'yes';
   const weekdayByDay = !!weekdayByDayInput?.checked;
   const weekendByDay = !!weekendByDayInput?.checked;
   const multiFrequencyByDay = !!multiFrequencyByDayInput?.checked;
@@ -703,9 +703,9 @@ function collectFormValues() {
     vcLineId,
     vcAppsOtherText,
     casualOk: casualOkInput?.value || '',
-    jokingOk: !!jokingOkInput?.checked,
-    yuriOk: !!yuriOkInput?.checked,
-    fujoshiOk: !!fujoshiOkInput?.checked,
+    jokingOk: jokingOkInput?.value === 'yes',
+    yuriOk: yuriOkInput?.value === 'yes',
+    fujoshiOk: fujoshiOkInput?.value === 'yes',
     sameOshiReject,
     sameOshiChars: sameOshiReject ? store.sameOshiChars : [],
     twitterId: twitterInput.value.trim(),
