@@ -133,8 +133,9 @@ const yuriOkInput = document.getElementById('input-yuriOk');
 const fujoshiOkInput = document.getElementById('input-fujoshiOk');
 const ageGroupInput = document.getElementById('input-ageGroup');
 const casualOkInput = document.getElementById('input-casualOk');
+const roughTalkInput = document.getElementById('input-roughTalk');
 // あなたの追加属性: チェックを入れた項目だけリストを表示する
-const ATTR_TOGGLE_FIELDS = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'sameOshiReject'];
+const ATTR_TOGGLE_FIELDS = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject'];
 const attrToggleInputs = Object.fromEntries(ATTR_TOGGLE_FIELDS.map((k) => [k, document.getElementById(`attr-toggle-${k}`)]));
 const vcNoteInput = document.getElementById('input-vcNote');
 const vcDiscordIdInput = document.getElementById('input-vcDiscordId');
@@ -378,7 +379,8 @@ function fillFormFromProfile() {
   if (jokingOkInput) jokingOkInput.value = store.jokingOk ? 'yes' : '';
   if (yuriOkInput) yuriOkInput.value = store.yuriOk ? 'yes' : '';
   if (fujoshiOkInput) fujoshiOkInput.value = store.fujoshiOk ? 'yes' : '';
-  if (sameOshiRejectInput) sameOshiRejectInput.value = store.sameOshiReject ? 'yes' : '';
+  if (roughTalkInput) roughTalkInput.value = store.roughTalk || '';
+  if (sameOshiRejectInput) sameOshiRejectInput.value = store.sameOshiReject || '';
   if (vcNoteInput && store.vcNote) vcNoteInput.value = store.vcNote;
   if (vcDiscordIdInput && store.vcDiscordId) vcDiscordIdInput.value = store.vcDiscordId;
   if (vcLineIdInput && store.vcLineId) vcLineIdInput.value = store.vcLineId;
@@ -438,8 +440,7 @@ function fillFormFromProfile() {
   updateWeekdayByDayVisibility();
   updateWeekendByDayVisibility();
   ATTR_TOGGLE_FIELDS.forEach((key) => {
-    const hasValue = key === 'casualOk' ? !!store.casualOk : !!store[key];
-    if (attrToggleInputs[key]) attrToggleInputs[key].checked = hasValue;
+    if (attrToggleInputs[key]) attrToggleInputs[key].checked = !!store[key];
     updateAttrToggleVisibility(key);
   });
   updateSameOshiCharsVisibility();
@@ -688,7 +689,7 @@ function collectFormValues() {
   // VCが「可能」以外のときはVC利用アプリ一式は非表示にしているため、
   // 古い入力値が残っていても投稿には含めない(あなたの属性一式はVCの可否と関係ないため対象外)
   const vcOpen = getRadioValue('vc') === 'yes';
-  const sameOshiReject = sameOshiRejectInput?.value === 'yes';
+  const sameOshiRejectYes = sameOshiRejectInput?.value === 'yes';
   const weekdayByDay = !!weekdayByDayInput?.checked;
   const weekendByDay = !!weekendByDayInput?.checked;
   const multiFrequencyByDay = !!multiFrequencyByDayInput?.checked;
@@ -733,8 +734,9 @@ function collectFormValues() {
     jokingOk: jokingOkInput?.value === 'yes',
     yuriOk: yuriOkInput?.value === 'yes',
     fujoshiOk: fujoshiOkInput?.value === 'yes',
-    sameOshiReject,
-    sameOshiChars: sameOshiReject ? store.sameOshiChars : [],
+    roughTalk: roughTalkInput?.value || '',
+    sameOshiReject: sameOshiRejectInput?.value || '',
+    sameOshiChars: sameOshiRejectYes ? store.sameOshiChars : [],
     twitterId: twitterInput.value.trim(),
     tiktokId: tiktokInput?.value.trim() || '',
     lineId: lineInput?.value.trim() || '',

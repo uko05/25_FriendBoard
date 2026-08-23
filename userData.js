@@ -97,7 +97,8 @@ export const store = {
   jokingOk: false,
   yuriOk: false,
   fujoshiOk: false,
-  sameOshiReject: false,
+  roughTalk: '',
+  sameOshiReject: '', // ''=未回答, 'no'=同担拒否なし, 'yes'=同担拒否あり
   sameOshiChars: [], // 原神キャラのicon名、人数制限なし
   twitterId: '',
   tiktokId: '',
@@ -145,7 +146,9 @@ export async function loadProfileFromFirestore() {
       if (d.jokingOk != null) store.jokingOk = !!d.jokingOk;
       if (d.yuriOk != null) store.yuriOk = !!d.yuriOk;
       if (d.fujoshiOk != null) store.fujoshiOk = !!d.fujoshiOk;
-      if (d.sameOshiReject != null) store.sameOshiReject = !!d.sameOshiReject;
+      if (d.roughTalk != null) store.roughTalk = d.roughTalk;
+      // 過去は真偽値だったため、trueのときだけ'yes'として移行する('false'は'未回答'扱い)
+      if (d.sameOshiReject != null) store.sameOshiReject = (d.sameOshiReject === true) ? 'yes' : (d.sameOshiReject === false ? '' : d.sameOshiReject);
       if (d.twitterId != null) store.twitterId = d.twitterId;
       if (d.tiktokId != null) store.tiktokId = d.tiktokId;
       if (d.lineId != null) store.lineId = d.lineId;
@@ -219,6 +222,7 @@ export async function syncProfileToFirestore() {
       jokingOk: store.jokingOk,
       yuriOk: store.yuriOk,
       fujoshiOk: store.fujoshiOk,
+      roughTalk: store.roughTalk,
       sameOshiReject: store.sameOshiReject,
       sameOshiChars: store.sameOshiChars,
       twitterId: store.twitterId,

@@ -9,7 +9,7 @@ export const VISIBILITY_FIELDS = [
   'oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck',
   'multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle',
   'vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText',
-  'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'sameOshiReject', 'sameOshiChars',
+  'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject', 'sameOshiChars',
   'twitterId', 'tiktokId', 'lineId', 'instagramId',
   'friendPreference',
 ];
@@ -22,7 +22,7 @@ export const FIELD_GROUPS = [
   { key: 'basic', fields: ['adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms'] },
   { key: 'style', fields: ['oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck'] },
   { key: 'contact', fields: ['multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle'] },
-  { key: 'voice', fields: ['vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'sameOshiReject', 'sameOshiChars'] },
+  { key: 'voice', fields: ['vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject', 'sameOshiChars'] },
   { key: 'sns', fields: ['twitterId', 'tiktokId', 'lineId', 'instagramId'] },
 ];
 
@@ -49,6 +49,7 @@ const FIXED_VISIBILITY = {
   jokingOk: 'public',
   yuriOk: 'public',
   fujoshiOk: 'public',
+  roughTalk: 'public',
   sameOshiReject: 'public',
   sameOshiChars: 'public',
 };
@@ -107,6 +108,7 @@ const FIELD_LABELS = {
   jokingOk: { ja: 'おふざけOK', en: 'Joking around OK' },
   yuriOk: { ja: '百合いけます', en: 'OK with yuri (girls’ love)' },
   fujoshiOk: { ja: '腐いけます', en: 'OK with BL (boys’ love)' },
+  roughTalk: { ja: '暴言', en: 'Rough language' },
   sameOshiReject: { ja: '同担拒否', en: 'Same-favorite rejection' },
   sameOshiChars: { ja: '同担拒否キャラ', en: 'Rejected characters' },
   friendPreference: { ja: 'どういうフレンドがほしい？', en: 'What kind of friend are you looking for?' },
@@ -169,6 +171,14 @@ const OPTION_LABELS = {
     ok: { ja: 'タメ口OK', en: 'Casual speech OK' },
     either: { ja: 'どっちでもOK', en: 'Either is fine' },
     no: { ja: 'タメ口なし', en: 'No casual speech' },
+  },
+  roughTalk: {
+    no: { ja: '暴言NG', en: 'No rough language' },
+    yes: { ja: '暴言出ます', en: 'I use rough language' },
+  },
+  sameOshiReject: {
+    no: { ja: '同担拒否なし', en: 'No same-favorite rejection' },
+    yes: { ja: '同担拒否あり', en: 'Same-favorite rejection' },
   },
   multiFrequency: {
     biweekly: { ja: '隔週1回くらい', en: 'About once every 2 weeks' },
@@ -303,9 +313,6 @@ export function formatFieldValue(key, value, lang) {
   }
   if (key === 'ageGroup') {
     return value ? (lang === 'en' ? "Adult (confirmed)" : '成人済') : '';
-  }
-  if (key === 'sameOshiReject') {
-    return value ? (lang === 'en' ? 'Yes' : 'あり') : '';
   }
   if (key === 'adventureRank') return String(value);
   if (key === 'worldLevel') return String(value);

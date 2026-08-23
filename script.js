@@ -148,7 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
       yuriOkLabel: "百合いけます",
       labelFujoshiOk: "腐",
       fujoshiOkLabel: "腐いけます",
+      labelRoughTalk: "暴言",
+      roughTalkNo: "暴言NG",
+      roughTalkYes: "暴言出ます",
       labelSameOshiReject: "同担拒否",
+      sameOshiRejectNo: "同担拒否なし",
       sameOshiRejectLabel: "同担拒否あり",
       labelSameOshiChars: "同担拒否キャラ",
 
@@ -334,7 +338,11 @@ document.addEventListener("DOMContentLoaded", () => {
       yuriOkLabel: "Into yuri (girls' love)",
       labelFujoshiOk: "BL",
       fujoshiOkLabel: "Into BL (boys' love)",
+      labelRoughTalk: "Rough language",
+      roughTalkNo: "No rough language",
+      roughTalkYes: "I use rough language",
       labelSameOshiReject: "Same-favorite rejection",
+      sameOshiRejectNo: "No same-favorite rejection",
       sameOshiRejectLabel: "Same-favorite rejection",
       labelSameOshiChars: "Rejected characters",
 
