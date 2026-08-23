@@ -144,7 +144,9 @@ document.addEventListener("DOMContentLoaded", () => {
       casualOkLabel: "タメ口OK",
       casualEither: "どっちでもOK",
       casualNo: "タメ口なし",
-      jokingOkLabel: "おふざけしながらでもOK",
+      jokingOkLabel: "おふざけします",
+      yuriOkLabel: "百合いけます",
+      fujoshiOkLabel: "腐いけます",
       sameOshiRejectLabel: "同担拒否あり",
       labelSameOshiChars: "同担拒否キャラ",
 
@@ -325,7 +327,9 @@ document.addEventListener("DOMContentLoaded", () => {
       casualOkLabel: "Casual speech OK",
       casualEither: "Either is fine",
       casualNo: "No casual speech",
-      jokingOkLabel: "OK to joke around",
+      jokingOkLabel: "I like to joke around",
+      yuriOkLabel: "Into yuri (girls' love)",
+      fujoshiOkLabel: "Into BL (boys' love)",
       sameOshiRejectLabel: "Same-favorite rejection",
       labelSameOshiChars: "Rejected characters",
 

@@ -130,6 +130,8 @@ const lineInput = document.getElementById('input-line');
 const instagramInput = document.getElementById('input-instagram');
 const workCallOkInput = document.getElementById('input-workCallOk');
 const jokingOkInput = document.getElementById('input-jokingOk');
+const yuriOkInput = document.getElementById('input-yuriOk');
+const fujoshiOkInput = document.getElementById('input-fujoshiOk');
 const vcNoteInput = document.getElementById('input-vcNote');
 const vcDiscordIdInput = document.getElementById('input-vcDiscordId');
 const vcLineIdInput = document.getElementById('input-vcLineId');
@@ -352,6 +354,8 @@ function fillFormFromProfile() {
   if (instagramInput && store.instagramId) instagramInput.value = store.instagramId;
   if (workCallOkInput) workCallOkInput.checked = !!store.workCallOk;
   if (jokingOkInput) jokingOkInput.checked = !!store.jokingOk;
+  if (yuriOkInput) yuriOkInput.checked = !!store.yuriOk;
+  if (fujoshiOkInput) fujoshiOkInput.checked = !!store.fujoshiOk;
   if (sameOshiRejectInput) sameOshiRejectInput.checked = !!store.sameOshiReject;
   if (vcNoteInput && store.vcNote) vcNoteInput.value = store.vcNote;
   if (vcDiscordIdInput && store.vcDiscordId) vcDiscordIdInput.value = store.vcDiscordId;
@@ -654,10 +658,10 @@ function clearDraft() {
 
 // フォームの現在値を全項目分集めて{key: value}で返す(genshinUid/serverも含む)
 function collectFormValues() {
-  // VCが「可能」以外のときはVC利用アプリ・通話スタイル一式は非表示にしているため、
-  // 古い入力値が残っていても投稿には含めない
+  // VCが「可能」以外のときはVC利用アプリ一式は非表示にしているため、
+  // 古い入力値が残っていても投稿には含めない(あなたの属性一式はVCの可否と関係ないため対象外)
   const vcOpen = getRadioValue('vc') === 'yes';
-  const sameOshiReject = vcOpen && !!sameOshiRejectInput?.checked;
+  const sameOshiReject = !!sameOshiRejectInput?.checked;
   const weekdayByDay = !!weekdayByDayInput?.checked;
   const weekendByDay = !!weekendByDayInput?.checked;
   const multiFrequencyByDay = !!multiFrequencyByDayInput?.checked;
@@ -692,15 +696,17 @@ function collectFormValues() {
     multiFrequency: multiFrequencyByDay ? getCheckboxValues('multiFrequencyDays') : (multiFrequencyInput?.value || ''),
     multiFrequencyByDay,
     multiFrequencyNote: (!multiFrequencyByDay && multiFrequencyInput?.value === 'ask') ? (multiFrequencyNoteInput?.value.trim() || '') : '',
-    workCallOk: vcOpen && !!workCallOkInput?.checked,
+    workCallOk: !!workCallOkInput?.checked,
     vc: getRadioValue('vc'),
     vcNote: getRadioValue('vc') === 'maybe' ? (vcNoteInput?.value.trim() || '') : '',
     vcApps,
     vcDiscordId,
     vcLineId,
     vcAppsOtherText,
-    casualOk: vcOpen ? getRadioValue('casualOk') : '',
-    jokingOk: vcOpen && !!jokingOkInput?.checked,
+    casualOk: getRadioValue('casualOk'),
+    jokingOk: !!jokingOkInput?.checked,
+    yuriOk: !!yuriOkInput?.checked,
+    fujoshiOk: !!fujoshiOkInput?.checked,
     sameOshiReject,
     sameOshiChars: sameOshiReject ? store.sameOshiChars : [],
     twitterId: twitterInput.value.trim(),

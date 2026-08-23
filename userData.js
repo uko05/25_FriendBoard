@@ -96,6 +96,8 @@ export const store = {
   vcAppsOtherText: '',
   casualOk: '',
   jokingOk: false,
+  yuriOk: false,
+  fujoshiOk: false,
   sameOshiReject: false,
   sameOshiChars: [], // 原神キャラのicon名、人数制限なし
   twitterId: '',
@@ -142,6 +144,8 @@ export async function loadProfileFromFirestore() {
       if (d.vcAppsOtherText != null) store.vcAppsOtherText = d.vcAppsOtherText;
       if (d.casualOk != null) store.casualOk = d.casualOk;
       if (d.jokingOk != null) store.jokingOk = !!d.jokingOk;
+      if (d.yuriOk != null) store.yuriOk = !!d.yuriOk;
+      if (d.fujoshiOk != null) store.fujoshiOk = !!d.fujoshiOk;
       if (d.sameOshiReject != null) store.sameOshiReject = !!d.sameOshiReject;
       if (d.twitterId != null) store.twitterId = d.twitterId;
       if (d.tiktokId != null) store.tiktokId = d.tiktokId;
@@ -211,6 +215,8 @@ export async function syncProfileToFirestore() {
       vcAppsOtherText: store.vcAppsOtherText,
       casualOk: store.casualOk,
       jokingOk: store.jokingOk,
+      yuriOk: store.yuriOk,
+      fujoshiOk: store.fujoshiOk,
       sameOshiReject: store.sameOshiReject,
       sameOshiChars: store.sameOshiChars,
       twitterId: store.twitterId,

@@ -5,10 +5,11 @@
 // 公開設定(visibility)の対象となる項目一覧。コメントは常に公開のため対象外。
 // フォームの並び順とだいたい揃えている(カードのチップ表示順にも使われる)。
 export const VISIBILITY_FIELDS = [
-  'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms',
+  'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'platforms',
   'oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck',
   'multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle',
-  'vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
+  'vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText',
+  'ageGroup', 'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk',
   'twitterId', 'tiktokId', 'lineId', 'instagramId',
   'friendPreference',
 ];
@@ -18,10 +19,10 @@ export const VISIBILITY_FIELDS = [
 // genshinUid/displayName/serverはヘッダー側で個別描画、friendPreferenceはチップに出さないため、
 // どちらもここには含めない。
 export const FIELD_GROUPS = [
-  { key: 'basic', fields: ['adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms'] },
+  { key: 'basic', fields: ['adventureRank', 'worldLevel', 'gender', 'platforms'] },
   { key: 'style', fields: ['oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck'] },
   { key: 'contact', fields: ['multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle'] },
-  { key: 'voice', fields: ['vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk'] },
+  { key: 'voice', fields: ['vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'ageGroup', 'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'sameOshiReject', 'sameOshiChars', 'workCallOk'] },
   { key: 'sns', fields: ['twitterId', 'tiktokId', 'lineId', 'instagramId'] },
 ];
 
@@ -44,8 +45,11 @@ const FIXED_VISIBILITY = {
   vcDiscordId: 'approval',
   vcLineId: 'approval',
   vcAppsOtherText: 'approval',
+  ageGroup: 'public',
   casualOk: 'public',
   jokingOk: 'public',
+  yuriOk: 'public',
+  fujoshiOk: 'public',
   sameOshiReject: 'public',
   sameOshiChars: 'public',
   workCallOk: 'public',
@@ -104,6 +108,8 @@ const FIELD_LABELS = {
   weekendTimes: { ja: '休日のマルチ可能時間帯', en: 'Weekend availability' },
   casualOk: { ja: 'タメ口について', en: 'Casual speech' },
   jokingOk: { ja: 'おふざけOK', en: 'Joking around OK' },
+  yuriOk: { ja: '百合いけます', en: 'OK with yuri (girls’ love)' },
+  fujoshiOk: { ja: '腐いけます', en: 'OK with BL (boys’ love)' },
   sameOshiReject: { ja: '同担拒否', en: 'Same-favorite rejection' },
   sameOshiChars: { ja: '同担拒否キャラ', en: 'Rejected characters' },
   friendPreference: { ja: 'どういうフレンドがほしい？', en: 'What kind of friend are you looking for?' },
@@ -298,7 +304,7 @@ export function computeFriendMatch(myPrefs, myGender, candidate) {
 // oshiCharsだけはアイコン画像なのでここでは扱わず、呼び出し側でアイコン表示する。
 export function formatFieldValue(key, value, lang) {
   if (isEmptyValue(value)) return '';
-  if (key === 'workCallOk' || key === 'jokingOk') {
+  if (key === 'workCallOk' || key === 'jokingOk' || key === 'yuriOk' || key === 'fujoshiOk') {
     return value ? 'OK' : '';
   }
   if (key === 'sameOshiReject') {
