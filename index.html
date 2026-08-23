@@ -418,9 +418,17 @@
                     <span class="board-fixed-public-badge" data-i18n="alwaysPublic">🌐常に公開</span>
                 </div>
 
-                <div class="board-form-row board-form-row-inline">
+                <div class="board-checkbox-group" id="group-attrToggles">
+                    <label><input type="checkbox" id="attr-toggle-casualOk" /><span data-i18n="labelCasualOk">タメ口について</span></label>
+                    <label><input type="checkbox" id="attr-toggle-jokingOk" /><span data-i18n="labelJokingOk">おふざけ</span></label>
+                    <label><input type="checkbox" id="attr-toggle-yuriOk" /><span data-i18n="labelYuriOk">百合</span></label>
+                    <label><input type="checkbox" id="attr-toggle-fujoshiOk" /><span data-i18n="labelFujoshiOk">腐</span></label>
+                    <label><input type="checkbox" id="attr-toggle-sameOshiReject" /><span data-i18n="labelSameOshiReject">同担拒否</span></label>
+                </div>
+
+                <div class="board-form-row board-form-row-inline hidden" id="row-casualOk">
                     <label data-i18n="labelCasualOk">タメ口について</label>
-                    <select id="input-casualOk" name="casualOk">
+                    <select id="input-casualOk" name="casualOk" class="board-compact-select">
                         <option value="" data-i18n="optUnspecified">未回答</option>
                         <option value="love" data-i18n="casualLove">タメ口大歓迎</option>
                         <option value="ok" data-i18n="casualOkLabel">タメ口OK</option>
@@ -429,33 +437,33 @@
                     </select>
                 </div>
 
-                <div class="board-form-row board-form-row-inline">
+                <div class="board-form-row board-form-row-inline hidden" id="row-jokingOk">
                     <label data-i18n="labelJokingOk">おふざけ</label>
-                    <select id="input-jokingOk" name="jokingOk">
+                    <select id="input-jokingOk" name="jokingOk" class="board-compact-select">
                         <option value="" data-i18n="optUnspecified">未回答</option>
                         <option value="yes" data-i18n="jokingOkLabel">おふざけします</option>
                     </select>
                 </div>
 
-                <div class="board-form-row board-form-row-inline">
+                <div class="board-form-row board-form-row-inline hidden" id="row-yuriOk">
                     <label data-i18n="labelYuriOk">百合</label>
-                    <select id="input-yuriOk" name="yuriOk">
+                    <select id="input-yuriOk" name="yuriOk" class="board-compact-select">
                         <option value="" data-i18n="optUnspecified">未回答</option>
                         <option value="yes" data-i18n="yuriOkLabel">百合いけます</option>
                     </select>
                 </div>
 
-                <div class="board-form-row board-form-row-inline">
+                <div class="board-form-row board-form-row-inline hidden" id="row-fujoshiOk">
                     <label data-i18n="labelFujoshiOk">腐</label>
-                    <select id="input-fujoshiOk" name="fujoshiOk">
+                    <select id="input-fujoshiOk" name="fujoshiOk" class="board-compact-select">
                         <option value="" data-i18n="optUnspecified">未回答</option>
                         <option value="yes" data-i18n="fujoshiOkLabel">腐いけます</option>
                     </select>
                 </div>
 
-                <div class="board-form-row board-form-row-inline">
+                <div class="board-form-row board-form-row-inline hidden" id="row-sameOshiReject">
                     <label data-i18n="labelSameOshiReject">同担拒否</label>
-                    <select id="input-sameOshiReject" name="sameOshiReject">
+                    <select id="input-sameOshiReject" name="sameOshiReject" class="board-compact-select">
                         <option value="" data-i18n="optUnspecified">未回答</option>
                         <option value="yes" data-i18n="sameOshiRejectLabel">同担拒否あり</option>
                     </select>
@@ -576,7 +584,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v2.9</span>
+    <span id="site-version" class="site-version">v3.0</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

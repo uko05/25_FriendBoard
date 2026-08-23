@@ -374,7 +374,7 @@ body.portal-page {
 }
 
 .board-form-row input:not([type="checkbox"]):not([type="radio"]),
-.board-form-row select:not(.board-visibility-select),
+.board-form-row select:not(.board-visibility-select):not(.board-compact-select),
 .board-form-row textarea {
   font-family: inherit;
   font-size: 15px;
@@ -582,7 +582,8 @@ body.portal-page {
   flex-shrink: 0;
 }
 
-.board-visibility-select {
+.board-visibility-select,
+.board-compact-select {
   font-family: inherit;
   font-size: 12px;
   padding: 4px 8px;

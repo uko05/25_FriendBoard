@@ -133,6 +133,9 @@ const yuriOkInput = document.getElementById('input-yuriOk');
 const fujoshiOkInput = document.getElementById('input-fujoshiOk');
 const ageGroupInput = document.getElementById('input-ageGroup');
 const casualOkInput = document.getElementById('input-casualOk');
+// あなたの追加属性: チェックを入れた項目だけリストを表示する
+const ATTR_TOGGLE_FIELDS = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'sameOshiReject'];
+const attrToggleInputs = Object.fromEntries(ATTR_TOGGLE_FIELDS.map((k) => [k, document.getElementById(`attr-toggle-${k}`)]));
 const vcNoteInput = document.getElementById('input-vcNote');
 const vcDiscordIdInput = document.getElementById('input-vcDiscordId');
 const vcLineIdInput = document.getElementById('input-vcLineId');
@@ -342,6 +345,25 @@ function updateSameOshiCharsVisibility() {
 }
 sameOshiRejectInput?.addEventListener('change', updateSameOshiCharsVisibility);
 
+// 追加属性のトグルにチェックが入っている項目だけリストを表示する。
+// トグルを外したときは選択値もクリアする(非表示のまま古い値が投稿されるのを防ぐ)。
+function updateAttrToggleVisibility(key, { clearOnHide = false } = {}) {
+  const toggle = attrToggleInputs[key];
+  const row = document.getElementById(`row-${key}`);
+  const checked = !!toggle?.checked;
+  if (row) row.classList.toggle('hidden', !checked);
+  if (!checked && clearOnHide) {
+    const select = document.getElementById(`input-${key}`);
+    if (select) select.value = '';
+  }
+}
+ATTR_TOGGLE_FIELDS.forEach((key) => {
+  attrToggleInputs[key]?.addEventListener('change', () => {
+    updateAttrToggleVisibility(key, { clearOnHide: true });
+    if (key === 'sameOshiReject') updateSameOshiCharsVisibility();
+  });
+});
+
 function fillFormFromProfile() {
   if (uidInput && store.genshinUid) uidInput.value = store.genshinUid;
   if (displayNameInput && store.displayName) displayNameInput.value = store.displayName;
@@ -415,6 +437,11 @@ function fillFormFromProfile() {
   updateMultiFrequencyByDayVisibility();
   updateWeekdayByDayVisibility();
   updateWeekendByDayVisibility();
+  ATTR_TOGGLE_FIELDS.forEach((key) => {
+    const hasValue = key === 'casualOk' ? !!store.casualOk : !!store[key];
+    if (attrToggleInputs[key]) attrToggleInputs[key].checked = hasValue;
+    updateAttrToggleVisibility(key);
+  });
   updateSameOshiCharsVisibility();
   refreshGenshinRankingPreview();
   refreshGenshinCheckPreview();
