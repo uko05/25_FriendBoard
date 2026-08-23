@@ -131,10 +131,6 @@ const OPTION_LABELS = {
     male: { ja: '男性', en: 'Male' },
     female: { ja: '女性', en: 'Female' },
   },
-  ageGroup: {
-    adult: { ja: '成人', en: 'Adult' },
-    minor: { ja: '未成年', en: 'Minor' },
-  },
   platforms: {
     pc: { ja: 'PC', en: 'PC' },
     mobile: { ja: 'スマホ', en: 'Mobile' },
@@ -306,6 +302,9 @@ export function formatFieldValue(key, value, lang) {
   if (isEmptyValue(value)) return '';
   if (key === 'workCallOk' || key === 'jokingOk' || key === 'yuriOk' || key === 'fujoshiOk') {
     return value ? 'OK' : '';
+  }
+  if (key === 'ageGroup') {
+    return value ? (lang === 'en' ? "Adult (confirmed)" : '成人済') : '';
   }
   if (key === 'sameOshiReject') {
     return value ? (lang === 'en' ? 'Yes' : 'あり') : '';

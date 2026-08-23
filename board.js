@@ -132,6 +132,7 @@ const workCallOkInput = document.getElementById('input-workCallOk');
 const jokingOkInput = document.getElementById('input-jokingOk');
 const yuriOkInput = document.getElementById('input-yuriOk');
 const fujoshiOkInput = document.getElementById('input-fujoshiOk');
+const ageGroupInput = document.getElementById('input-ageGroup');
 const vcNoteInput = document.getElementById('input-vcNote');
 const vcDiscordIdInput = document.getElementById('input-vcDiscordId');
 const vcLineIdInput = document.getElementById('input-vcLineId');
@@ -395,7 +396,7 @@ function fillFormFromProfile() {
   }
 
   setRadioValue('gender', store.gender);
-  setRadioValue('ageGroup', store.ageGroup);
+  if (ageGroupInput) ageGroupInput.checked = !!store.ageGroup;
   setRadioValue('spending', store.spending);
   setRadioValue('inviteStyle', store.inviteStyle);
   if (multiFrequencyByDayInput) multiFrequencyByDayInput.checked = !!store.multiFrequencyByDay;
@@ -684,7 +685,7 @@ function collectFormValues() {
     adventureRank: arInput.value ? Number(arInput.value) : '',
     worldLevel: wlInput.value !== '' ? Number(wlInput.value) : '',
     gender: getRadioValue('gender'),
-    ageGroup: getRadioValue('ageGroup'),
+    ageGroup: !!ageGroupInput?.checked,
     platforms: getCheckboxValues('platforms'),
     oshiChars: store.oshiChars,
     spending: getRadioValue('spending'),

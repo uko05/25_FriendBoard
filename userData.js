@@ -75,7 +75,7 @@ export const store = {
   adventureRank: 60,
   worldLevel: 9,
   gender: '',
-  ageGroup: '',
+  ageGroup: false,
   platforms: [],
   oshiChars: [], // 原神キャラのicon名、最大3件
   spending: '',
@@ -130,7 +130,8 @@ export async function loadProfileFromFirestore() {
       if (d.adventureRank != null) store.adventureRank = d.adventureRank;
       if (d.worldLevel != null) store.worldLevel = d.worldLevel;
       if (d.gender != null) store.gender = d.gender;
-      if (d.ageGroup != null) store.ageGroup = d.ageGroup;
+      // 過去は'adult'/'minor'の文字列だったため、'adult'のときだけtrueとして移行する
+      if (d.ageGroup != null) store.ageGroup = (d.ageGroup === true || d.ageGroup === 'adult');
       if (d.spending != null) store.spending = d.spending;
       if (d.inviteStyle != null) store.inviteStyle = d.inviteStyle;
       if (d.multiFrequency != null) store.multiFrequency = d.multiFrequency;

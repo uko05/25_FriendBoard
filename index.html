@@ -413,14 +413,8 @@
                     <span class="board-fixed-public-badge" data-i18n="alwaysPublic">🌐常に公開</span>
                 </div>
 
-                <div class="board-form-row">
-                    <div class="board-form-row-head">
-                        <span><span data-i18n="labelAgeGroup">年齢</span><span class="board-required-mark">＊</span></span>
-                    </div>
-                    <div class="board-radio-group" id="group-ageGroup">
-                        <label><input type="radio" name="ageGroup" value="adult" /><span data-i18n="ageAdult">成人</span></label>
-                        <label><input type="radio" name="ageGroup" value="minor" /><span data-i18n="ageMinor">未成年</span></label>
-                    </div>
+                <div class="board-form-row board-form-row-inline" id="group-ageGroup">
+                    <label class="board-single-checkbox"><input type="checkbox" id="input-ageGroup" name="ageGroup" /><span data-i18n="ageAdultConfirm">成人済</span><span class="board-required-mark">＊</span></label>
                 </div>
 
                 <div class="board-form-row">
@@ -569,7 +563,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v2.6</span>
+    <span id="site-version" class="site-version">v2.7</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">
