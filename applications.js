@@ -456,11 +456,6 @@ function buildReceivedCard(app) {
     body.appendChild(msg);
   }
 
-  const forPost = document.createElement('p');
-  forPost.className = 'board-request-for';
-  forPost.textContent = s().forPost(app.postComment || '');
-  body.appendChild(forPost);
-
   const foot = document.createElement('div');
   foot.className = 'board-card-foot';
 
