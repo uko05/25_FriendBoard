@@ -6,7 +6,7 @@
 import { db } from './firebaseConfig.js';
 import { store } from './userData.js';
 import { avatarUrl, getMyAvatar } from './avatar.js';
-import { VISIBILITY_FIELDS, fieldLabel, formatFieldValue, snapshotVisibleFields } from './fields.js';
+import { VISIBILITY_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets } from './fields.js';
 import {
   collection, addDoc, updateDoc, doc, onSnapshot,
   query, where, orderBy, limit, serverTimestamp,
@@ -21,6 +21,7 @@ const STR = {
     emptyReceived: 'まだ届いた申請はありません',
     emptySent: 'まだ申請を送っていません',
     acceptBtn: '承認する',
+    acceptWithReplyBtn: 'メッセージを添えて承認',
     rejectBtn: '見送る',
     statusPending: '返答待ち',
     statusAccepted: '承認済み',
@@ -30,6 +31,11 @@ const STR = {
     applyFail: '申請に失敗しました。時間をおいて再度お試しください。',
     respondFail: '処理に失敗しました。',
     forPost: (comment) => `募集: 「${comment}」`,
+    secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
+    acceptReplyModalTitle: 'メッセージを添えて承認',
+    acceptReplyPlaceholder: '「こちらこそよろしくお願いします」など、返信を添えてみましょう（未入力でも承認できます）',
+    acceptReplySendBtn: 'この内容で承認する',
+    ownerReplyTitle: '相手からの返信',
   },
   en: {
     noName: 'Nameless Traveler',
@@ -39,6 +45,7 @@ const STR = {
     emptyReceived: 'No requests received yet',
     emptySent: "You haven't sent any requests yet",
     acceptBtn: 'Accept',
+    acceptWithReplyBtn: 'Accept with a message',
     rejectBtn: 'Pass',
     statusPending: 'Pending',
     statusAccepted: 'Accepted',
@@ -48,6 +55,11 @@ const STR = {
     applyFail: 'Failed to apply. Please try again later.',
     respondFail: 'Failed to process.',
     forPost: (comment) => `For: "${comment}"`,
+    secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
+    acceptReplyModalTitle: 'Accept with a message',
+    acceptReplyPlaceholder: 'Add a short reply, e.g. "Nice to meet you too!" (optional — you can accept without one)',
+    acceptReplySendBtn: 'Accept with this message',
+    ownerReplyTitle: "Their reply",
   },
 };
 
@@ -85,8 +97,11 @@ let _onSentChange = null;
 let latestReceived = [];
 let latestSent = [];
 
+const MESSAGE_MAXLEN = 150;
+
 // ===== 申請する =====
-export async function applyToPost(post) {
+// message: 申請時に任意で添えられる一言(未指定なら'')
+export async function applyToPost(post, message = '') {
   if (!store.genshinUid || !store.server) {
     const err = new Error('PROFILE_INCOMPLETE');
     err.code = 'PROFILE_INCOMPLETE';
@@ -94,6 +109,19 @@ export async function applyToPost(post) {
   }
   const userId = _getUserId();
   const applicantAvatar = await getMyAvatar(userId);
+
+  // 申請者自身の項目も、募集の投稿時と全く同じルールで公開/承認後公開に仕分ける。
+  // 承認後公開の項目("承認するまでは全部お互いに隠す"の対象)は値ごとapplicantSecretFieldsに
+  // 保持しておくが、募集主の画面には承認されるまで一切描画しない(buildReceivedCard参照)。
+  const { publicFields, secretFieldKeys } = buildPostFieldBuckets(store, store.visibility);
+  const secretFields = {};
+  secretFieldKeys.forEach((key) => {
+    const value = store[key];
+    if (value != null && value !== '' && !(Array.isArray(value) && value.length === 0)) {
+      secretFields[key] = value;
+    }
+  });
+
   await addDoc(collection(db, 'friendBoardApplications'), {
     postId: post.id,
     postComment: post.comment || '',
@@ -104,14 +132,17 @@ export async function applyToPost(post) {
     revealedFields: {}, // 承認時にのみ書き込む(承認前に見えないようにするため)
 
     applicantUserId: userId,
-    // 申請者自身の非公開(hidden)以外の項目一式(募集主が申請可否を判断するための情報)
-    applicantFields: snapshotVisibleFields(store, store.visibility),
+    applicantFields: publicFields,
+    applicantSecretFieldKeys: secretFieldKeys,
+    applicantSecretFields: secretFields, // 承認されるまで画面には出さない(buildReceivedCard参照)
     applicantAvatarGame: applicantAvatar.game,
     applicantAvatarIcon: applicantAvatar.icon,
+    message: (message || '').trim().slice(0, MESSAGE_MAXLEN),
 
     status: 'pending',
     ownerSeen: false,
     applicantSeen: true,
+    ownerReply: '',
 
     createdAt: serverTimestamp(),
     respondedAt: null,
@@ -122,7 +153,8 @@ export function hasAppliedTo(postId) {
   return latestSent.some((a) => a.postId === postId);
 }
 
-async function respondToApplication(app, accept) {
+// reply: 承認と同時に任意で添えられる一言(見送り時は使わない)
+async function respondToApplication(app, accept, reply = '') {
   const updates = {
     status: accept ? 'accepted' : 'rejected',
     applicantSeen: false,
@@ -137,6 +169,7 @@ async function respondToApplication(app, accept) {
       }
     });
     updates.revealedFields = revealed;
+    updates.ownerReply = (reply || '').trim().slice(0, MESSAGE_MAXLEN);
   }
   try {
     await updateDoc(doc(db, 'friendBoardApplications', app.id), updates);
@@ -145,6 +178,35 @@ async function respondToApplication(app, accept) {
     alert(s().respondFail);
   }
 }
+
+// ===== 返信を添えて承認するモーダル =====
+let pendingAcceptApp = null;
+const acceptReplyModal = document.getElementById('accept-reply-modal');
+const acceptReplyInput = document.getElementById('accept-reply-input');
+const acceptReplySendBtn = document.getElementById('accept-reply-send');
+
+function openAcceptReplyModal(app) {
+  pendingAcceptApp = app;
+  if (acceptReplyInput) acceptReplyInput.value = '';
+  if (acceptReplyModal) acceptReplyModal.style.display = 'flex';
+  acceptReplyInput?.focus();
+}
+function closeAcceptReplyModal() {
+  if (acceptReplyModal) acceptReplyModal.style.display = 'none';
+  pendingAcceptApp = null;
+}
+document.getElementById('accept-reply-close')?.addEventListener('click', closeAcceptReplyModal);
+document.querySelector('#accept-reply-modal .col-modal-backdrop')?.addEventListener('click', closeAcceptReplyModal);
+acceptReplySendBtn?.addEventListener('click', async () => {
+  if (!pendingAcceptApp) return;
+  acceptReplySendBtn.disabled = true;
+  try {
+    await respondToApplication(pendingAcceptApp, true, acceptReplyInput?.value || '');
+    closeAcceptReplyModal();
+  } finally {
+    acceptReplySendBtn.disabled = false;
+  }
+});
 
 // ===== 届いた申請一覧（自分が募集主） =====
 function renderReceivedList() {
@@ -184,7 +246,32 @@ function buildReceivedCard(app) {
     chip.textContent = text;
     chips.appendChild(chip);
   });
+  // 承認済みになった時点で、申請者側の「承認後に公開」項目も初めてこちらに見せる
+  // (=募集主の項目が承認時に見えるようになるのと対称のルール)。
+  if (app.status === 'accepted') {
+    formatFieldDict(app.applicantSecretFields, lang).forEach((text) => {
+      const chip = document.createElement('span');
+      chip.className = 'board-card-chip board-request-revealed-chip';
+      chip.textContent = text;
+      chips.appendChild(chip);
+    });
+  }
   if (chips.children.length) body.appendChild(chips);
+
+  if (app.status === 'pending' && app.applicantSecretFieldKeys?.length) {
+    const note = document.createElement('p');
+    note.className = 'board-card-secret-note';
+    const labels = app.applicantSecretFieldKeys.map((key) => fieldLabel(key, lang));
+    note.textContent = s().secretFieldsNote(labels.join(lang === 'en' ? ', ' : '、'));
+    body.appendChild(note);
+  }
+
+  if (app.message) {
+    const msg = document.createElement('p');
+    msg.className = 'board-request-message';
+    msg.textContent = `💬 ${app.message}`;
+    body.appendChild(msg);
+  }
 
   const forPost = document.createElement('p');
   forPost.className = 'board-request-for';
@@ -202,6 +289,13 @@ function buildReceivedCard(app) {
   if (app.status === 'pending') {
     const btnRow = document.createElement('div');
     btnRow.className = 'board-request-btn-row';
+
+    const acceptReplyBtn = document.createElement('button');
+    acceptReplyBtn.type = 'button';
+    acceptReplyBtn.className = 'board-request-accept-reply-btn';
+    acceptReplyBtn.textContent = s().acceptWithReplyBtn;
+    acceptReplyBtn.addEventListener('click', () => openAcceptReplyModal(app));
+    btnRow.appendChild(acceptReplyBtn);
 
     const acceptBtn = document.createElement('button');
     acceptBtn.type = 'button';
@@ -264,7 +358,26 @@ function buildSentCard(app) {
   forPost.textContent = s().forPost(app.postComment || '');
   body.appendChild(forPost);
 
+  if (app.message) {
+    const msg = document.createElement('p');
+    msg.className = 'board-request-message';
+    msg.textContent = `💬 ${app.message}`;
+    body.appendChild(msg);
+  }
+
   if (app.status === 'accepted') {
+    if (app.ownerReply) {
+      const replyTitle = document.createElement('p');
+      replyTitle.className = 'board-request-revealed-title';
+      replyTitle.textContent = s().ownerReplyTitle;
+      body.appendChild(replyTitle);
+
+      const reply = document.createElement('p');
+      reply.className = 'board-request-message board-request-reply-message';
+      reply.textContent = `💬 ${app.ownerReply}`;
+      body.appendChild(reply);
+    }
+
     const revealedTexts = formatFieldDict(app.revealedFields, lang);
     if (revealedTexts.length) {
       const title = document.createElement('p');
@@ -356,11 +469,11 @@ function startReceivedListener(userId) {
     snap.docChanges().filter((c) => c.type === 'added').forEach((c) => {
       const app = { id: c.doc.id, ...c.doc.data() };
       if (app.status === 'pending' && !app.ownerSeen) {
-        const name = app.applicantFields?.genshinUid || s().noName;
+        // 表示名は承認後に公開の項目なので、この時点ではまだ名乗れない
         showToast({
           avatarGame: app.applicantAvatarGame,
           avatarIcon: app.applicantAvatarIcon,
-          text: s().newApplicationToast(name),
+          text: s().newApplicationToast(s().noName),
         });
         updateDoc(doc(db, 'friendBoardApplications', app.id), { ownerSeen: true }).catch(() => {});
       }

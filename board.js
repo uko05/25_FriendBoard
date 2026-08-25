@@ -45,11 +45,15 @@ const STR = {
     fillAll: '必須項目（＊）をすべて入力してください。',
     fillAllMissing: (labels) => `必須項目（＊）をすべて入力してください。\n不足している項目: ${labels}`,
     uidLabel: 'UID',
-    applyBtn: '申請する',
+    applyBtn: 'メッセージなしで申請',
+    applyWithMsgBtn: 'メッセージをつけて申請',
     appliedBtn: '申請済み',
     applyOk: '申請しました！相手が承認するとUIDが確認できます。',
     applyFail: '申請に失敗しました。時間をおいて再度お試しください。',
     applyProfileIncomplete: '先に原神UID・サーバーを入力・保存してください（「マイプロフィール」タブから保存してください）。',
+    applyMessageModalTitle: 'メッセージをつけて申請',
+    applyMessagePlaceholder: '「よろしくお願いします」など、一言添えてみましょう（未入力でも送信できます）',
+    applyMessageSendBtn: 'この内容で申請する',
     visPublic: '公開',
     visHidden: '非公開',
     visApproval: '承認後に公開',
@@ -84,11 +88,15 @@ const STR = {
     fillAll: 'Please fill in all required (＊) fields.',
     fillAllMissing: (labels) => `Please fill in all required (＊) fields.\nMissing: ${labels}`,
     uidLabel: 'UID',
-    applyBtn: 'Apply',
+    applyBtn: 'Apply without a message',
+    applyWithMsgBtn: 'Apply with a message',
     appliedBtn: 'Applied',
     applyOk: 'Request sent! You can see their UID once they accept.',
     applyFail: 'Failed to apply. Please try again later.',
     applyProfileIncomplete: 'Please fill in and save your Genshin UID and server first (save on the "My Profile" tab).',
+    applyMessageModalTitle: 'Apply with a message',
+    applyMessagePlaceholder: 'Add a short note, e.g. "Nice to meet you!" (optional — you can send without one)',
+    applyMessageSendBtn: 'Send this request',
     visPublic: 'Public',
     visHidden: 'Hidden',
     visApproval: 'Visible after approval',
@@ -1198,23 +1206,42 @@ function buildCard(post, { mine, matchPercent }) {
     foot.appendChild(delBtn);
   } else if (post.requiresApproval) {
     // 承認制でない募集はUIDが既に見えているため、申請ボタンは不要
-    const applied = hasAppliedTo(post.id);
-    const applyBtn = document.createElement('button');
-    applyBtn.type = 'button';
-    applyBtn.className = 'board-card-apply-btn';
-    applyBtn.textContent = applied ? s().appliedBtn : s().applyBtn;
-    applyBtn.disabled = applied;
-    applyBtn.addEventListener('click', () => handleApply(post));
-    foot.appendChild(applyBtn);
+    if (hasAppliedTo(post.id)) {
+      const appliedBtn = document.createElement('button');
+      appliedBtn.type = 'button';
+      appliedBtn.className = 'board-card-apply-btn';
+      appliedBtn.textContent = s().appliedBtn;
+      appliedBtn.disabled = true;
+      foot.appendChild(appliedBtn);
+    } else {
+      const btnRow = document.createElement('div');
+      btnRow.className = 'board-request-btn-row';
+
+      const applyMsgBtn = document.createElement('button');
+      applyMsgBtn.type = 'button';
+      applyMsgBtn.className = 'board-card-apply-msg-btn';
+      applyMsgBtn.textContent = s().applyWithMsgBtn;
+      applyMsgBtn.addEventListener('click', () => openApplyMessageModal(post));
+      btnRow.appendChild(applyMsgBtn);
+
+      const applyBtn = document.createElement('button');
+      applyBtn.type = 'button';
+      applyBtn.className = 'board-card-apply-btn';
+      applyBtn.textContent = s().applyBtn;
+      applyBtn.addEventListener('click', () => handleApply(post));
+      btnRow.appendChild(applyBtn);
+
+      foot.appendChild(btnRow);
+    }
   }
 
   body.appendChild(foot);
   return card;
 }
 
-async function handleApply(post) {
+async function handleApply(post, message) {
   try {
-    await applyToPost(post);
+    await applyToPost(post, message);
     alert(s().applyOk);
   } catch (err) {
     if (err.code === 'PROFILE_INCOMPLETE') {
@@ -1225,6 +1252,45 @@ async function handleApply(post) {
     }
   }
 }
+
+// ===== メッセージをつけて申請するモーダル =====
+let pendingApplyPost = null;
+const applyMessageModal = document.getElementById('apply-message-modal');
+const applyMessageInput = document.getElementById('apply-message-input');
+const applyMessageSendBtn = document.getElementById('apply-message-send');
+
+function openApplyMessageModal(post) {
+  pendingApplyPost = post;
+  if (applyMessageInput) applyMessageInput.value = '';
+  if (applyMessageModal) applyMessageModal.style.display = 'flex';
+  applyMessageInput?.focus();
+}
+function closeApplyMessageModal() {
+  if (applyMessageModal) applyMessageModal.style.display = 'none';
+  pendingApplyPost = null;
+}
+document.getElementById('apply-message-close')?.addEventListener('click', closeApplyMessageModal);
+document.querySelector('#apply-message-modal .col-modal-backdrop')?.addEventListener('click', closeApplyMessageModal);
+applyMessageSendBtn?.addEventListener('click', async () => {
+  if (!pendingApplyPost) return;
+  applyMessageSendBtn.disabled = true;
+  const post = pendingApplyPost;
+  const message = applyMessageInput?.value || '';
+  try {
+    await applyToPost(post, message);
+    closeApplyMessageModal();
+    alert(s().applyOk);
+  } catch (err) {
+    if (err.code === 'PROFILE_INCOMPLETE') {
+      alert(s().applyProfileIncomplete);
+    } else {
+      console.error('[board] apply failed', err);
+      alert(s().applyFail);
+    }
+  } finally {
+    applyMessageSendBtn.disabled = false;
+  }
+});
 
 async function deletePost(postId) {
   if (!confirm(s().deleteConfirm)) return;

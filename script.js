@@ -233,6 +233,13 @@ document.addEventListener("DOMContentLoaded", () => {
       receivedTitle: "届いた申請",
       sentTitle: "送った申請",
 
+      applyMessageModalTitle: "メッセージをつけて申請",
+      applyMessagePlaceholder: "「よろしくお願いします」など、一言添えてみましょう（未入力でも送信できます）",
+      applyMessageSendBtn: "この内容で申請する",
+      acceptReplyModalTitle: "メッセージを添えて承認",
+      acceptReplyPlaceholder: "「こちらこそよろしくお願いします」など、返信を添えてみましょう（未入力でも承認できます）",
+      acceptReplySendBtn: "この内容で承認する",
+
       friend: "＜友達ください…",
     },
     en: {
@@ -425,6 +432,13 @@ document.addEventListener("DOMContentLoaded", () => {
       requestsDesc: "Apply to a post you're interested in and the poster gets notified. Once they accept, you'll be able to see their Genshin UID.",
       receivedTitle: "Received requests",
       sentTitle: "Sent requests",
+
+      applyMessageModalTitle: "Apply with a message",
+      applyMessagePlaceholder: "Add a short note, e.g. \"Nice to meet you!\" (optional — you can send without one)",
+      applyMessageSendBtn: "Send this request",
+      acceptReplyModalTitle: "Accept with a message",
+      acceptReplyPlaceholder: "Add a short reply, e.g. \"Nice to meet you too!\" (optional — you can accept without one)",
+      acceptReplySendBtn: "Accept with this message",
 
       friend: "< Follow me on X!",
     },

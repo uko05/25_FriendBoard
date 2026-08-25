@@ -245,7 +245,8 @@ function isEmptyValue(v) {
   return v === '' || v == null;
 }
 
-// 投稿用に、公開設定(visibility)に応じて値を振り分ける。
+// 公開設定(visibility)に応じて値を振り分ける。募集の投稿時、申請時のどちらでも使う
+// (どちらも「承認するまでapproval項目は相手に見せない」という同じルールのため)。
 // values: {key: 現在の入力値, ...}, visibility: {key: 'hidden'|'public'|'approval', ...}
 // 戻り値: { publicFields: {key:value,...}, secretFieldKeys: [key,...] }
 // 全ユーザーが'approval'を使える(誰でも承認制の項目を持てる)。genshinUidは常にapproval固定。
@@ -264,20 +265,6 @@ export function buildPostFieldBuckets(values, visibility) {
     }
   });
   return { publicFields, secretFieldKeys };
-}
-
-// 申請時、申請者が相手(募集主)に見せる自分のプロフィール一式を作る。
-// 非公開(hidden)の項目だけ除外し、公開/承認制はどちらも含める
-// (申請という行為自体が、その相手への開示に同意したことを意味するため)。
-export function snapshotVisibleFields(values, visibility) {
-  const out = {};
-  VISIBILITY_FIELDS.forEach((key) => {
-    const vis = visibility[key] || 'public';
-    const value = values[key];
-    if (vis === 'hidden' || vis === 'closeFriend' || isEmptyValue(value)) return;
-    out[key] = value;
-  });
-  return out;
 }
 
 // 「どういうフレンドがほしい？」のマッチ度を計算する。

@@ -602,7 +602,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v4.0</span>
+    <span id="site-version" class="site-version">v4.1</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">
@@ -613,6 +613,28 @@
             <p class="info-modal-body" data-i18n="infoModalBody1">このサイトは一般的なフレンド募集とは異なり、相手に承認されないとUIDなどの公開されません。</p>
             <p class="info-modal-body" data-i18n="infoModalBody2">全利用者はマイプロフィールの設定が必須です。気になる人に申請をしたら相手にマイプロフィールが一部公開されます。相手が承認することで、お互いにUIDなど承認後に公開される情報を閲覧でき、ゲーム内でフレンド申請することができるようになります。</p>
             <p class="info-modal-body info-modal-emphasis" data-i18n="infoModalBody3">お互いのことを事前にしっかり知れるので、挨拶だけで終わらない長続きするフレンドを探すことができます</p>
+        </div>
+    </div>
+
+    <!-- メッセージをつけて申請するポップ -->
+    <div id="apply-message-modal" class="col-modal" style="display:none;">
+        <div class="col-modal-backdrop"></div>
+        <div class="col-modal-content apply-message-content">
+            <button type="button" id="apply-message-close" class="col-modal-close" aria-label="close">×</button>
+            <h3 class="apply-message-title" data-i18n="applyMessageModalTitle">メッセージをつけて申請</h3>
+            <textarea id="apply-message-input" class="apply-message-textarea" rows="4" maxlength="150" data-i18n-placeholder="applyMessagePlaceholder"></textarea>
+            <button type="button" id="apply-message-send" class="board-submit-btn" data-i18n="applyMessageSendBtn">この内容で申請する</button>
+        </div>
+    </div>
+
+    <!-- メッセージを添えて承認するポップ -->
+    <div id="accept-reply-modal" class="col-modal" style="display:none;">
+        <div class="col-modal-backdrop"></div>
+        <div class="col-modal-content apply-message-content">
+            <button type="button" id="accept-reply-close" class="col-modal-close" aria-label="close">×</button>
+            <h3 class="apply-message-title" data-i18n="acceptReplyModalTitle">メッセージを添えて承認</h3>
+            <textarea id="accept-reply-input" class="apply-message-textarea" rows="4" maxlength="150" data-i18n-placeholder="acceptReplyPlaceholder"></textarea>
+            <button type="button" id="accept-reply-send" class="board-submit-btn" data-i18n="acceptReplySendBtn">この内容で承認する</button>
         </div>
     </div>
 
