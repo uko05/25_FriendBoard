@@ -229,6 +229,13 @@ const REAL_PROFILE_SECRET_KEYS = {
   'u_da5a88bc89e207961d04887402d62e50': ['genshinUid', 'displayName', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'twitterId', 'tiktokId', 'lineId', 'instagramId'],
   'u_ea650affe48d31eb21e5308a46cfe586': ['genshinUid', 'displayName', 'twitterId'],
 };
+// 同じく実プロフィールの実際のcomment(空の場合は「募集:」欄が分かりやすいようダミー文言を使う)。
+const REAL_PROFILE_COMMENTS = {
+  'u_98161cf62727f133496de6d7f974c5b8': 'ドラフトテスト用コメント',
+  'u_1b6f98a7e2cc3da240e4b58e27569a25': '(コメント未設定のテストプロフィールです)',
+  'u_da5a88bc89e207961d04887402d62e50': 'yorosiku',
+  'u_ea650affe48d31eb21e5308a46cfe586': 'テスト一言！',
+};
 
 function fakeApplicantBuckets(seed) {
   // 実プロフィールの生の入力値は分からないので、申請カード表示の検証用にそれらしい値を捏造する。
@@ -312,7 +319,7 @@ async function seedApplications(personas) {
 
     const doc = {
       postId: ownerId,
-      postComment: isOwnerReal ? 'あなたの募集(テスト用)' : post.comment,
+      postComment: isOwnerReal ? REAL_PROFILE_COMMENTS[ownerId] : post.comment,
       postOwnerUserId: ownerId,
       postOwnerAvatarGame: null,
       postOwnerAvatarIcon: null,
