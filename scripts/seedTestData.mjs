@@ -100,9 +100,12 @@ const COMMENT_POOL = [
   '成人済みです、下ネタOKな人歓迎！',
   '初心者なので色々教えてもらえると助かります。',
 ];
+// genshin_chars.js(CDN)の実際のicon値と1文字も違わず一致させること。
+// 大半は先頭大文字のローマ字だが、一部だけ小文字/日本語のものが混ざっており、
+// 単純なcamelCase化では作れないため、実データから確認した値をそのまま書き写す。
 const OSHI_ICON_POOL = [
-  'furina.png', 'nahida.png', 'hutao.png', 'raiden.png', 'zhongli.png',
-  'yelan.png', 'xiao.png', 'ayaka.png', 'klee.png', 'venti.png',
+  'Furina.png', 'Nahida.png', 'Hutao.png', 'Raiden.png', 'Zhongli.png',
+  'Yelan.png', 'Xiao.png', 'AyakaKamisato.png', 'Klee.png', 'Venti.png',
   'Mavuika.png', 'Arlecchino.png', 'niko.png', 'arisu.png', 'dorin.png',
 ];
 const PLAYSTYLE_POOL = [
