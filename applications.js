@@ -25,7 +25,6 @@ const STR = {
     emptyReceived: 'まだ届いた申請はありません',
     emptySent: 'まだ申請を送っていません',
     acceptBtn: '承認する',
-    acceptWithReplyBtn: 'メッセージを添えて承認',
     rejectBtn: '見送る',
     statusPending: '返答待ち',
     statusAccepted: '承認済み',
@@ -35,16 +34,16 @@ const STR = {
     applyFail: '申請に失敗しました。時間をおいて再度お試しください。',
     respondFail: '処理に失敗しました。',
     secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
-    acceptReplyModalTitle: 'メッセージを添えて承認',
-    acceptReplyPlaceholder: '「こちらこそよろしくお願いします」など、返信を添えてみましょう（未入力でも承認できます）',
-    acceptReplySendBtn: 'この内容で承認する',
     groupTitles: { basic: '基本情報', style: 'あなたについて', contact: '連絡・時間帯', voice: 'ボイスチャット', sns: 'つながれるSNS' },
     playStyleOfferTitle: '手伝います！',
     playStyleRequestTitle: '手伝ってください！',
     uidLabel: 'UID',
-    showOriginalPostBtn: '元の投稿を見る',
-    hideOriginalPostBtn: '閉じる',
+    originalPostTitle: '元の投稿',
     originalPostGone: 'この投稿は取り下げられたか見つかりませんでした。',
+    chatComposerPlaceholder: 'メッセージを入力...',
+    chatSendBtn: '送信',
+    chatWaitingNote: '相手の返信をお待ちください',
+    chatEndedNote: 'やり取りは終了しました（最大3往復まで）',
   },
   en: {
     noName: 'Nameless Traveler',
@@ -54,7 +53,6 @@ const STR = {
     emptyReceived: 'No requests received yet',
     emptySent: "You haven't sent any requests yet",
     acceptBtn: 'Accept',
-    acceptWithReplyBtn: 'Accept with a message',
     rejectBtn: 'Pass',
     statusPending: 'Pending',
     statusAccepted: 'Accepted',
@@ -64,16 +62,16 @@ const STR = {
     applyFail: 'Failed to apply. Please try again later.',
     respondFail: 'Failed to process.',
     secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
-    acceptReplyModalTitle: 'Accept with a message',
-    acceptReplyPlaceholder: 'Add a short reply, e.g. "Nice to meet you too!" (optional — you can accept without one)',
-    acceptReplySendBtn: 'Accept with this message',
     groupTitles: { basic: 'Basic Info', style: 'About You', contact: 'Contact & Availability', voice: 'Voice Chat', sns: 'SNS' },
     playStyleOfferTitle: 'I can help with...',
     playStyleRequestTitle: 'Please help me with...',
     uidLabel: 'UID',
-    showOriginalPostBtn: 'View original post',
-    hideOriginalPostBtn: 'Close',
+    originalPostTitle: 'Original post',
     originalPostGone: 'This post was withdrawn or could not be found.',
+    chatComposerPlaceholder: 'Type a message...',
+    chatSendBtn: 'Send',
+    chatWaitingNote: "Waiting for their reply",
+    chatEndedNote: 'This conversation has ended (up to 3 exchanges).',
   },
 };
 
@@ -147,6 +145,75 @@ function renderChatThread(container, messages) {
     chat.appendChild(row);
   });
   container.appendChild(chat);
+}
+
+// 承認後のチャットは最大3往復(=6通)まで。申請時のメッセージ(app.message)と
+// 「承認する」という行為自体はこのカウントに含めない(=chatMessagesとは別枠)。
+// そのため、承認直後でchatMessagesが空の状態に限っては、募集主・申請者どちらから
+// 送ってもよい(「無言で承認」した場合に誰も送れず詰むのを防ぐため)。それ以降は
+// 直前の送信者と同じ人は連続して送れない。
+const CHAT_MAX_MESSAGES = 6;
+function canSendChat(app, sender) {
+  if (app.status !== 'accepted') return false;
+  const msgs = app.chatMessages || [];
+  if (msgs.length >= CHAT_MAX_MESSAGES) return false;
+  if (!msgs.length) return true;
+  return msgs[msgs.length - 1].sender !== sender;
+}
+
+// sender: 'owner'|'applicant'。承認後、自分の番であれば入力欄を、そうでなければ
+// 「相手の返信を待って」等の案内だけを表示する。
+function renderChatComposer(container, app, sender) {
+  if (app.status !== 'accepted') return;
+  const msgs = app.chatMessages || [];
+
+  if (msgs.length >= CHAT_MAX_MESSAGES) {
+    const note = document.createElement('p');
+    note.className = 'board-chat-note';
+    note.textContent = s().chatEndedNote;
+    container.appendChild(note);
+    return;
+  }
+
+  if (!canSendChat(app, sender)) {
+    const note = document.createElement('p');
+    note.className = 'board-chat-note';
+    note.textContent = s().chatWaitingNote;
+    container.appendChild(note);
+    return;
+  }
+
+  const composer = document.createElement('div');
+  composer.className = 'board-chat-composer';
+
+  const input = document.createElement('textarea');
+  input.className = 'board-chat-composer-input';
+  input.rows = 2;
+  input.maxLength = MESSAGE_MAXLEN;
+  input.placeholder = s().chatComposerPlaceholder;
+  composer.appendChild(input);
+
+  const sendBtn = document.createElement('button');
+  sendBtn.type = 'button';
+  sendBtn.className = 'board-chat-composer-send';
+  sendBtn.textContent = s().chatSendBtn;
+  sendBtn.addEventListener('click', async () => {
+    const text = input.value.trim().slice(0, MESSAGE_MAXLEN);
+    if (!text) return;
+    sendBtn.disabled = true;
+    input.disabled = true;
+    try {
+      await sendChatMessage(app, sender, text);
+    } catch (e) {
+      console.error('[applications] send chat message failed', e);
+      alert(s().respondFail);
+      sendBtn.disabled = false;
+      input.disabled = false;
+    }
+  });
+  composer.appendChild(sendBtn);
+
+  container.appendChild(composer);
 }
 
 function appendChip(parent, { text, matchKind, revealed }) {
@@ -256,17 +323,29 @@ function appendOshiIcons(container, icons, lang, vertical) {
   container.appendChild(wrap);
 }
 
-// 送った申請一覧の「元の投稿を見る」用: 対象の投稿を今の内容で取得し、さがす一覧と
-// 同じ形式(名前/UIDヘッダー＋カテゴリー別の枠)で描画する。承認済みなら、既にrevealedFields
-// に入っている情報(=募集主が承認時に公開した項目)もあわせて表示する。
-async function renderOriginalPostInto(container, app, lang) {
+// 送った申請一覧に常時表示する「元の投稿」は、一覧が再描画されるたび(チャットで
+// メッセージが届くたびに再描画される)に呼ばれるため、同じpostIdは一度取得したら
+// メモリにキャッシュし、Firestoreへの無駄な読み取りを避ける。
+const originalPostCache = new Map();
+
+async function fetchPostCached(postId) {
+  if (originalPostCache.has(postId)) return originalPostCache.get(postId);
   let post = null;
   try {
-    const snap = await getDoc(doc(db, 'friendBoardPosts', app.postId));
+    const snap = await getDoc(doc(db, 'friendBoardPosts', postId));
     post = snap.exists() ? snap.data() : null;
   } catch (e) {
     console.error('[applications] fetch original post failed', e);
   }
+  originalPostCache.set(postId, post);
+  return post;
+}
+
+// 送った申請一覧の「元の投稿」用: 対象の投稿を(キャッシュ経由で)取得し、さがす一覧と
+// 同じ形式(名前/UIDヘッダー＋カテゴリー別の枠)で描画する。承認済みなら、既にrevealedFields
+// に入っている情報(=募集主が承認時に公開した項目)もあわせて表示する。
+async function renderOriginalPostInto(container, app, lang) {
+  const post = await fetchPostCached(app.postId);
   container.innerHTML = '';
   if (!post) {
     const msg = document.createElement('p');
@@ -364,7 +443,7 @@ export async function applyToPost(post, message = '') {
     status: 'pending',
     ownerSeen: false,
     applicantSeen: true,
-    ownerReply: '',
+    chatMessages: [], // 承認後のチャット(最大3往復)。申請時のこのmessageとは別枠でカウントする
 
     createdAt: serverTimestamp(),
     respondedAt: null,
@@ -375,8 +454,7 @@ export function hasAppliedTo(postId) {
   return latestSent.some((a) => a.postId === postId);
 }
 
-// reply: 承認と同時に任意で添えられる一言(見送り時は使わない)
-async function respondToApplication(app, accept, reply = '') {
+async function respondToApplication(app, accept) {
   const updates = {
     status: accept ? 'accepted' : 'rejected',
     applicantSeen: false,
@@ -391,7 +469,6 @@ async function respondToApplication(app, accept, reply = '') {
       }
     });
     updates.revealedFields = revealed;
-    updates.ownerReply = (reply || '').trim().slice(0, MESSAGE_MAXLEN);
   }
   try {
     await updateDoc(doc(db, 'friendBoardApplications', app.id), updates);
@@ -401,34 +478,11 @@ async function respondToApplication(app, accept, reply = '') {
   }
 }
 
-// ===== 返信を添えて承認するモーダル =====
-let pendingAcceptApp = null;
-const acceptReplyModal = document.getElementById('accept-reply-modal');
-const acceptReplyInput = document.getElementById('accept-reply-input');
-const acceptReplySendBtn = document.getElementById('accept-reply-send');
-
-function openAcceptReplyModal(app) {
-  pendingAcceptApp = app;
-  if (acceptReplyInput) acceptReplyInput.value = '';
-  if (acceptReplyModal) acceptReplyModal.style.display = 'flex';
-  acceptReplyInput?.focus();
+// sender: 'owner'|'applicant'。承認後のチャット欄から送信された1通をchatMessagesへ追記する。
+async function sendChatMessage(app, sender, text) {
+  const messages = [...(app.chatMessages || []), { sender, text }];
+  await updateDoc(doc(db, 'friendBoardApplications', app.id), { chatMessages: messages });
 }
-function closeAcceptReplyModal() {
-  if (acceptReplyModal) acceptReplyModal.style.display = 'none';
-  pendingAcceptApp = null;
-}
-document.getElementById('accept-reply-close')?.addEventListener('click', closeAcceptReplyModal);
-document.querySelector('#accept-reply-modal .col-modal-backdrop')?.addEventListener('click', closeAcceptReplyModal);
-acceptReplySendBtn?.addEventListener('click', async () => {
-  if (!pendingAcceptApp) return;
-  acceptReplySendBtn.disabled = true;
-  try {
-    await respondToApplication(pendingAcceptApp, true, acceptReplyInput?.value || '');
-    closeAcceptReplyModal();
-  } finally {
-    acceptReplySendBtn.disabled = false;
-  }
-});
 
 // ===== 届いた申請一覧（自分が募集主） =====
 // 届いた申請のうち、まだ返答していない件数をメインタブ・サブタブの両方のバッジに出す
@@ -519,8 +573,13 @@ function buildReceivedCard(app) {
 
   renderChatThread(body, [
     { text: app.message, mine: false, avatarSrc: avatarImg.src },
-    { text: app.ownerReply, mine: true },
+    ...(app.chatMessages || []).map((m) => ({
+      text: m.text,
+      mine: m.sender === 'owner',
+      avatarSrc: avatarImg.src,
+    })),
   ]);
+  renderChatComposer(body, app, 'owner');
 
   const foot = document.createElement('div');
   foot.className = 'board-card-foot';
@@ -533,13 +592,6 @@ function buildReceivedCard(app) {
   if (app.status === 'pending') {
     const btnRow = document.createElement('div');
     btnRow.className = 'board-request-btn-row';
-
-    const acceptReplyBtn = document.createElement('button');
-    acceptReplyBtn.type = 'button';
-    acceptReplyBtn.className = 'board-request-accept-reply-btn';
-    acceptReplyBtn.textContent = s().acceptWithReplyBtn;
-    acceptReplyBtn.addEventListener('click', () => openAcceptReplyModal(app));
-    btnRow.appendChild(acceptReplyBtn);
 
     const acceptBtn = document.createElement('button');
     acceptBtn.type = 'button';
@@ -633,41 +685,28 @@ function buildSentCard(app) {
     }
   }
 
-  // 元の投稿を丸ごと見たい時のためのボタン。
-  // 押した時点の最新の投稿内容を取得して表示する(投稿が既に取り下げられている場合もある)。
-  const originalToggleBtn = document.createElement('button');
-  originalToggleBtn.type = 'button';
-  originalToggleBtn.className = 'board-request-original-toggle-btn';
-  originalToggleBtn.textContent = s().showOriginalPostBtn;
-  body.appendChild(originalToggleBtn);
+  // 元の投稿は常に表示する(取得結果はfetchPostCachedでキャッシュされるため、
+  // 一覧がチャット更新の度に再描画されても無駄なFirestore読み取りにはならない)。
+  const originalTitle = document.createElement('p');
+  originalTitle.className = 'board-request-revealed-title';
+  originalTitle.textContent = s().originalPostTitle;
+  body.appendChild(originalTitle);
 
   const originalContainer = document.createElement('div');
-  originalContainer.className = 'board-request-original-post hidden';
+  originalContainer.className = 'board-request-original-post';
   body.appendChild(originalContainer);
-
-  let originalLoaded = false;
-  originalToggleBtn.addEventListener('click', async () => {
-    const isHidden = originalContainer.classList.contains('hidden');
-    if (!isHidden) {
-      originalContainer.classList.add('hidden');
-      originalToggleBtn.textContent = s().showOriginalPostBtn;
-      return;
-    }
-    originalContainer.classList.remove('hidden');
-    originalToggleBtn.textContent = s().hideOriginalPostBtn;
-    if (!originalLoaded) {
-      originalLoaded = true;
-      originalToggleBtn.disabled = true;
-      await renderOriginalPostInto(originalContainer, app, lang);
-      originalToggleBtn.disabled = false;
-    }
-  });
+  renderOriginalPostInto(originalContainer, app, lang);
 
   // 届いた申請と同じく、メッセージのやり取りはカードの一番下(footの直前)に表示する
   renderChatThread(body, [
     { text: app.message, mine: true },
-    { text: app.ownerReply, mine: false, avatarSrc: avatarImg.src },
+    ...(app.chatMessages || []).map((m) => ({
+      text: m.text,
+      mine: m.sender === 'applicant',
+      avatarSrc: avatarImg.src,
+    })),
   ]);
+  renderChatComposer(body, app, 'applicant');
 
   const foot = document.createElement('div');
   foot.className = 'board-card-foot';

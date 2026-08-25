@@ -1143,19 +1143,6 @@ body.portal-page {
   color: #8a6d00;
 }
 
-.board-request-original-toggle-btn {
-  font-family: inherit;
-  font-size: 12px;
-  padding: 6px 14px;
-  margin: 6px 0 0;
-  border: 1px solid rgba(0,0,0,0.15);
-  border-radius: 999px;
-  background: #fff;
-  color: #666;
-  cursor: pointer;
-}
-.board-request-original-toggle-btn:hover { background: #f2f2f2; }
-
 .board-request-original-post {
   margin-top: 10px;
   padding-top: 10px;
@@ -1208,7 +1195,7 @@ body.portal-page {
   position: relative;
   max-width: 75%;
   padding: 8px 12px;
-  border-radius: 16px;
+  border-radius: 10px;
   font-size: 13px;
   line-height: 1.4;
   white-space: pre-wrap;
@@ -1218,7 +1205,7 @@ body.portal-page {
 .board-chat-bubble-them {
   background: #f0f0f0;
   color: #222;
-  border-bottom-left-radius: 4px;
+  border-bottom-left-radius: 2px;
 }
 /* 吹き出しの先端(しっぽ)。左下から相手のアバターの方向へ突き出す三角形 */
 .board-chat-bubble-them::before {
@@ -1237,7 +1224,7 @@ body.portal-page {
 .board-chat-bubble-me {
   background: #ffcc00;
   color: #222;
-  border-bottom-right-radius: 4px;
+  border-bottom-right-radius: 2px;
 }
 /* 吹き出しの先端(しっぽ)。右下へ突き出す三角形(相手側と左右対称) */
 .board-chat-bubble-me::before {
@@ -1253,6 +1240,56 @@ body.portal-page {
   border-bottom: 0;
 }
 
+.board-chat-note {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #999;
+  text-align: center;
+}
+
+.board-chat-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.board-chat-composer-input {
+  flex: 1;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 10px;
+  background: #fff;
+  color: #222;
+  resize: vertical;
+}
+.board-chat-composer-input:focus {
+  outline: 2px solid #ffcc00;
+  outline-offset: 1px;
+}
+
+.board-chat-composer-send {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 999px;
+  background: #ffcc00;
+  color: #222;
+  font-weight: bold;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.board-chat-composer-send:hover { transform: translateY(-1px); }
+.board-chat-composer-send:disabled {
+  background: #eee;
+  color: #999;
+  cursor: default;
+  transform: none;
+}
+
 .board-request-btn-row {
   display: flex;
   flex-wrap: wrap;
@@ -1260,7 +1297,6 @@ body.portal-page {
 }
 
 .board-request-accept-btn,
-.board-request-accept-reply-btn,
 .board-request-reject-btn {
   font-family: inherit;
   font-size: 12px;
@@ -1275,14 +1311,6 @@ body.portal-page {
   color: #222;
   font-weight: bold;
 }
-
-.board-request-accept-reply-btn {
-  border: 1.5px solid #e0ac00;
-  background: #fff;
-  color: #a67c00;
-  font-weight: bold;
-}
-.board-request-accept-reply-btn:hover { background: #fff8e1; }
 
 .board-request-reject-btn {
   border: 1px solid rgba(0,0,0,0.15);
