@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "静的サイトなのでビルド不要。scripts/以下の開発用Node.jsスクリプト(テストデータ投入など)がfields.js等をESモジュールとしてimportできるようにするためだけのファイル。"
+}
