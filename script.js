@@ -22,6 +22,25 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
+     申請タブ内のサブタブ切替（届いた申請／送った申請）
+     ========================= */
+  const subTabButtons = document.querySelectorAll(".board-subtab-btn");
+  subTabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      subTabButtons.forEach((b) => {
+        b.classList.remove("active");
+        b.setAttribute("aria-selected", "false");
+      });
+      btn.classList.add("active");
+      btn.setAttribute("aria-selected", "true");
+
+      document.querySelectorAll(".board-subtab-panel").forEach((panel) => panel.classList.add("hidden"));
+      const target = document.getElementById(`subtab-panel-${btn.dataset.subtab}`);
+      if (target) target.classList.remove("hidden");
+    });
+  });
+
+  /* =========================
      このサイトについて(?)モーダル。
      初回訪問時は自動で1回だけ表示し、以降はlocalStorageのフラグで抑制する。
      ========================= */

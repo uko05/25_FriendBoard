@@ -948,15 +948,16 @@ body.portal-page {
 
 .board-card-saved-image-toggle {
   font-family: inherit;
-  font-size: 12px;
-  padding: 6px 16px;
-  border: 1px solid #ffcc00;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 7px 18px;
+  border: 1.5px solid #ffcc00;
   border-radius: 999px;
-  background: #fff;
+  background: #fff8e1;
   color: #8a6d00;
   cursor: pointer;
 }
-.board-card-saved-image-toggle:hover { background: #fff6d9; }
+.board-card-saved-image-toggle:hover { background: #ffedb3; }
 .board-card-saved-image-toggle:disabled {
   color: #999;
   border-color: #ddd;
@@ -1065,6 +1066,33 @@ body.portal-page {
   color: #666;
 }
 
+.board-subtabs {
+  display: flex;
+  max-width: 360px;
+  margin: 0 auto 20px;
+  border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+.board-subtab-btn {
+  flex: 1;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 8px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease;
+}
+.board-subtab-btn:hover { color: #444; }
+.board-subtab-btn.active {
+  color: #222;
+  font-weight: bold;
+  border-bottom-color: #ffcc00;
+}
+
 .board-requests-group + .board-requests-group {
   margin-top: 28px;
 }
@@ -1082,6 +1110,25 @@ body.portal-page {
   font-size: 12px;
   font-weight: bold;
   color: #8a6d00;
+}
+
+.board-request-original-toggle-btn {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 14px;
+  margin: 6px 0 0;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 999px;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+}
+.board-request-original-toggle-btn:hover { background: #f2f2f2; }
+
+.board-request-original-post {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(0,0,0,0.15);
 }
 
 .board-request-revealed-chip {

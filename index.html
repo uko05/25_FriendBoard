@@ -589,20 +589,23 @@
             <h2 data-i18n="requestsTitle">申請の管理</h2>
             <p class="board-requests-desc" data-i18n="requestsDesc">気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。</p>
 
-            <div class="board-requests-group">
-                <h3 data-i18n="receivedTitle">届いた申請</h3>
+            <nav class="board-subtabs" role="tablist">
+                <button type="button" class="board-subtab-btn active" id="subtab-btn-received" data-subtab="received" role="tab" aria-selected="true" data-i18n="receivedTitle">届いた申請</button>
+                <button type="button" class="board-subtab-btn" id="subtab-btn-sent" data-subtab="sent" role="tab" aria-selected="false" data-i18n="sentTitle">送った申請</button>
+            </nav>
+
+            <div class="board-requests-group board-subtab-panel" id="subtab-panel-received" role="tabpanel">
                 <div class="board-list" id="received-list"></div>
             </div>
 
-            <div class="board-requests-group">
-                <h3 data-i18n="sentTitle">送った申請</h3>
+            <div class="board-requests-group board-subtab-panel hidden" id="subtab-panel-sent" role="tabpanel">
                 <div class="board-list" id="sent-list"></div>
             </div>
         </section>
 
     </main>
 
-    <span id="site-version" class="site-version">v4.5</span>
+    <span id="site-version" class="site-version">v4.6</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

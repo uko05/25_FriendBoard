@@ -12,7 +12,7 @@ import {
   fieldMatchKind, playStyleValueMatchKind,
 } from './fields.js';
 import {
-  collection, addDoc, updateDoc, doc, onSnapshot,
+  collection, addDoc, updateDoc, doc, getDoc, onSnapshot,
   query, where, orderBy, limit, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
@@ -44,6 +44,9 @@ const STR = {
     playStyleOfferTitle: '手伝います！',
     playStyleRequestTitle: '手伝ってください！',
     uidLabel: 'UID',
+    showOriginalPostBtn: '元の投稿を見る',
+    hideOriginalPostBtn: '閉じる',
+    originalPostGone: 'この投稿は取り下げられたか見つかりませんでした。',
   },
   en: {
     noName: 'Nameless Traveler',
@@ -72,6 +75,9 @@ const STR = {
     playStyleOfferTitle: 'I can help with...',
     playStyleRequestTitle: 'Please help me with...',
     uidLabel: 'UID',
+    showOriginalPostBtn: 'View original post',
+    hideOriginalPostBtn: 'Close',
+    originalPostGone: 'This post was withdrawn or could not be found.',
   },
 };
 
@@ -200,6 +206,62 @@ function renderGroupedFields(container, rows, lang) {
 
     container.appendChild(box);
   });
+}
+
+// 送った申請一覧の「元の投稿を見る」用: 対象の投稿を今の内容で取得し、さがす一覧と
+// 同じ形式(名前/UIDヘッダー＋カテゴリー別の枠)で描画する。承認済みなら、既にrevealedFields
+// に入っている情報(=募集主が承認時に公開した項目)もあわせて表示する。
+async function renderOriginalPostInto(container, app, lang) {
+  let post = null;
+  try {
+    const snap = await getDoc(doc(db, 'friendBoardPosts', app.postId));
+    post = snap.exists() ? snap.data() : null;
+  } catch (e) {
+    console.error('[applications] fetch original post failed', e);
+  }
+  container.innerHTML = '';
+  if (!post) {
+    const msg = document.createElement('p');
+    msg.className = 'board-list-empty';
+    msg.textContent = s().originalPostGone;
+    container.appendChild(msg);
+    return;
+  }
+
+  const accepted = app.status === 'accepted';
+  const displayName = (accepted && app.revealedFields?.displayName) || post.publicFields?.displayName;
+  const uidValue = (accepted && app.revealedFields?.genshinUid) || post.publicFields?.genshinUid;
+
+  if (displayName) {
+    const nameEl = document.createElement('div');
+    nameEl.className = 'board-card-name';
+    nameEl.textContent = displayName;
+    container.appendChild(nameEl);
+  }
+  if (uidValue || (!accepted && app.postSecretFieldKeys?.length)) {
+    const head = document.createElement('div');
+    head.className = 'board-card-head';
+    if (uidValue) {
+      const uid = document.createElement('span');
+      uid.className = 'board-card-uid';
+      uid.textContent = `${s().uidLabel}: ${uidValue}`;
+      head.appendChild(uid);
+    }
+    if (!accepted && app.postSecretFieldKeys?.length) {
+      const note = document.createElement('span');
+      note.className = 'board-card-secret-note';
+      const labels = app.postSecretFieldKeys.map((key) => fieldLabel(key, lang));
+      note.textContent = s().secretFieldsNote(labels.join(lang === 'en' ? ', ' : '、'));
+      head.appendChild(note);
+    }
+    container.appendChild(head);
+  }
+
+  const rows = [
+    ...buildFieldRows(post.publicFields, lang, store, false),
+    ...(accepted ? buildFieldRows(app.revealedFields, lang, store, true) : []),
+  ];
+  renderGroupedFields(container, rows, lang);
 }
 
 let _getUserId = null;
@@ -528,6 +590,36 @@ function buildSentCard(app) {
       renderGroupedFields(body, revealedRows, lang);
     }
   }
+
+  // 「募集:」は投稿のコメントだけの簡易表示なので、元の投稿を丸ごと見たい時のためのボタン。
+  // 押した時点の最新の投稿内容を取得して表示する(投稿が既に取り下げられている場合もある)。
+  const originalToggleBtn = document.createElement('button');
+  originalToggleBtn.type = 'button';
+  originalToggleBtn.className = 'board-request-original-toggle-btn';
+  originalToggleBtn.textContent = s().showOriginalPostBtn;
+  body.appendChild(originalToggleBtn);
+
+  const originalContainer = document.createElement('div');
+  originalContainer.className = 'board-request-original-post hidden';
+  body.appendChild(originalContainer);
+
+  let originalLoaded = false;
+  originalToggleBtn.addEventListener('click', async () => {
+    const isHidden = originalContainer.classList.contains('hidden');
+    if (!isHidden) {
+      originalContainer.classList.add('hidden');
+      originalToggleBtn.textContent = s().showOriginalPostBtn;
+      return;
+    }
+    originalContainer.classList.remove('hidden');
+    originalToggleBtn.textContent = s().hideOriginalPostBtn;
+    if (!originalLoaded) {
+      originalLoaded = true;
+      originalToggleBtn.disabled = true;
+      await renderOriginalPostInto(originalContainer, app, lang);
+      originalToggleBtn.disabled = false;
+    }
+  });
 
   const foot = document.createElement('div');
   foot.className = 'board-card-foot';
