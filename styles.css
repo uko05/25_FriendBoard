@@ -784,8 +784,9 @@ body.portal-page {
   margin: 0 auto;
 }
 
-/* さがす一覧は表示項目が多く縦に伸びやすいため、横幅いっぱいまで広げる */
-#search-list {
+/* さがす一覧・申請タブは表示項目が多く縦に伸びやすいため、横幅いっぱいまで広げる
+   (申請タブのカードもさがす一覧と同じ枠組み(FIELD_GROUPS)で描画しているため揃える) */
+#search-list, #received-list, #sent-list {
   max-width: none;
 }
 
