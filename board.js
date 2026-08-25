@@ -793,7 +793,6 @@ const REQUIRED_FIELDS = [
   { key: 'genshinUid', el: uidInput, filled: (v) => !!v.genshinUid },
   { key: 'server', el: serverInput, filled: (v) => !!v.server },
   { key: 'gender', el: document.getElementById('group-gender'), filled: (v) => !!v.gender },
-  { key: 'ageGroup', el: document.getElementById('group-ageGroup'), filled: (v) => !!v.ageGroup },
   {
     key: 'weekdayTimes',
     el: () => document.getElementById(weekdayByDayInput?.checked ? 'weekday-byday-rows' : 'weekday-range-row'),
