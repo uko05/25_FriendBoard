@@ -601,11 +601,6 @@ function buildSentCard(app) {
   body.className = 'board-card-body';
   card.appendChild(body);
 
-  renderChatThread(body, [
-    { text: app.message, mine: true },
-    { text: app.ownerReply, mine: false, avatarSrc: avatarImg.src },
-  ]);
-
   if (app.status === 'accepted') {
     // さがす一覧と同じく、名前・UIDはヘッダー側に個別描画し、それ以外は
     // カテゴリー別の枠(FIELD_GROUPS)に分けて描画する。
@@ -667,6 +662,12 @@ function buildSentCard(app) {
       originalToggleBtn.disabled = false;
     }
   });
+
+  // 届いた申請と同じく、メッセージのやり取りはカードの一番下(footの直前)に表示する
+  renderChatThread(body, [
+    { text: app.message, mine: true },
+    { text: app.ownerReply, mine: false, avatarSrc: avatarImg.src },
+  ]);
 
   const foot = document.createElement('div');
   foot.className = 'board-card-foot';
