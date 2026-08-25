@@ -158,6 +158,21 @@ body.portal-page {
 }
 .board-tab-btn:disabled:hover { color: #ccc; }
 
+.board-tab-badge {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 5px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #e53935;
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 1.6;
+  text-align: center;
+  vertical-align: middle;
+}
+
 .board-tab-lock-hint {
   max-width: 480px;
   margin: 8px auto 0;

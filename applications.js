@@ -381,7 +381,19 @@ acceptReplySendBtn?.addEventListener('click', async () => {
 });
 
 // ===== 届いた申請一覧（自分が募集主） =====
+// 届いた申請のうち、まだ返答していない件数をメインタブ・サブタブの両方のバッジに出す
+function updateReceivedBadges() {
+  const count = latestReceived.filter((a) => a.status === 'pending').length;
+  ['requests-tab-badge', 'received-subtab-badge'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = count > 0 ? String(count) : '';
+    el.classList.toggle('hidden', count === 0);
+  });
+}
+
 function renderReceivedList() {
+  updateReceivedBadges();
   const list = document.getElementById('received-list');
   if (!list) return;
   list.innerHTML = '';
