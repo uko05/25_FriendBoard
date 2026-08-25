@@ -7,7 +7,8 @@ import { db } from './firebaseConfig.js';
 import { store } from './userData.js';
 import { avatarUrl, getMyAvatar } from './avatar.js';
 import {
-  VISIBILITY_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets,
+  VISIBILITY_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES, GENSHIN_ICON_BASE,
+  fieldLabel, formatFieldValue, buildPostFieldBuckets,
   fieldMatchKind, playStyleValueMatchKind,
 } from './fields.js';
 import {
@@ -39,6 +40,10 @@ const STR = {
     acceptReplyPlaceholder: '「こちらこそよろしくお願いします」など、返信を添えてみましょう（未入力でも承認できます）',
     acceptReplySendBtn: 'この内容で承認する',
     ownerReplyTitle: '相手からの返信',
+    groupTitles: { basic: '基本情報', style: 'あなたについて', contact: '連絡・時間帯', voice: 'ボイスチャット', sns: 'つながれるSNS' },
+    playStyleOfferTitle: '手伝います！',
+    playStyleRequestTitle: '手伝ってください！',
+    uidLabel: 'UID',
   },
   en: {
     noName: 'Nameless Traveler',
@@ -63,6 +68,10 @@ const STR = {
     acceptReplyPlaceholder: 'Add a short reply, e.g. "Nice to meet you too!" (optional — you can accept without one)',
     acceptReplySendBtn: 'Accept with this message',
     ownerReplyTitle: "Their reply",
+    groupTitles: { basic: 'Basic Info', style: 'About You', contact: 'Contact & Availability', voice: 'Voice Chat', sns: 'SNS' },
+    playStyleOfferTitle: 'I can help with...',
+    playStyleRequestTitle: 'Please help me with...',
+    uidLabel: 'UID',
   },
 };
 
@@ -81,39 +90,116 @@ function relTime(ts) {
   return currentLang() === 'en' ? `${Math.floor(hour / 24)}d ago` : `${Math.floor(hour / 24)}日前`;
 }
 
-// {key: value} のオブジェクトを、チップ表示用の{text, matchKind}配列に整形する
-// (oshiCharsは除く、画像なので個別描画)。
+// genshinUid/displayNameはさがす一覧と同じくヘッダー側で個別描画するため、枠内のチップには出さない
+const HEAD_FIELDS = new Set(['genshinUid', 'displayName']);
+
+// {key: value} のオブジェクトを、枠(FIELD_GROUPS)描画用の行データ配列に整形する。
 // さがす一覧と同じ「一致/相性◎」の色分けができるよう、自分のプロフィール(myValues)との
-// 比較結果もここで一緒に計算しておく。playStylesだけは値ごとに個別チップへ分ける
-// (1チップにまとめると、どの値が一致/相性なのか色分けできなくなるため)。
-function buildChipData(dict, lang, myValues) {
+// 比較結果もここで一緒に計算しておく。oshiCharsはアイコン行、playStylesは値ごとに
+// 個別の行へ分ける(1チップにまとめると、どの値が一致/相性なのか色分けできなくなるため)。
+// revealed: trueなら、承認によって今まさに見えるようになった項目として黄色チップにする
+function buildFieldRows(dict, lang, myValues, revealed) {
   if (!dict) return [];
-  const out = [];
+  const rows = [];
   VISIBILITY_FIELDS.forEach((key) => {
-    if (key === 'oshiChars' || key === 'friendPreference'
-      || key === 'showGenshinRanking' || key === 'showGenshinCheck') return;
+    if (key === 'friendPreference' || key === 'showGenshinRanking' || key === 'showGenshinCheck' || HEAD_FIELDS.has(key)) return;
     const value = dict[key];
-    if (value == null || value === '') return;
-    if (key === 'playStyles' && Array.isArray(value)) {
+    if (value == null || value === '' || (Array.isArray(value) && !value.length)) return;
+    if (key === 'oshiChars') { rows.push({ key, oshiIcons: value }); return; }
+    if (key === 'playStyles') {
       value.forEach((v) => {
         const text = formatFieldValue('playStyles', [v], lang);
-        if (text) out.push({ text, matchKind: playStyleValueMatchKind(myValues.playStyles, v) });
+        if (text) rows.push({ key, value: v, text, matchKind: playStyleValueMatchKind(myValues.playStyles, v), revealed });
       });
       return;
     }
     const text = formatFieldValue(key, value, lang);
-    if (text) out.push({ text: `${fieldLabel(key, lang)}: ${text}`, matchKind: fieldMatchKind(myValues[key], value, key) });
+    if (text) rows.push({ key, text: `${fieldLabel(key, lang)}: ${text}`, matchKind: fieldMatchKind(myValues[key], value, key), revealed });
   });
-  return out;
+  return rows;
 }
 
-function appendChip(parent, { text, matchKind }, extraClass) {
+function appendChip(parent, { text, matchKind, revealed }) {
   const chip = document.createElement('span');
-  chip.className = extraClass ? `board-card-chip ${extraClass}` : 'board-card-chip';
+  chip.className = revealed ? 'board-card-chip board-request-revealed-chip' : 'board-card-chip';
   if (matchKind === 'exact') chip.classList.add('board-card-chip-matched');
   else if (matchKind === 'complementary') chip.classList.add('board-card-chip-complementary');
   chip.textContent = text;
   parent.appendChild(chip);
+}
+
+// rowsを、さがす一覧と同じカテゴリー別の枠(FIELD_GROUPS)に区切って描画する。
+function renderGroupedFields(container, rows, lang) {
+  FIELD_GROUPS.forEach((group) => {
+    const groupRows = rows.filter((row) => group.fields.includes(row.key));
+    if (!groupRows.length) return;
+
+    const box = document.createElement('div');
+    box.className = 'board-card-group';
+    const title = document.createElement('p');
+    title.className = 'board-card-group-title';
+    title.textContent = s().groupTitles[group.key] || group.key;
+    box.appendChild(title);
+
+    const oshiRow = groupRows.find((row) => row.key === 'oshiChars');
+    if (oshiRow) {
+      const oshiBadge = document.createElement('div');
+      oshiBadge.className = 'board-card-group-oshi-badge';
+      const oshiLabel = document.createElement('span');
+      oshiLabel.className = 'board-card-group-oshi-label';
+      oshiLabel.textContent = `${fieldLabel('oshiChars', lang)}: `;
+      oshiBadge.appendChild(oshiLabel);
+      oshiRow.oshiIcons.forEach((icon) => {
+        const img = document.createElement('img');
+        img.className = 'board-card-oshi-icon-lg';
+        img.src = GENSHIN_ICON_BASE + icon;
+        img.alt = '';
+        img.loading = 'lazy';
+        oshiBadge.appendChild(img);
+      });
+      box.appendChild(oshiBadge);
+    }
+
+    const playStyleRows = groupRows.filter((row) => row.key === 'playStyles');
+    const otherRows = groupRows.filter((row) => row.key !== 'playStyles' && row.key !== 'oshiChars');
+    const generalPs = playStyleRows.filter((row) => !PLAYSTYLE_OFFER_VALUES.includes(row.value) && !PLAYSTYLE_REQUEST_VALUES.includes(row.value));
+    const offerPs = playStyleRows.filter((row) => PLAYSTYLE_OFFER_VALUES.includes(row.value));
+    const requestPs = playStyleRows.filter((row) => PLAYSTYLE_REQUEST_VALUES.includes(row.value));
+
+    const chips = document.createElement('div');
+    chips.className = 'board-card-chips';
+    [...otherRows, ...generalPs].forEach((row) => appendChip(chips, row));
+    box.appendChild(chips);
+
+    if (offerPs.length) {
+      const offerBox = document.createElement('div');
+      offerBox.className = 'board-card-group board-card-group-nested board-card-group-offer';
+      const offerTitle = document.createElement('p');
+      offerTitle.className = 'board-card-group-title board-card-group-title-offer';
+      offerTitle.textContent = s().playStyleOfferTitle;
+      offerBox.appendChild(offerTitle);
+      const offerChips = document.createElement('div');
+      offerChips.className = 'board-card-chips';
+      offerPs.forEach((row) => appendChip(offerChips, row));
+      offerBox.appendChild(offerChips);
+      box.appendChild(offerBox);
+    }
+    if (requestPs.length) {
+      const requestBox = document.createElement('div');
+      requestBox.className = 'board-card-group board-card-group-nested board-card-group-request';
+      const requestTitle = document.createElement('p');
+      requestTitle.className = 'board-card-group-title board-card-group-title-request';
+      requestTitle.textContent = s().playStyleRequestTitle;
+      requestBox.appendChild(requestTitle);
+      const requestChips = document.createElement('div');
+      requestChips.className = 'board-card-chips';
+      requestPs.forEach((row) => appendChip(requestChips, row));
+      requestBox.appendChild(requestChips);
+      box.appendChild(requestBox);
+    }
+
+    container.appendChild(box);
+  });
 }
 
 let _getUserId = null;
@@ -262,23 +348,44 @@ function buildReceivedCard(app) {
   body.className = 'board-card-body';
   card.appendChild(body);
 
-  const chips = document.createElement('div');
-  chips.className = 'board-card-chips';
-  buildChipData(app.applicantFields, lang, store).forEach((chipData) => appendChip(chips, chipData));
   // 承認済みになった時点で、申請者側の「承認後に公開」項目も初めてこちらに見せる
-  // (=募集主の項目が承認時に見えるようになるのと対称のルール)。
-  if (app.status === 'accepted') {
-    buildChipData(app.applicantSecretFields, lang, store).forEach((chipData) => appendChip(chips, chipData, 'board-request-revealed-chip'));
-  }
-  if (chips.children.length) body.appendChild(chips);
+  // (=募集主の項目が承認時に見えるようになるのと対称のルール)。さがす一覧と同じく
+  // 名前・UIDはヘッダー側に個別描画し、それ以外はカテゴリー別の枠(FIELD_GROUPS)に分けて描画する。
+  const revealedNow = app.status === 'accepted';
+  const displayName = revealedNow ? app.applicantSecretFields?.displayName : null;
+  const uidValue = revealedNow ? app.applicantSecretFields?.genshinUid : null;
 
-  if (app.status === 'pending' && app.applicantSecretFieldKeys?.length) {
-    const note = document.createElement('p');
-    note.className = 'board-card-secret-note';
-    const labels = app.applicantSecretFieldKeys.map((key) => fieldLabel(key, lang));
-    note.textContent = s().secretFieldsNote(labels.join(lang === 'en' ? ', ' : '、'));
-    body.appendChild(note);
+  if (displayName) {
+    const nameEl = document.createElement('div');
+    nameEl.className = 'board-card-name';
+    nameEl.textContent = displayName;
+    body.appendChild(nameEl);
   }
+
+  if (uidValue || (!revealedNow && app.applicantSecretFieldKeys?.length)) {
+    const head = document.createElement('div');
+    head.className = 'board-card-head';
+    if (uidValue) {
+      const uid = document.createElement('span');
+      uid.className = 'board-card-uid';
+      uid.textContent = `${s().uidLabel}: ${uidValue}`;
+      head.appendChild(uid);
+    }
+    if (!revealedNow && app.applicantSecretFieldKeys?.length) {
+      const note = document.createElement('span');
+      note.className = 'board-card-secret-note';
+      const labels = app.applicantSecretFieldKeys.map((key) => fieldLabel(key, lang));
+      note.textContent = s().secretFieldsNote(labels.join(lang === 'en' ? ', ' : '、'));
+      head.appendChild(note);
+    }
+    body.appendChild(head);
+  }
+
+  const rows = [
+    ...buildFieldRows(app.applicantFields, lang, store, false),
+    ...(revealedNow ? buildFieldRows(app.applicantSecretFields, lang, store, true) : []),
+  ];
+  renderGroupedFields(body, rows, lang);
 
   if (app.message) {
     const msg = document.createElement('p');
@@ -392,17 +499,33 @@ function buildSentCard(app) {
       body.appendChild(reply);
     }
 
-    const revealedChipData = buildChipData(app.revealedFields, lang, store);
-    if (revealedChipData.length) {
+    // さがす一覧と同じく、名前・UIDはヘッダー側に個別描画し、それ以外は
+    // カテゴリー別の枠(FIELD_GROUPS)に分けて描画する。
+    const revealedRows = buildFieldRows(app.revealedFields, lang, store, true);
+    const revealedName = app.revealedFields?.displayName;
+    const revealedUid = app.revealedFields?.genshinUid;
+    if (revealedRows.length || revealedName || revealedUid) {
       const title = document.createElement('p');
       title.className = 'board-request-revealed-title';
       title.textContent = s().revealedTitle;
       body.appendChild(title);
 
-      const chips = document.createElement('div');
-      chips.className = 'board-card-chips';
-      revealedChipData.forEach((chipData) => appendChip(chips, chipData, 'board-request-revealed-chip'));
-      body.appendChild(chips);
+      if (revealedName) {
+        const nameEl = document.createElement('div');
+        nameEl.className = 'board-card-name';
+        nameEl.textContent = revealedName;
+        body.appendChild(nameEl);
+      }
+      if (revealedUid) {
+        const head = document.createElement('div');
+        head.className = 'board-card-head';
+        const uid = document.createElement('span');
+        uid.className = 'board-card-uid';
+        uid.textContent = `${s().uidLabel}: ${revealedUid}`;
+        head.appendChild(uid);
+        body.appendChild(head);
+      }
+      renderGroupedFields(body, revealedRows, lang);
     }
   }
 

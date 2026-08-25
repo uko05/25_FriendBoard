@@ -2,6 +2,9 @@
 // プロフィール項目の定義（表示ラベル・選択肢・既定の公開設定）を一箇所に集約する。
 // board.js(投稿フォーム・カード表示)とapplications.js(申請カード表示)の両方から使う。
 
+// 推しキャラ・同担拒否キャラのアイコン画像を置いているCDNのベースURL。
+export const GENSHIN_ICON_BASE = 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_icon/';
+
 // 公開設定(visibility)の対象となる項目一覧。コメントは常に公開のため対象外。
 // フォームの並び順とだいたい揃えている(カードのチップ表示順にも使われる)。
 export const VISIBILITY_FIELDS = [

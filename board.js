@@ -8,7 +8,7 @@ import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
 import {
   VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
   fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch, fieldOptions,
-  fieldMatchKind, playStyleValueMatchKind,
+  fieldMatchKind, playStyleValueMatchKind, GENSHIN_ICON_BASE,
 } from './fields.js';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
@@ -17,7 +17,6 @@ import {
   query, where, orderBy, limit, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-const GENSHIN_ICON_BASE = 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_icon/';
 const OSHI_ELEMS = ['hi', 'mizu', 'koori', 'kaminari', 'kusa', 'kaze', 'iwa'];
 const OSHI_ELEM_LABELS = {
   ja: { hi: '炎', mizu: '水', koori: '氷', kaminari: '雷', kusa: '草', kaze: '風', iwa: '岩' },
