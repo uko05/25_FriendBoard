@@ -954,21 +954,6 @@ body.portal-page {
   background: #fff;
 }
 
-/* アバターの無い場所(申請タブの「元の投稿を見る」など)で推しキャラを出す時の
-   横並び版フォールバック */
-.board-card-oshi-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 6px 0;
-}
-.board-card-oshi-row-label {
-  font-size: 12px;
-  font-weight: bold;
-  color: #a08000;
-}
-
 .board-card-secret-note {
   font-size: 11px;
   color: #8a6d00;

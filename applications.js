@@ -44,6 +44,7 @@ const STR = {
     chatSendBtn: '送信',
     chatWaitingNote: '相手の返信をお待ちください',
     chatEndedNote: 'やり取りは終了しました（最大3往復まで）',
+    chatRemainingNote: (n) => `あと${n}通やり取りできます`,
   },
   en: {
     noName: 'Nameless Traveler',
@@ -72,6 +73,7 @@ const STR = {
     chatSendBtn: 'Send',
     chatWaitingNote: "Waiting for their reply",
     chatEndedNote: 'This conversation has ended (up to 3 exchanges).',
+    chatRemainingNote: (n) => `${n} message${n === 1 ? '' : 's'} left in this exchange`,
   },
 };
 
@@ -121,8 +123,8 @@ function buildFieldRows(dict, lang, myValues, revealed) {
 
 // 申請メッセージ/承認時の返信を、LINEのようなチャット吹き出し形式で描画する。
 // messages: [{ text, mine, avatarSrc }, ...] を時系列順(申請メッセージ→返信)に渡す。
-// mine=trueは自分の発言として右寄せ・アバターなし、falseは相手の発言として
-// 左寄せ・アバター付きにする(avatarSrcは相手側の時だけ必須)。
+// mine=trueは自分の発言として右寄せ、falseは相手の発言として左寄せにする。
+// どちらの側もアイコンを吹き出しのしっぽ側(自分=右端、相手=左端)に表示する。
 function renderChatThread(container, messages) {
   const list = messages.filter((m) => m.text);
   if (!list.length) return;
@@ -131,17 +133,23 @@ function renderChatThread(container, messages) {
   list.forEach(({ text, mine, avatarSrc }) => {
     const row = document.createElement('div');
     row.className = mine ? 'board-chat-row board-chat-row-me' : 'board-chat-row board-chat-row-them';
-    if (!mine) {
-      const av = document.createElement('img');
-      av.className = 'board-chat-avatar';
-      av.src = avatarSrc;
-      av.alt = '';
-      row.appendChild(av);
-    }
+
+    const av = document.createElement('img');
+    av.className = 'board-chat-avatar';
+    av.src = avatarSrc;
+    av.alt = '';
+
     const bubble = document.createElement('div');
     bubble.className = mine ? 'board-chat-bubble board-chat-bubble-me' : 'board-chat-bubble board-chat-bubble-them';
     bubble.textContent = text;
-    row.appendChild(bubble);
+
+    if (mine) {
+      row.appendChild(bubble);
+      row.appendChild(av);
+    } else {
+      row.appendChild(av);
+      row.appendChild(bubble);
+    }
     chat.appendChild(row);
   });
   container.appendChild(chat);
@@ -162,18 +170,25 @@ function canSendChat(app, sender) {
 }
 
 // sender: 'owner'|'applicant'。承認後、自分の番であれば入力欄を、そうでなければ
-// 「相手の返信を待って」等の案内だけを表示する。
+// 「相手の返信を待って」等の案内だけを表示する。残り送信可能数(お互い共通のプール)は
+// 何回でも送れるように見えて誤解されないよう、常に案内しておく。
 function renderChatComposer(container, app, sender) {
   if (app.status !== 'accepted') return;
   const msgs = app.chatMessages || [];
+  const remaining = CHAT_MAX_MESSAGES - msgs.length;
 
-  if (msgs.length >= CHAT_MAX_MESSAGES) {
+  if (remaining <= 0) {
     const note = document.createElement('p');
     note.className = 'board-chat-note';
     note.textContent = s().chatEndedNote;
     container.appendChild(note);
     return;
   }
+
+  const countNote = document.createElement('p');
+  countNote.className = 'board-chat-note';
+  countNote.textContent = s().chatRemainingNote(remaining);
+  container.appendChild(countNote);
 
   if (!canSendChat(app, sender)) {
     const note = document.createElement('p');
@@ -304,13 +319,13 @@ function extractOshiRow(rows) {
   return { rest: rows.filter((_, i) => i !== idx), oshiIcons: rows[idx].oshiIcons };
 }
 
-// アバターの下(vertical)か、見出しの下(horizontal)に推しキャラアイコンを並べる。
-function appendOshiIcons(container, icons, lang, vertical) {
+// アバターの下に推しキャラアイコンを縦並びで表示する(さがす一覧のカードと同じ体裁)。
+function appendOshiIcons(avatarCol, icons, lang) {
   const wrap = document.createElement('div');
-  wrap.className = vertical ? 'board-card-oshi-col' : 'board-card-oshi-row';
+  wrap.className = 'board-card-oshi-col';
   const label = document.createElement('span');
-  label.className = vertical ? 'board-card-oshi-col-label' : 'board-card-oshi-row-label';
-  label.textContent = vertical ? fieldLabel('oshiChars', lang) : `${fieldLabel('oshiChars', lang)}: `;
+  label.className = 'board-card-oshi-col-label';
+  label.textContent = fieldLabel('oshiChars', lang);
   wrap.appendChild(label);
   icons.forEach((icon) => {
     const img = document.createElement('img');
@@ -320,7 +335,7 @@ function appendOshiIcons(container, icons, lang, vertical) {
     img.loading = 'lazy';
     wrap.appendChild(img);
   });
-  container.appendChild(wrap);
+  avatarCol.appendChild(wrap);
 }
 
 // 送った申請一覧に常時表示する「元の投稿」は、一覧が再描画されるたび(チャットで
@@ -344,7 +359,9 @@ async function fetchPostCached(postId) {
 // 送った申請一覧の「元の投稿」用: 対象の投稿を(キャッシュ経由で)取得し、さがす一覧と
 // 同じ形式(名前/UIDヘッダー＋カテゴリー別の枠)で描画する。承認済みなら、既にrevealedFields
 // に入っている情報(=募集主が承認時に公開した項目)もあわせて表示する。
-async function renderOriginalPostInto(container, app, lang) {
+// avatarCol: この投稿の主(募集主)のアバターは、カード上部のavatarColと同一人物なので、
+// 推しキャラもさがす一覧と同じくそこへ縦並びで追加する(横並びのboard-card-oshi-rowは使わない)。
+async function renderOriginalPostInto(container, avatarCol, app, lang) {
   const post = await fetchPostCached(app.postId);
   container.innerHTML = '';
   if (!post) {
@@ -389,7 +406,7 @@ async function renderOriginalPostInto(container, app, lang) {
     ...(accepted ? buildFieldRows(app.revealedFields, lang, store, true) : []),
   ];
   const { rest: rows, oshiIcons } = extractOshiRow(allRows);
-  if (oshiIcons) appendOshiIcons(container, oshiIcons, lang, false);
+  if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang);
   renderGroupedFields(container, rows, lang);
 }
 
@@ -397,6 +414,16 @@ let _getUserId = null;
 let _onSentChange = null;
 let latestReceived = [];
 let latestSent = [];
+
+// 自分のチャット吹き出しにも自分のアイコンを出すため、初回に一度だけ取得しておく
+// (毎回の再描画でFirestoreへ読みに行かないよう、シンプルにモジュール内へ保持する)。
+let myAvatarSrc = avatarUrl(null, null);
+async function loadMyAvatar(userId) {
+  const avatar = await getMyAvatar(userId);
+  myAvatarSrc = avatarUrl(avatar.game, avatar.icon);
+  renderReceivedList();
+  renderSentList();
+}
 
 const MESSAGE_MAXLEN = 150;
 
@@ -568,7 +595,7 @@ function buildReceivedCard(app) {
     ...(revealedNow ? buildFieldRows(app.applicantSecretFields, lang, store, true) : []),
   ];
   const { rest: rows, oshiIcons } = extractOshiRow(allRows);
-  if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang, true);
+  if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang);
   renderGroupedFields(body, rows, lang);
 
   renderChatThread(body, [
@@ -576,7 +603,7 @@ function buildReceivedCard(app) {
     ...(app.chatMessages || []).map((m) => ({
       text: m.text,
       mine: m.sender === 'owner',
-      avatarSrc: avatarImg.src,
+      avatarSrc: m.sender === 'owner' ? myAvatarSrc : avatarImg.src,
     })),
   ]);
   renderChatComposer(body, app, 'owner');
@@ -680,7 +707,7 @@ function buildSentCard(app) {
         head.appendChild(uid);
         body.appendChild(head);
       }
-      if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang, true);
+      if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang);
       renderGroupedFields(body, revealedRows, lang);
     }
   }
@@ -695,15 +722,15 @@ function buildSentCard(app) {
   const originalContainer = document.createElement('div');
   originalContainer.className = 'board-request-original-post';
   body.appendChild(originalContainer);
-  renderOriginalPostInto(originalContainer, app, lang);
+  renderOriginalPostInto(originalContainer, avatarCol, app, lang);
 
   // 届いた申請と同じく、メッセージのやり取りはカードの一番下(footの直前)に表示する
   renderChatThread(body, [
-    { text: app.message, mine: true },
+    { text: app.message, mine: true, avatarSrc: myAvatarSrc },
     ...(app.chatMessages || []).map((m) => ({
       text: m.text,
       mine: m.sender === 'applicant',
-      avatarSrc: avatarImg.src,
+      avatarSrc: m.sender === 'applicant' ? myAvatarSrc : avatarImg.src,
     })),
   ]);
   renderChatComposer(body, app, 'applicant');
@@ -841,6 +868,7 @@ export function initApplications({ getUserId, onSentChange }) {
   _getUserId = getUserId;
   _onSentChange = onSentChange || null;
   const userId = getUserId();
+  loadMyAvatar(userId);
   startReceivedListener(userId);
   startSentListener(userId);
 }
