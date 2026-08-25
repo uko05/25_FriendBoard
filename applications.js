@@ -34,7 +34,6 @@ const STR = {
     profileIncomplete: '先に「マイプロフィール」タブで原神UID・サーバーを入力・保存してください。',
     applyFail: '申請に失敗しました。時間をおいて再度お試しください。',
     respondFail: '処理に失敗しました。',
-    forPost: (comment) => `募集: 「${comment}」`,
     secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
     acceptReplyModalTitle: 'メッセージを添えて承認',
     acceptReplyPlaceholder: '「こちらこそよろしくお願いします」など、返信を添えてみましょう（未入力でも承認できます）',
@@ -65,7 +64,6 @@ const STR = {
     profileIncomplete: 'Please fill in and save your Genshin UID and server on the "My Profile" tab first.',
     applyFail: 'Failed to apply. Please try again later.',
     respondFail: 'Failed to process.',
-    forPost: (comment) => `For: "${comment}"`,
     secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
     acceptReplyModalTitle: 'Accept with a message',
     acceptReplyPlaceholder: 'Add a short reply, e.g. "Nice to meet you too!" (optional — you can accept without one)',
@@ -111,7 +109,7 @@ function buildFieldRows(dict, lang, myValues, revealed) {
     if (key === 'friendPreference' || key === 'showGenshinRanking' || key === 'showGenshinCheck' || HEAD_FIELDS.has(key)) return;
     const value = dict[key];
     if (value == null || value === '' || (Array.isArray(value) && !value.length)) return;
-    if (key === 'oshiChars') { rows.push({ key, oshiIcons: value }); return; }
+    if (key === 'oshiChars' || key === 'sameOshiChars') { rows.push({ key, oshiIcons: value }); return; }
     if (key === 'playStyles') {
       value.forEach((v) => {
         const text = formatFieldValue('playStyles', [v], lang);
@@ -135,6 +133,9 @@ function appendChip(parent, { text, matchKind, revealed }) {
 }
 
 // rowsを、さがす一覧と同じカテゴリー別の枠(FIELD_GROUPS)に区切って描画する。
+// oshiChars(推しキャラ)は呼び出し側でextractOshiRowにより抜き出し、アバター下へ
+// 縦並びの別表示にするため、ここには含まれない想定(sameOshiCharsは通常通りここで
+// 小さいアイコンとして表示する)。
 function renderGroupedFields(container, rows, lang) {
   FIELD_GROUPS.forEach((group) => {
     const groupRows = rows.filter((row) => group.fields.includes(row.key));
@@ -147,34 +148,28 @@ function renderGroupedFields(container, rows, lang) {
     title.textContent = s().groupTitles[group.key] || group.key;
     box.appendChild(title);
 
-    const oshiRow = groupRows.find((row) => row.key === 'oshiChars');
-    if (oshiRow) {
-      const oshiBadge = document.createElement('div');
-      oshiBadge.className = 'board-card-group-oshi-badge';
-      const oshiLabel = document.createElement('span');
-      oshiLabel.className = 'board-card-group-oshi-label';
-      oshiLabel.textContent = `${fieldLabel('oshiChars', lang)}: `;
-      oshiBadge.appendChild(oshiLabel);
-      oshiRow.oshiIcons.forEach((icon) => {
-        const img = document.createElement('img');
-        img.className = 'board-card-oshi-icon-lg';
-        img.src = GENSHIN_ICON_BASE + icon;
-        img.alt = '';
-        img.loading = 'lazy';
-        oshiBadge.appendChild(img);
-      });
-      box.appendChild(oshiBadge);
-    }
-
     const playStyleRows = groupRows.filter((row) => row.key === 'playStyles');
-    const otherRows = groupRows.filter((row) => row.key !== 'playStyles' && row.key !== 'oshiChars');
+    const otherRows = groupRows.filter((row) => row.key !== 'playStyles');
     const generalPs = playStyleRows.filter((row) => !PLAYSTYLE_OFFER_VALUES.includes(row.value) && !PLAYSTYLE_REQUEST_VALUES.includes(row.value));
     const offerPs = playStyleRows.filter((row) => PLAYSTYLE_OFFER_VALUES.includes(row.value));
     const requestPs = playStyleRows.filter((row) => PLAYSTYLE_REQUEST_VALUES.includes(row.value));
 
     const chips = document.createElement('div');
     chips.className = 'board-card-chips';
-    [...otherRows, ...generalPs].forEach((row) => appendChip(chips, row));
+    [...otherRows, ...generalPs].forEach((row) => {
+      if (row.oshiIcons) {
+        row.oshiIcons.forEach((icon) => {
+          const img = document.createElement('img');
+          img.className = 'board-card-oshi-icon';
+          img.src = GENSHIN_ICON_BASE + icon;
+          img.alt = '';
+          img.loading = 'lazy';
+          chips.appendChild(img);
+        });
+        return;
+      }
+      appendChip(chips, row);
+    });
     box.appendChild(chips);
 
     if (offerPs.length) {
@@ -206,6 +201,33 @@ function renderGroupedFields(container, rows, lang) {
 
     container.appendChild(box);
   });
+}
+
+// rowsから推しキャラ(oshiChars)の行を1つ抜き出す。項目数が多いカードだと枠内の
+// 文字と被って見づらいため、呼び出し側でアバターの下に縦並び表示するのに使う。
+function extractOshiRow(rows) {
+  const idx = rows.findIndex((row) => row.key === 'oshiChars');
+  if (idx === -1) return { rest: rows, oshiIcons: null };
+  return { rest: rows.filter((_, i) => i !== idx), oshiIcons: rows[idx].oshiIcons };
+}
+
+// アバターの下(vertical)か、見出しの下(horizontal)に推しキャラアイコンを並べる。
+function appendOshiIcons(container, icons, lang, vertical) {
+  const wrap = document.createElement('div');
+  wrap.className = vertical ? 'board-card-oshi-col' : 'board-card-oshi-row';
+  const label = document.createElement('span');
+  label.className = vertical ? 'board-card-oshi-col-label' : 'board-card-oshi-row-label';
+  label.textContent = vertical ? fieldLabel('oshiChars', lang) : `${fieldLabel('oshiChars', lang)}: `;
+  wrap.appendChild(label);
+  icons.forEach((icon) => {
+    const img = document.createElement('img');
+    img.className = 'board-card-oshi-icon-lg';
+    img.src = GENSHIN_ICON_BASE + icon;
+    img.alt = '';
+    img.loading = 'lazy';
+    wrap.appendChild(img);
+  });
+  container.appendChild(wrap);
 }
 
 // 送った申請一覧の「元の投稿を見る」用: 対象の投稿を今の内容で取得し、さがす一覧と
@@ -257,10 +279,12 @@ async function renderOriginalPostInto(container, app, lang) {
     container.appendChild(head);
   }
 
-  const rows = [
+  const allRows = [
     ...buildFieldRows(post.publicFields, lang, store, false),
     ...(accepted ? buildFieldRows(app.revealedFields, lang, store, true) : []),
   ];
+  const { rest: rows, oshiIcons } = extractOshiRow(allRows);
+  if (oshiIcons) appendOshiIcons(container, oshiIcons, lang, false);
   renderGroupedFields(container, rows, lang);
 }
 
@@ -412,11 +436,15 @@ function buildReceivedCard(app) {
   const card = document.createElement('div');
   card.className = 'board-card';
 
+  const avatarCol = document.createElement('div');
+  avatarCol.className = 'board-card-avatar-col';
+  card.appendChild(avatarCol);
+
   const avatarImg = document.createElement('img');
   avatarImg.className = 'board-card-avatar';
   avatarImg.src = avatarUrl(app.applicantAvatarGame, app.applicantAvatarIcon);
   avatarImg.alt = '';
-  card.appendChild(avatarImg);
+  avatarCol.appendChild(avatarImg);
 
   const body = document.createElement('div');
   body.className = 'board-card-body';
@@ -455,10 +483,12 @@ function buildReceivedCard(app) {
     body.appendChild(head);
   }
 
-  const rows = [
+  const allRows = [
     ...buildFieldRows(app.applicantFields, lang, store, false),
     ...(revealedNow ? buildFieldRows(app.applicantSecretFields, lang, store, true) : []),
   ];
+  const { rest: rows, oshiIcons } = extractOshiRow(allRows);
+  if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang, true);
   renderGroupedFields(body, rows, lang);
 
   if (app.message) {
@@ -533,20 +563,19 @@ function buildSentCard(app) {
   const card = document.createElement('div');
   card.className = 'board-card';
 
+  const avatarCol = document.createElement('div');
+  avatarCol.className = 'board-card-avatar-col';
+  card.appendChild(avatarCol);
+
   const avatarImg = document.createElement('img');
   avatarImg.className = 'board-card-avatar';
   avatarImg.src = avatarUrl(app.postOwnerAvatarGame, app.postOwnerAvatarIcon);
   avatarImg.alt = '';
-  card.appendChild(avatarImg);
+  avatarCol.appendChild(avatarImg);
 
   const body = document.createElement('div');
   body.className = 'board-card-body';
   card.appendChild(body);
-
-  const forPost = document.createElement('p');
-  forPost.className = 'board-request-for';
-  forPost.textContent = s().forPost(app.postComment || '');
-  body.appendChild(forPost);
 
   if (app.message) {
     const msg = document.createElement('p');
@@ -570,10 +599,10 @@ function buildSentCard(app) {
 
     // さがす一覧と同じく、名前・UIDはヘッダー側に個別描画し、それ以外は
     // カテゴリー別の枠(FIELD_GROUPS)に分けて描画する。
-    const revealedRows = buildFieldRows(app.revealedFields, lang, store, true);
+    const { rest: revealedRows, oshiIcons } = extractOshiRow(buildFieldRows(app.revealedFields, lang, store, true));
     const revealedName = app.revealedFields?.displayName;
     const revealedUid = app.revealedFields?.genshinUid;
-    if (revealedRows.length || revealedName || revealedUid) {
+    if (revealedRows.length || revealedName || revealedUid || oshiIcons) {
       const title = document.createElement('p');
       title.className = 'board-request-revealed-title';
       title.textContent = s().revealedTitle;
@@ -594,11 +623,12 @@ function buildSentCard(app) {
         head.appendChild(uid);
         body.appendChild(head);
       }
+      if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang, true);
       renderGroupedFields(body, revealedRows, lang);
     }
   }
 
-  // 「募集:」は投稿のコメントだけの簡易表示なので、元の投稿を丸ごと見たい時のためのボタン。
+  // 元の投稿を丸ごと見たい時のためのボタン。
   // 押した時点の最新の投稿内容を取得して表示する(投稿が既に取り下げられている場合もある)。
   const originalToggleBtn = document.createElement('button');
   originalToggleBtn.type = 'button';

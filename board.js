@@ -925,12 +925,16 @@ function buildCard(post, { mine, matchPercent }) {
   const card = document.createElement('div');
   card.className = 'board-card';
 
+  const avatarCol = document.createElement('div');
+  avatarCol.className = 'board-card-avatar-col';
+  card.appendChild(avatarCol);
+
   const avatarImg = document.createElement('img');
   avatarImg.className = 'board-card-avatar';
   avatarImg.src = avatarUrl(post.avatarGame, post.avatarIcon);
   avatarImg.alt = '';
   avatarImg.loading = 'lazy';
-  card.appendChild(avatarImg);
+  avatarCol.appendChild(avatarImg);
 
   const body = document.createElement('div');
   body.className = 'board-card-body';
@@ -947,7 +951,29 @@ function buildCard(post, { mine, matchPercent }) {
     body.appendChild(nameEl);
   }
 
-  const { rows, secretLabels } = getDisplayFields(post, mine);
+  const { rows: allRows, secretLabels } = getDisplayFields(post, mine);
+
+  // 推しキャラは項目数が多いとカテゴリー枠内で文字と被ってしまうため、
+  // アバター画像の下(元々余白ができやすい場所)に縦に並べて表示する
+  const oshiCharsRow = allRows.find((row) => row.key === 'oshiChars');
+  const rows = allRows.filter((row) => row.key !== 'oshiChars');
+  if (oshiCharsRow) {
+    const oshiCol = document.createElement('div');
+    oshiCol.className = 'board-card-oshi-col';
+    const oshiLabel = document.createElement('span');
+    oshiLabel.className = 'board-card-oshi-col-label';
+    oshiLabel.textContent = fieldLabel('oshiChars', currentLang());
+    oshiCol.appendChild(oshiLabel);
+    oshiCharsRow.oshiIcons.forEach((icon) => {
+      const img = document.createElement('img');
+      img.className = 'board-card-oshi-icon-lg';
+      img.src = GENSHIN_ICON_BASE + icon;
+      img.alt = '';
+      img.loading = 'lazy';
+      oshiCol.appendChild(img);
+    });
+    avatarCol.appendChild(oshiCol);
+  }
 
   const head = document.createElement('div');
   head.className = 'board-card-head';
@@ -992,30 +1018,10 @@ function buildCard(post, { mine, matchPercent }) {
     title.className = 'board-card-group-title';
     title.textContent = s().groupTitles[group.key] || group.key;
     box.appendChild(title);
-    // 推しキャラ(oshiChars)は他のチップと一緒だと小さくて見づらいため、
-    // 枠の右上に大きめのアイコンとして別枠表示する(同担拒否キャラ=sameOshiCharsは対象外)
-    const oshiCharsRow = groupRows.find((row) => row.key === 'oshiChars');
-    if (oshiCharsRow) {
-      const oshiBadge = document.createElement('div');
-      oshiBadge.className = 'board-card-group-oshi-badge';
-      const oshiLabel = document.createElement('span');
-      oshiLabel.className = 'board-card-group-oshi-label';
-      oshiLabel.textContent = `${fieldLabel('oshiChars', currentLang())}: `;
-      oshiBadge.appendChild(oshiLabel);
-      oshiCharsRow.oshiIcons.forEach((icon) => {
-        const img = document.createElement('img');
-        img.className = 'board-card-oshi-icon-lg';
-        img.src = GENSHIN_ICON_BASE + icon;
-        img.alt = '';
-        img.loading = 'lazy';
-        oshiBadge.appendChild(img);
-      });
-      box.appendChild(oshiBadge);
-    }
     const chips = document.createElement('div');
     chips.className = 'board-card-chips';
     const playStylesRow = groupRows.find((row) => row.key === 'playStyles');
-    const otherRows = groupRows.filter((row) => row.key !== 'playStyles' && row.key !== 'oshiChars');
+    const otherRows = groupRows.filter((row) => row.key !== 'playStyles');
     otherRows.forEach((row) => {
       if (row.oshiIcons) {
         row.oshiIcons.forEach((icon) => {

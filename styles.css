@@ -923,26 +923,50 @@ body.portal-page {
   border: 1px solid #ffcc00;
 }
 
-.board-card-group-oshi-badge {
-  position: absolute;
-  top: 2px;
-  right: 8px;
+.board-card-avatar-col {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* 推しキャラは項目数が多いとカテゴリー枠内で文字と被ってしまうため、
+   アバター画像の下(元々余白ができやすい場所)に縦に並べて表示する */
+.board-card-oshi-col {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 4px;
 }
-.board-card-group-oshi-label {
-  font-size: 11px;
-  color: #555;
-  white-space: nowrap;
+.board-card-oshi-col-label {
+  font-size: 10px;
+  font-weight: bold;
+  color: #a08000;
+  text-align: center;
 }
 .board-card-oshi-icon-lg {
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #ffcc00;
   background: #fff;
+}
+
+/* アバターの無い場所(申請タブの「元の投稿を見る」など)で推しキャラを出す時の
+   横並び版フォールバック */
+.board-card-oshi-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+.board-card-oshi-row-label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #a08000;
 }
 
 .board-card-secret-note {
@@ -1110,14 +1134,6 @@ body.portal-page {
 
 .board-requests-group + .board-requests-group {
   margin-top: 28px;
-}
-
-.board-request-for {
-  margin: 4px 0;
-  font-size: 13px;
-  color: #888;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .board-request-revealed-title {
