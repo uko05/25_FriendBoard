@@ -8,6 +8,7 @@ import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
 import {
   VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
   fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch, fieldOptions,
+  fieldMatchKind, playStyleValueMatchKind,
 } from './fields.js';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
@@ -920,54 +921,6 @@ function pushFieldRow(rows, key, value, lang, ownerUserId) {
   if (text) rows.push({ key, value, text: `${fieldLabel(key, lang)}: ${text}` });
 }
 
-// 値としては違うが相性が良い(非対称に噛み合う)組み合わせ。
-// 例: マルチ自発について「お誘いします！」⇔「自発苦手です(誘われたい)」は
-// 同じ値ではないが、誘う側と誘われたい側でちょうど噛み合うため好相性として扱う。
-const COMPLEMENTARY_VALUE_PAIRS = {
-  inviteStyle: [['invite', 'invited']],
-  playStyles: [
-    ['needExploreHelp', 'canHelpExplore'],
-    ['needFarmHelp', 'canHelpBuild'],
-    ['needDomainHelp', 'canHelpDomain'],
-    ['needIllusiveHelp', 'canHelpIllusive'],
-    ['wantAchievements', 'canHelpAchievements'],
-    ['needQuestions', 'canHelpQuestions'],
-  ],
-};
-
-// 相手のチップの値が自分のプロフィールと一致(配列は重複あり)しているか、上記の
-// 相性ペアに該当しているかを判定する。戻り値は 'exact' | 'complementary' | null で、
-// 呼び出し側で色分け表示に使う。
-// 時間帯({start,end})や数値(AR/WLなど)は曖昧になりすぎるため判定対象外(常にnull)。
-function fieldMatchKind(myValue, otherValue, key) {
-  const pairs = COMPLEMENTARY_VALUE_PAIRS[key];
-  if (Array.isArray(myValue) && Array.isArray(otherValue)) {
-    if (myValue.some((v) => otherValue.includes(v))) return 'exact';
-    const isComplementary = !!pairs && pairs.some(([a, b]) => (
-      (myValue.includes(a) && otherValue.includes(b)) || (myValue.includes(b) && otherValue.includes(a))
-    ));
-    return isComplementary ? 'complementary' : null;
-  }
-  if (Array.isArray(myValue) || Array.isArray(otherValue)) return null;
-  if (typeof myValue === 'object' || typeof otherValue === 'object') return null;
-  if (myValue == null || myValue === '' || otherValue == null || otherValue === '') return null;
-  if (myValue === otherValue) return 'exact';
-  const isComplementary = !!pairs && pairs.some(([a, b]) => (myValue === a && otherValue === b) || (myValue === b && otherValue === a));
-  return isComplementary ? 'complementary' : null;
-}
-
-// playStylesを個別の値(1つ1つのチップ)単位で判定する版。相手の1つの値が、
-// 自分のplayStyles配列のどれかと完全一致するか、相性ペアの相手側を持っているかを見る。
-function playStyleValueMatchKind(otherValue) {
-  const myValues = store.playStyles || [];
-  if (myValues.includes(otherValue)) return 'exact';
-  const pairs = COMPLEMENTARY_VALUE_PAIRS.playStyles || [];
-  const isComplementary = pairs.some(([a, b]) => (
-    (otherValue === a && myValues.includes(b)) || (otherValue === b && myValues.includes(a))
-  ));
-  return isComplementary ? 'complementary' : null;
-}
-
 // ===== 募集カード描画 =====
 function buildCard(post, { mine, matchPercent }) {
   const card = document.createElement('div');
@@ -1099,7 +1052,7 @@ function buildCard(post, { mine, matchPercent }) {
         const chip = document.createElement('span');
         chip.className = 'board-card-chip';
         if (!mine) {
-          const matchKind = playStyleValueMatchKind(v);
+          const matchKind = playStyleValueMatchKind(store.playStyles, v);
           if (matchKind === 'exact') chip.classList.add('board-card-chip-matched');
           else if (matchKind === 'complementary') chip.classList.add('board-card-chip-complementary');
         }

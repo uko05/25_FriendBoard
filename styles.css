@@ -1088,6 +1088,15 @@ body.portal-page {
   color: #8a6d00;
   font-weight: bold;
 }
+/* さがす一覧と同じ「一致/相性◎」色を優先させる(承認後に公開された項目でも判定できるように) */
+.board-request-revealed-chip.board-card-chip-matched {
+  background: #ffe1ec;
+  color: #c2185b;
+}
+.board-request-revealed-chip.board-card-chip-complementary {
+  background: #e1f0ff;
+  color: #1565c0;
+}
 
 .board-request-message {
   margin: 6px 0;

@@ -267,6 +267,54 @@ export function buildPostFieldBuckets(values, visibility) {
   return { publicFields, secretFieldKeys };
 }
 
+// 値としては違うが相性が良い(非対称に噛み合う)組み合わせ。
+// 例: マルチ自発について「お誘いします！」⇔「自発苦手です(誘われたい)」は
+// 同じ値ではないが、誘う側と誘われたい側でちょうど噛み合うため好相性として扱う。
+export const COMPLEMENTARY_VALUE_PAIRS = {
+  inviteStyle: [['invite', 'invited']],
+  playStyles: [
+    ['needExploreHelp', 'canHelpExplore'],
+    ['needFarmHelp', 'canHelpBuild'],
+    ['needDomainHelp', 'canHelpDomain'],
+    ['needIllusiveHelp', 'canHelpIllusive'],
+    ['wantAchievements', 'canHelpAchievements'],
+    ['needQuestions', 'canHelpQuestions'],
+  ],
+};
+
+// 相手のチップの値が自分のプロフィールと一致(配列は重複あり)しているか、上記の
+// 相性ペアに該当しているかを判定する。戻り値は 'exact' | 'complementary' | null で、
+// 呼び出し側で色分け表示に使う(さがす一覧・申請タブどちらのチップ表示からも使う)。
+// 時間帯({start,end})や数値(AR/WLなど)は曖昧になりすぎるため判定対象外(常にnull)。
+export function fieldMatchKind(myValue, otherValue, key) {
+  const pairs = COMPLEMENTARY_VALUE_PAIRS[key];
+  if (Array.isArray(myValue) && Array.isArray(otherValue)) {
+    if (myValue.some((v) => otherValue.includes(v))) return 'exact';
+    const isComplementary = !!pairs && pairs.some(([a, b]) => (
+      (myValue.includes(a) && otherValue.includes(b)) || (myValue.includes(b) && otherValue.includes(a))
+    ));
+    return isComplementary ? 'complementary' : null;
+  }
+  if (Array.isArray(myValue) || Array.isArray(otherValue)) return null;
+  if (typeof myValue === 'object' || typeof otherValue === 'object') return null;
+  if (myValue == null || myValue === '' || otherValue == null || otherValue === '') return null;
+  if (myValue === otherValue) return 'exact';
+  const isComplementary = !!pairs && pairs.some(([a, b]) => (myValue === a && otherValue === b) || (myValue === b && otherValue === a));
+  return isComplementary ? 'complementary' : null;
+}
+
+// playStylesを個別の値(1つ1つのチップ)単位で判定する版。相手の1つの値が、
+// myValues(自分のplayStyles配列)のどれかと完全一致するか、相性ペアの相手側を持っているかを見る。
+export function playStyleValueMatchKind(myValues, otherValue) {
+  const mine = myValues || [];
+  if (mine.includes(otherValue)) return 'exact';
+  const pairs = COMPLEMENTARY_VALUE_PAIRS.playStyles || [];
+  const isComplementary = pairs.some(([a, b]) => (
+    (otherValue === a && mine.includes(b)) || (otherValue === b && mine.includes(a))
+  ));
+  return isComplementary ? 'complementary' : null;
+}
+
 // 「どういうフレンドがほしい？」のマッチ度を計算する。
 // myPrefs: 自分のfriendPreference配列, myGender: 自分の性別
 // candidate: 相手側の公開フィールド一式相当のオブジェクト(gender/vc/friendPreferenceを含む)

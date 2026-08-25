@@ -6,7 +6,10 @@
 import { db } from './firebaseConfig.js';
 import { store } from './userData.js';
 import { avatarUrl, getMyAvatar } from './avatar.js';
-import { VISIBILITY_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets } from './fields.js';
+import {
+  VISIBILITY_FIELDS, fieldLabel, formatFieldValue, buildPostFieldBuckets,
+  fieldMatchKind, playStyleValueMatchKind,
+} from './fields.js';
 import {
   collection, addDoc, updateDoc, doc, onSnapshot,
   query, where, orderBy, limit, serverTimestamp,
@@ -78,18 +81,39 @@ function relTime(ts) {
   return currentLang() === 'en' ? `${Math.floor(hour / 24)}d ago` : `${Math.floor(hour / 24)}日前`;
 }
 
-// {key: value} のオブジェクトを "ラベル: 値" の文字列配列に整形する(oshiCharsは除く、画像なので個別描画)
-function formatFieldDict(dict, lang) {
+// {key: value} のオブジェクトを、チップ表示用の{text, matchKind}配列に整形する
+// (oshiCharsは除く、画像なので個別描画)。
+// さがす一覧と同じ「一致/相性◎」の色分けができるよう、自分のプロフィール(myValues)との
+// 比較結果もここで一緒に計算しておく。playStylesだけは値ごとに個別チップへ分ける
+// (1チップにまとめると、どの値が一致/相性なのか色分けできなくなるため)。
+function buildChipData(dict, lang, myValues) {
   if (!dict) return [];
-  return VISIBILITY_FIELDS
-    .filter((key) => key !== 'oshiChars' && key !== 'friendPreference'
-      && key !== 'showGenshinRanking' && key !== 'showGenshinCheck'
-      && dict[key] != null && dict[key] !== '')
-    .map((key) => {
-      const text = formatFieldValue(key, dict[key], lang);
-      return text ? `${fieldLabel(key, lang)}: ${text}` : null;
-    })
-    .filter(Boolean);
+  const out = [];
+  VISIBILITY_FIELDS.forEach((key) => {
+    if (key === 'oshiChars' || key === 'friendPreference'
+      || key === 'showGenshinRanking' || key === 'showGenshinCheck') return;
+    const value = dict[key];
+    if (value == null || value === '') return;
+    if (key === 'playStyles' && Array.isArray(value)) {
+      value.forEach((v) => {
+        const text = formatFieldValue('playStyles', [v], lang);
+        if (text) out.push({ text, matchKind: playStyleValueMatchKind(myValues.playStyles, v) });
+      });
+      return;
+    }
+    const text = formatFieldValue(key, value, lang);
+    if (text) out.push({ text: `${fieldLabel(key, lang)}: ${text}`, matchKind: fieldMatchKind(myValues[key], value, key) });
+  });
+  return out;
+}
+
+function appendChip(parent, { text, matchKind }, extraClass) {
+  const chip = document.createElement('span');
+  chip.className = extraClass ? `board-card-chip ${extraClass}` : 'board-card-chip';
+  if (matchKind === 'exact') chip.classList.add('board-card-chip-matched');
+  else if (matchKind === 'complementary') chip.classList.add('board-card-chip-complementary');
+  chip.textContent = text;
+  parent.appendChild(chip);
 }
 
 let _getUserId = null;
@@ -240,21 +264,11 @@ function buildReceivedCard(app) {
 
   const chips = document.createElement('div');
   chips.className = 'board-card-chips';
-  formatFieldDict(app.applicantFields, lang).forEach((text) => {
-    const chip = document.createElement('span');
-    chip.className = 'board-card-chip';
-    chip.textContent = text;
-    chips.appendChild(chip);
-  });
+  buildChipData(app.applicantFields, lang, store).forEach((chipData) => appendChip(chips, chipData));
   // 承認済みになった時点で、申請者側の「承認後に公開」項目も初めてこちらに見せる
   // (=募集主の項目が承認時に見えるようになるのと対称のルール)。
   if (app.status === 'accepted') {
-    formatFieldDict(app.applicantSecretFields, lang).forEach((text) => {
-      const chip = document.createElement('span');
-      chip.className = 'board-card-chip board-request-revealed-chip';
-      chip.textContent = text;
-      chips.appendChild(chip);
-    });
+    buildChipData(app.applicantSecretFields, lang, store).forEach((chipData) => appendChip(chips, chipData, 'board-request-revealed-chip'));
   }
   if (chips.children.length) body.appendChild(chips);
 
@@ -378,8 +392,8 @@ function buildSentCard(app) {
       body.appendChild(reply);
     }
 
-    const revealedTexts = formatFieldDict(app.revealedFields, lang);
-    if (revealedTexts.length) {
+    const revealedChipData = buildChipData(app.revealedFields, lang, store);
+    if (revealedChipData.length) {
       const title = document.createElement('p');
       title.className = 'board-request-revealed-title';
       title.textContent = s().revealedTitle;
@@ -387,12 +401,7 @@ function buildSentCard(app) {
 
       const chips = document.createElement('div');
       chips.className = 'board-card-chips';
-      revealedTexts.forEach((text) => {
-        const chip = document.createElement('span');
-        chip.className = 'board-card-chip board-request-revealed-chip';
-        chip.textContent = text;
-        chips.appendChild(chip);
-      });
+      revealedChipData.forEach((chipData) => appendChip(chips, chipData, 'board-request-revealed-chip'));
       body.appendChild(chips);
     }
   }
