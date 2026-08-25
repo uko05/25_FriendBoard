@@ -38,7 +38,6 @@ const STR = {
     acceptReplyModalTitle: 'メッセージを添えて承認',
     acceptReplyPlaceholder: '「こちらこそよろしくお願いします」など、返信を添えてみましょう（未入力でも承認できます）',
     acceptReplySendBtn: 'この内容で承認する',
-    ownerReplyTitle: '相手からの返信',
     groupTitles: { basic: '基本情報', style: 'あなたについて', contact: '連絡・時間帯', voice: 'ボイスチャット', sns: 'つながれるSNS' },
     playStyleOfferTitle: '手伝います！',
     playStyleRequestTitle: '手伝ってください！',
@@ -68,7 +67,6 @@ const STR = {
     acceptReplyModalTitle: 'Accept with a message',
     acceptReplyPlaceholder: 'Add a short reply, e.g. "Nice to meet you too!" (optional — you can accept without one)',
     acceptReplySendBtn: 'Accept with this message',
-    ownerReplyTitle: "Their reply",
     groupTitles: { basic: 'Basic Info', style: 'About You', contact: 'Contact & Availability', voice: 'Voice Chat', sns: 'SNS' },
     playStyleOfferTitle: 'I can help with...',
     playStyleRequestTitle: 'Please help me with...',
@@ -121,6 +119,34 @@ function buildFieldRows(dict, lang, myValues, revealed) {
     if (text) rows.push({ key, text: `${fieldLabel(key, lang)}: ${text}`, matchKind: fieldMatchKind(myValues[key], value, key), revealed });
   });
   return rows;
+}
+
+// 申請メッセージ/承認時の返信を、LINEのようなチャット吹き出し形式で描画する。
+// messages: [{ text, mine, avatarSrc }, ...] を時系列順(申請メッセージ→返信)に渡す。
+// mine=trueは自分の発言として右寄せ・アバターなし、falseは相手の発言として
+// 左寄せ・アバター付きにする(avatarSrcは相手側の時だけ必須)。
+function renderChatThread(container, messages) {
+  const list = messages.filter((m) => m.text);
+  if (!list.length) return;
+  const chat = document.createElement('div');
+  chat.className = 'board-chat';
+  list.forEach(({ text, mine, avatarSrc }) => {
+    const row = document.createElement('div');
+    row.className = mine ? 'board-chat-row board-chat-row-me' : 'board-chat-row board-chat-row-them';
+    if (!mine) {
+      const av = document.createElement('img');
+      av.className = 'board-chat-avatar';
+      av.src = avatarSrc;
+      av.alt = '';
+      row.appendChild(av);
+    }
+    const bubble = document.createElement('div');
+    bubble.className = mine ? 'board-chat-bubble board-chat-bubble-me' : 'board-chat-bubble board-chat-bubble-them';
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    chat.appendChild(row);
+  });
+  container.appendChild(chat);
 }
 
 function appendChip(parent, { text, matchKind, revealed }) {
@@ -491,12 +517,10 @@ function buildReceivedCard(app) {
   if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang, true);
   renderGroupedFields(body, rows, lang);
 
-  if (app.message) {
-    const msg = document.createElement('p');
-    msg.className = 'board-request-message';
-    msg.textContent = `💬 ${app.message}`;
-    body.appendChild(msg);
-  }
+  renderChatThread(body, [
+    { text: app.message, mine: false, avatarSrc: avatarImg.src },
+    { text: app.ownerReply, mine: true },
+  ]);
 
   const foot = document.createElement('div');
   foot.className = 'board-card-foot';
@@ -577,26 +601,12 @@ function buildSentCard(app) {
   body.className = 'board-card-body';
   card.appendChild(body);
 
-  if (app.message) {
-    const msg = document.createElement('p');
-    msg.className = 'board-request-message';
-    msg.textContent = `💬 ${app.message}`;
-    body.appendChild(msg);
-  }
+  renderChatThread(body, [
+    { text: app.message, mine: true },
+    { text: app.ownerReply, mine: false, avatarSrc: avatarImg.src },
+  ]);
 
   if (app.status === 'accepted') {
-    if (app.ownerReply) {
-      const replyTitle = document.createElement('p');
-      replyTitle.className = 'board-request-revealed-title';
-      replyTitle.textContent = s().ownerReplyTitle;
-      body.appendChild(replyTitle);
-
-      const reply = document.createElement('p');
-      reply.className = 'board-request-message board-request-reply-message';
-      reply.textContent = `💬 ${app.ownerReply}`;
-      body.appendChild(reply);
-    }
-
     // さがす一覧と同じく、名前・UIDはヘッダー側に個別描画し、それ以外は
     // カテゴリー別の枠(FIELD_GROUPS)に分けて描画する。
     const { rest: revealedRows, oshiIcons } = extractOshiRow(buildFieldRows(app.revealedFields, lang, store, true));

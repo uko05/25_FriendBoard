@@ -1177,20 +1177,53 @@ body.portal-page {
   color: #1565c0;
 }
 
-.board-request-message {
-  margin: 6px 0;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #f5f5f5;
-  color: #333;
+/* 申請メッセージ/承認時の返信のやり取りをLINEのような吹き出しで表示する。
+   自分の発言は右寄せ・黄色(サイトのアクセントカラー)、相手の発言はアバター付きで
+   左寄せ・グレーにする。 */
+.board-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.board-chat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.board-chat-row-them { justify-content: flex-start; }
+.board-chat-row-me { justify-content: flex-end; }
+
+.board-chat-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.board-chat-bubble {
+  max-width: 75%;
+  padding: 8px 12px;
+  border-radius: 16px;
   font-size: 13px;
+  line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.board-request-reply-message {
-  background: #fff6d9;
-  color: #6b5400;
+.board-chat-bubble-them {
+  background: #f0f0f0;
+  color: #222;
+  border-bottom-left-radius: 4px;
+}
+
+.board-chat-bubble-me {
+  background: #ffcc00;
+  color: #222;
+  border-bottom-right-radius: 4px;
 }
 
 .board-request-btn-row {
