@@ -523,6 +523,13 @@ async function respondToApplication(app, accept) {
 async function sendChatMessage(app, sender, text) {
   const messages = [...(app.chatMessages || []), { sender, text }];
   await updateDoc(doc(db, 'friendBoardApplications', app.id), { chatMessages: messages });
+
+  // 誰かとチャットのやり取りをした = アクティブに探している、とみなして
+  // 自分の投稿も自動更新する(board.jsのPOST_STALE_MS参照)。
+  const activeUserId = sender === 'applicant' ? app.applicantUserId : app.postOwnerUserId;
+  if (activeUserId) {
+    updateDoc(doc(db, 'friendBoardPosts', activeUserId), { lastActiveAt: serverTimestamp() }).catch(() => {});
+  }
 }
 
 // ===== 届いた申請一覧（自分が募集主） =====
