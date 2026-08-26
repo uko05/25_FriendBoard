@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const dict = {
     ja: {
-      homeTitle: "フレンド募集掲示板",
+      homeTitle: "＃原神フレンド承認板",
       accountLink: "アカウント管理（登録は任意です）",
       langJa: "JP",
       langEn: "EN",
@@ -265,7 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
       friend: "＜友達ください…",
     },
     en: {
-      homeTitle: "Friend Board",
+      homeTitle: "#Genshin Friend Approval Board",
       accountLink: "Account Center (registration optional)",
       langJa: "JP",
       langEn: "EN",

@@ -1,5 +1,5 @@
 // board.js
-// フレンド募集掲示板：タブ切替・プロフィール自動反映・投稿(募集する)・一覧購読(さがす)
+// ＃原神フレンド承認板：タブ切替・プロフィール自動反映・投稿(募集する)・一覧購読(さがす)
 
 import { db } from './firebaseConfig.js';
 import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink } from './userData.js';
@@ -73,6 +73,7 @@ const STR = {
     viewProfileGone: 'このプロフィールは取り下げられたか見つかりませんでした。',
     exportGenerating: '画像を作成しています…',
     exportFail: '画像の作成に失敗しました。時間をおいて再度お試しください。',
+    exportSiteTitle: '＃原神フレンド承認板',
   },
   en: {
     justNow: 'just now',
@@ -119,6 +120,7 @@ const STR = {
     viewProfileGone: 'This profile was withdrawn or could not be found.',
     exportGenerating: 'Generating image…',
     exportFail: 'Failed to generate the image. Please try again later.',
+    exportSiteTitle: '#Genshin Friend Approval Board',
   },
 };
 
@@ -1846,6 +1848,14 @@ async function buildProfileExportImage(post) {
 
   const PAD = 48;
   let y = PAD;
+
+  // サイト名を画像の一番上に表示する
+  ctx.textAlign = 'center';
+  ctx.font = `bold 34px ${EXPORT_FONT_FAMILY}`;
+  ctx.fillStyle = '#222';
+  ctx.fillText(s().exportSiteTitle, scratch.width / 2, y + 30);
+  ctx.textAlign = 'left';
+  y += 68;
 
   // ヘッダー: アバター + 名前/UID/サーバー(名前・UIDは常に承認後公開のためマスク表示)
   const avatarSize = 132;
