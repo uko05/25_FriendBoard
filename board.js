@@ -2172,6 +2172,13 @@ function downloadDataUrlAsFile(dataUrl, filename) {
   a.remove();
 }
 
+// ファイル名用にyyyyMMddHHmmss形式のタイムスタンプ(端末のローカル時刻)を作る。
+function timestampForFilename() {
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
 document.getElementById('export-profile-image-btn')?.addEventListener('click', async () => {
   if (!latestMyListing) return;
   const btn = document.getElementById('export-profile-image-btn');
@@ -2183,7 +2190,7 @@ document.getElementById('export-profile-image-btn')?.addEventListener('click', a
   }
   try {
     const dataUrl = await buildProfileExportImage(latestMyListing);
-    downloadDataUrlAsFile(dataUrl, `friendboard_${getUserId()}.png`);
+    downloadDataUrlAsFile(dataUrl, `friendboard_${timestampForFilename()}.png`);
     if (msgEl) msgEl.classList.add('hidden');
   } catch (e) {
     console.error('[board] export image failed', e);
