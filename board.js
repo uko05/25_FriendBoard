@@ -73,7 +73,6 @@ const STR = {
     viewProfileGone: 'このプロフィールは取り下げられたか見つかりませんでした。',
     exportGenerating: '画像を作成しています…',
     exportFail: '画像の作成に失敗しました。時間をおいて再度お試しください。',
-    exportQrCaption: 'QRコードを読み取ると、このプロフィールのページが開きます',
   },
   en: {
     justNow: 'just now',
@@ -120,7 +119,6 @@ const STR = {
     viewProfileGone: 'This profile was withdrawn or could not be found.',
     exportGenerating: 'Generating image…',
     exportFail: 'Failed to generate the image. Please try again later.',
-    exportQrCaption: 'Scan the QR code to open this profile page',
   },
 };
 
@@ -1886,6 +1884,24 @@ async function buildProfileExportImage(post) {
     ctx.fillStyle = EXPORT_COLORS.uid;
     ctx.fillText(`${fieldLabel('server', lang)}: ${formatFieldValue('server', publicFields.server, lang)}`, nameX, y + 118);
   }
+
+  // QRコード(アバター行の右側、空いているスペースに配置)。読み取ると個別プロフィール
+  // 表示(?u=userId)が開く。アバターの高さに収まるサイズにして行の高さは増やさない。
+  const qr = makeQrCode(exportViewProfileUrl(post.userId));
+  const moduleCount = qr.getModuleCount();
+  const qrSize = avatarSize;
+  const cellSize = qrSize / moduleCount;
+  const qrX = scratch.width - PAD - qrSize;
+  // isDark(row, col)のrow=縦方向・col=横方向という対応は、このライブラリの
+  // createDataURL/createImgTag(最も実績のある標準的な使われ方)の実装に合わせている。
+  // QRコードは特定の並び順を持つため、縦横を取り違えると読み取れなくなる。
+  for (let row = 0; row < moduleCount; row++) {
+    for (let col = 0; col < moduleCount; col++) {
+      ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
+      ctx.fillRect(qrX + col * cellSize, y + row * cellSize, cellSize + 0.5, cellSize + 0.5);
+    }
+  }
+
   y += avatarSize + 44;
 
   // なんでも一言(常に公開)
@@ -1966,44 +1982,6 @@ async function buildProfileExportImage(post) {
     y = drawFieldGroupBoxForExport(ctx, s().groupTitles[group.key] || group.key, chips, PAD, y, scratch.width - PAD * 2);
     y += 26;
   });
-
-  // 区切り線 + QRコード
-  y += 10;
-  ctx.strokeStyle = EXPORT_COLORS.groupBorder;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(PAD, y);
-  ctx.lineTo(scratch.width - PAD, y);
-  ctx.stroke();
-  y += 44;
-
-  const qr = makeQrCode(exportViewProfileUrl(post.userId));
-  const moduleCount = qr.getModuleCount();
-  const qrSize = 340;
-  const cellSize = qrSize / moduleCount;
-  const qrX = (scratch.width - qrSize) / 2;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(qrX - 20, y - 20, qrSize + 40, qrSize + 40);
-  // isDark(row, col)のrow=縦方向・col=横方向という対応は、このライブラリの
-  // createDataURL/createImgTag(最も実績のある標準的な使われ方)の実装に合わせている。
-  // QRコードは特定の並び順を持つため、縦横を取り違えると読み取れなくなる。
-  for (let row = 0; row < moduleCount; row++) {
-    for (let col = 0; col < moduleCount; col++) {
-      ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
-      ctx.fillRect(qrX + col * cellSize, y + row * cellSize, cellSize + 0.5, cellSize + 0.5);
-    }
-  }
-  y += qrSize + 40;
-
-  ctx.textAlign = 'center';
-  ctx.font = `bold 26px ${EXPORT_FONT_FAMILY}`;
-  ctx.fillStyle = EXPORT_COLORS.comment;
-  wrapTextForExport(ctx, s().exportQrCaption, scratch.width - PAD * 2).forEach((line) => {
-    ctx.fillText(line, scratch.width / 2, y);
-    y += 34;
-  });
-  ctx.textAlign = 'left';
-  y += 20;
 
   // 下書き(scratch)の実際に使った高さぶんだけ、最終キャンバスへ切り詰めてコピーし、
   // さがす一覧のカード(.board-card)と同じ黄色い枠を最後に重ねる。
