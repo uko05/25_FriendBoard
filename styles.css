@@ -901,7 +901,7 @@ body.portal-page {
 /* さがす一覧・申請タブ・QR等からの個別プロフィール表示は表示項目が多く縦に伸びやすい
    ため、横幅いっぱいまで広げる(どれもさがす一覧と同じ枠組み(FIELD_GROUPS)で描画
    しているため揃える) */
-#search-list, #received-list, #sent-list, #view-profile-card {
+#search-list, #received-list, #sent-list, #match-list, #view-profile-card {
   max-width: none;
 }
 
