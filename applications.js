@@ -43,7 +43,7 @@ const STR = {
     chatComposerPlaceholder: 'メッセージを入力...',
     chatSendBtn: '送信',
     chatWaitingNote: '相手の返信をお待ちください',
-    chatEndedNote: 'やり取りは終了しました（最大3往復まで）',
+    chatEndedNote: 'やり取りは終了しました（最大10往復まで）',
     chatRemainingNote: (n) => `あと${n}通やり取りできます`,
   },
   en: {
@@ -72,7 +72,7 @@ const STR = {
     chatComposerPlaceholder: 'Type a message...',
     chatSendBtn: 'Send',
     chatWaitingNote: "Waiting for their reply",
-    chatEndedNote: 'This conversation has ended (up to 3 exchanges).',
+    chatEndedNote: 'This conversation has ended (up to 10 exchanges).',
     chatRemainingNote: (n) => `${n} message${n === 1 ? '' : 's'} left in this exchange`,
   },
 };
@@ -155,12 +155,12 @@ function renderChatThread(container, messages) {
   container.appendChild(chat);
 }
 
-// 承認後のチャットは最大3往復(=6通)まで。申請時のメッセージ(app.message)と
+// 承認後のチャットは最大10往復(=20通)まで。申請時のメッセージ(app.message)と
 // 「承認する」という行為自体はこのカウントに含めない(=chatMessagesとは別枠)。
 // そのため、承認直後でchatMessagesが空の状態に限っては、募集主・申請者どちらから
 // 送ってもよい(「無言で承認」した場合に誰も送れず詰むのを防ぐため)。それ以降は
 // 直前の送信者と同じ人は連続して送れない。
-const CHAT_MAX_MESSAGES = 6;
+const CHAT_MAX_MESSAGES = 20;
 function canSendChat(app, sender) {
   if (app.status !== 'accepted') return false;
   const msgs = app.chatMessages || [];
@@ -470,7 +470,7 @@ export async function applyToPost(post, message = '') {
     status: 'pending',
     ownerSeen: false,
     applicantSeen: true,
-    chatMessages: [], // 承認後のチャット(最大3往復)。申請時のこのmessageとは別枠でカウントする
+    chatMessages: [], // 承認後のチャット(最大10往復)。申請時のこのmessageとは別枠でカウントする
 
     createdAt: serverTimestamp(),
     respondedAt: null,
