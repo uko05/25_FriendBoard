@@ -71,6 +71,7 @@ const STR = {
     filterAdminTitle: '管理者用フィルター(非表示項目も含む)',
     resultCount: (n) => `${n}件`,
     viewProfileGone: 'このプロフィールは取り下げられたか見つかりませんでした。',
+    viewProfileLoading: '読み込み中…',
     exportGenerating: '画像を作成しています…',
     exportFail: '画像の作成に失敗しました。時間をおいて再度お試しください。',
     exportSiteTitle: '＃原神フレンド承認板',
@@ -118,6 +119,7 @@ const STR = {
     filterAdminTitle: 'Admin filters (includes hidden fields)',
     resultCount: (n) => `${n} result${n === 1 ? '' : 's'}`,
     viewProfileGone: 'This profile was withdrawn or could not be found.',
+    viewProfileLoading: 'Loading…',
     exportGenerating: 'Generating image…',
     exportFail: 'Failed to generate the image. Please try again later.',
     exportSiteTitle: '#Genshin Friend Approval Board',
@@ -1331,6 +1333,14 @@ function startMyListingListener() {
 // script.js側のタブ切替(.board-tab-btn/.board-tab-panel)と同じDOM操作を行う。
 // viewprofileは通常のタブバーに存在しないボタンのため、対応するタブボタンが
 // 無くてもエラーにならないようにしておく。
+// 一部のモバイルブラウザで、非表示(display:none)から表示への切り替えや、その後の
+// JSだけによるDOM更新が画面に反映されないことがある(下に引っ張って更新すると
+// 直る症状がまさにこれ)。offsetHeightを読むと強制的にレイアウト計算・再描画が
+// 起こるため、それを利用して確実に画面を更新させる。
+function forceReflow(el) {
+  if (el) void el.offsetHeight;
+}
+
 function switchToPanel(tabName) {
   document.querySelectorAll('.board-tab-btn').forEach((b) => {
     b.classList.remove('active');
@@ -1338,7 +1348,10 @@ function switchToPanel(tabName) {
   });
   document.querySelectorAll('.board-tab-panel').forEach((p) => p.classList.add('hidden'));
   const target = document.getElementById(`tab-panel-${tabName}`);
-  if (target) target.classList.remove('hidden');
+  if (target) {
+    target.classList.remove('hidden');
+    forceReflow(target);
+  }
   const btn = document.getElementById(`tab-btn-${tabName}`);
   if (btn) {
     btn.classList.add('active');
@@ -1364,24 +1377,31 @@ async function renderViewProfilePanel(targetUserId) {
   const container = document.getElementById('view-profile-card');
   if (!container) return;
   container.innerHTML = '';
+  // 取得中も何か表示しておく(空のまま待つより、モバイルブラウザの再描画も
+  // 誘発しやすくなる)。
+  const loading = document.createElement('p');
+  loading.className = 'board-list-empty';
+  loading.textContent = s().viewProfileLoading;
+  container.appendChild(loading);
+  forceReflow(container);
 
   try {
     const post = await fetchViewProfilePost(targetUserId);
+    container.innerHTML = '';
     if (!post || post.active === false) {
       const p = document.createElement('p');
       p.className = 'board-list-empty';
       p.textContent = s().viewProfileGone;
       container.appendChild(p);
-      return;
+    } else {
+      const mine = post.userId === getUserId();
+      const matchPercent = mine ? null : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {});
+      container.appendChild(buildCard(post, {
+        mine,
+        matchPercent,
+        onNeedProfile: () => openProfileIncompleteModal(targetUserId),
+      }));
     }
-
-    const mine = post.userId === getUserId();
-    const matchPercent = mine ? null : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {});
-    container.appendChild(buildCard(post, {
-      mine,
-      matchPercent,
-      onNeedProfile: () => openProfileIncompleteModal(targetUserId),
-    }));
   } catch (e) {
     console.error('[board] view profile render failed', e);
     container.innerHTML = '';
@@ -1390,6 +1410,10 @@ async function renderViewProfilePanel(targetUserId) {
     p.textContent = s().viewProfileGone;
     container.appendChild(p);
   }
+
+  // 一部のモバイルブラウザで、この後の画面更新が反映されない(下に引っ張って
+  // 更新すると直る)ことがあるため、最後に必ず強制的に再描画させる。
+  forceReflow(container);
 }
 
 function checkViewProfileFromUrl() {
