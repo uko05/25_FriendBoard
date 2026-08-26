@@ -720,7 +720,9 @@ body.portal-page {
 .board-visibility-select,
 .board-compact-select {
   font-family: inherit;
-  font-size: 12px;
+  /* iOSのSafariは、フォーカスした入力欄の文字サイズが16px未満だと自動的に
+     ズームしてしまうため、16px未満にしない(見た目が合わなければ戻す候補) */
+  font-size: 16px;
   padding: 4px 8px;
   border: 1px solid rgba(0,0,0,0.15);
   border-radius: 999px;
