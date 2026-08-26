@@ -465,7 +465,9 @@ body.portal-page {
 .board-form-row select:not(.board-visibility-select):not(.board-compact-select),
 .board-form-row textarea {
   font-family: inherit;
-  font-size: 15px;
+  /* iOSのSafariは、フォーカスした入力欄の文字サイズが16px未満だと自動的に
+     ズームしてしまうため、16px未満にしない */
+  font-size: 16px;
   padding: 10px 12px;
   border: 1px solid rgba(0,0,0,0.15);
   border-radius: 10px;
@@ -473,6 +475,21 @@ body.portal-page {
   color: #222;
   resize: vertical;
   width: 100%;
+}
+
+/* <select>はOSのネイティブ描画(特にiOS Safari)の影響で、同じCSSを当てていても
+   <input>とわずかに高さがずれることがある(原神UID/サーバー等)。ネイティブの
+   見た目を解除して完全にCSSだけで描画することで、<input>と高さを一致させる。
+   ネイティブの矢印が消えるため、背景画像で自前の矢印を描き直す。 */
+.board-form-row select:not(.board-visibility-select):not(.board-compact-select) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
 }
 
 .board-form-row input:not([type="checkbox"]):not([type="radio"]):focus,
@@ -1274,7 +1291,9 @@ body.portal-page {
   flex: 1;
   min-width: 0;
   font-family: inherit;
-  font-size: 13px;
+  /* iOSのSafariは、フォーカスした入力欄の文字サイズが16px未満だと自動的に
+     ズームしてしまうため、16px未満にしない */
+  font-size: 16px;
   padding: 8px 10px;
   border: 1px solid rgba(0,0,0,0.15);
   border-radius: 10px;
@@ -1446,7 +1465,9 @@ body.portal-page {
   display: block;
   width: 100%;
   font-family: inherit;
-  font-size: 15px;
+  /* iOSのSafariは、フォーカスした入力欄の文字サイズが16px未満だと自動的に
+     ズームしてしまうため、16px未満にしない */
+  font-size: 16px;
   padding: 10px 12px;
   border: 1px solid rgba(0,0,0,0.15);
   border-radius: 10px;
