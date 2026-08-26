@@ -1346,34 +1346,50 @@ function switchToPanel(tabName) {
   }
 }
 
+// 自分のプロフィール保存直後の自動復帰など、書き込み直後に別ドキュメントを読む
+// ケースでごく稀に反映が一瞬遅れることがあるため、見つからなければ少し待って
+// 1回だけ読み直す。
+async function fetchViewProfilePost(targetUserId) {
+  const snap = await getDoc(doc(db, 'friendBoardPosts', targetUserId));
+  if (snap.exists()) return { id: snap.id, ...snap.data() };
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  const retrySnap = await getDoc(doc(db, 'friendBoardPosts', targetUserId));
+  return retrySnap.exists() ? { id: retrySnap.id, ...retrySnap.data() } : null;
+}
+
+// 内部で何が起きても(取得失敗・想定外のデータ形状など)、空白のまま何も表示され
+// ないことだけは避け、必ず何かしら(カードか案内文)を表示する。
 async function renderViewProfilePanel(targetUserId) {
   switchToPanel('viewprofile');
   const container = document.getElementById('view-profile-card');
   if (!container) return;
   container.innerHTML = '';
 
-  let post = null;
   try {
-    const snap = await getDoc(doc(db, 'friendBoardPosts', targetUserId));
-    post = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+    const post = await fetchViewProfilePost(targetUserId);
+    if (!post || post.active === false) {
+      const p = document.createElement('p');
+      p.className = 'board-list-empty';
+      p.textContent = s().viewProfileGone;
+      container.appendChild(p);
+      return;
+    }
+
+    const mine = post.userId === getUserId();
+    const matchPercent = mine ? null : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {});
+    container.appendChild(buildCard(post, {
+      mine,
+      matchPercent,
+      onNeedProfile: () => openProfileIncompleteModal(targetUserId),
+    }));
   } catch (e) {
-    console.error('[board] view profile fetch failed', e);
-  }
-  if (!post || post.active === false) {
+    console.error('[board] view profile render failed', e);
+    container.innerHTML = '';
     const p = document.createElement('p');
     p.className = 'board-list-empty';
     p.textContent = s().viewProfileGone;
     container.appendChild(p);
-    return;
   }
-
-  const mine = post.userId === getUserId();
-  const matchPercent = mine ? null : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {});
-  container.appendChild(buildCard(post, {
-    mine,
-    matchPercent,
-    onNeedProfile: () => openProfileIncompleteModal(targetUserId),
-  }));
 }
 
 function checkViewProfileFromUrl() {

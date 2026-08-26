@@ -1623,7 +1623,11 @@ body.portal-page {
 
   .board-card-head { flex-direction: column; align-items: flex-start; gap: 4px; }
 
-  .board-form-row-head { flex-wrap: wrap; gap: 4px 8px; }
+  /* wrap(横に折り返す)だと、バッジや公開設定セレクトの有無・ラベルの文字数次第で
+     折り返す/折り返さないがバラつき、横並びのboard-form-row-pair内で高さが揃わず
+     入力欄がずれて見える(原神UID/サーバー、冒険者ランク/世界ランク等)。常に縦積みに
+     すれば、どの項目でも同じ形になり高さが揃う。 */
+  .board-form-row-head { flex-direction: column; align-items: flex-start; gap: 4px; }
   .board-radio-group, .board-checkbox-group { gap: 6px 12px; }
   .board-radio-group label, .board-checkbox-group label, .board-single-checkbox { font-size: 13px; }
 }
