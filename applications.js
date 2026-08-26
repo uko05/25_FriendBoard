@@ -525,7 +525,10 @@ async function respondToApplication(app, accept) {
 
 // sender: 'owner'|'applicant'。承認後のチャット欄から送信された1通をchatMessagesへ追記する。
 async function sendChatMessage(app, sender, text) {
-  const messages = [...(app.chatMessages || []), { sender, text }];
+  // Firestoreの制約でserverTimestamp()は配列の要素内では解決されない(nullになる)ため、
+  // 送信時刻はクライアント時計のDate.now()で記録する。数秒〜数分のずれは、将来ここから
+  // 「◯時間前」のような相対表示を作る用途では許容範囲。
+  const messages = [...(app.chatMessages || []), { sender, text, at: Date.now() }];
   const updates = { chatMessages: messages };
   // 「やり取り」タブの未読バッジ用に、受け取る側のSeenフラグをfalseへ戻す
   // (ownerSeen/applicantSeenは元々は申請結果の通知用だが、承認後はチャットの
