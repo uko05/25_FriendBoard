@@ -820,6 +820,7 @@ const REQUIRED_FIELDS = [
     filled: (v) => (Array.isArray(v.multiFrequency) ? v.multiFrequency.length > 0 : !!v.multiFrequency),
   },
   { key: 'vc', el: document.getElementById('group-vc'), filled: (v) => !!v.vc },
+  { key: 'spending', el: document.getElementById('group-spending'), filled: (v) => !!v.spending },
 ];
 
 postForm?.addEventListener('submit', async (e) => {
@@ -1361,7 +1362,16 @@ function switchToPanel(tabName) {
   // マイプロフィールタブへ移動した時など、直前のスクロール位置のまま切り替わると
   // フォーム途中(基本情報など)から表示され、一番上の名前欄が見えず入力し忘れ
   // やすいため、タブ切替時は必ずページ先頭へ戻す。
-  window.scrollTo(0, 0);
+  // window.scrollToだけだと、この直後に起こるレイアウト変化(スクロール位置維持の
+  // ためのブラウザの自動補正等)で元の位置へ戻されてしまうことがあるため、
+  // documentElement/bodyへも直接書き込み、次のフレームでもう一度実行して確実にする。
+  const scrollTop = () => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  };
+  scrollTop();
+  requestAnimationFrame(scrollTop);
 }
 
 // 自分のプロフィール保存直後の自動復帰など、書き込み直後に別ドキュメントを読む

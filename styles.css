@@ -16,6 +16,10 @@ body.portal-page {
   background: #f4f4f4;
   font-family: 'mihoyo-zenzero', sans-serif;
   overflow-x: hidden;
+  /* タブ切替時にJSでスクロール位置を先頭へ戻しても、直後のレイアウト変化に
+     合わせてブラウザが自動でスクロール位置を補正(アンカリング)し、元の位置へ
+     戻してしまうことがあるため無効化する */
+  overflow-anchor: none;
 }
 
 .site-version {
@@ -369,10 +373,14 @@ body.portal-page {
 
 .board-fixed-approval-badge {
   display: inline-block;
-  font-size: 12px;
+  /* 横並びペア(原神UID/サーバー等)で、このバッジと.board-visibility-selectが
+     それぞれの列の2行目に来るため、高さを完全に一致させるためフォントサイズ・
+     縦paddingと、同じ太さの枠線(見た目には出ない透明色)を揃えている */
+  font-size: 16px;
   font-weight: bold;
   color: #8a6d00;
   background: #fff6d9;
+  border: 1px solid transparent;
   border-radius: 999px;
   padding: 4px 10px;
   flex-shrink: 0;
