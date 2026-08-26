@@ -1820,7 +1820,7 @@ async function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width, nested
     return { ...ng, rows: ngRows, height: nestedTitleH + ngChipsH + nestedPad * 1.3 };
   });
 
-  const iconRowIconD = 60;
+  const iconRowIconD = 82; // ヘッダーの推しキャラアイコンと同じサイズに揃える
   const iconRowGap = 10;
   const iconRowLabelH = 32;
   const iconRowH = iconRow ? iconRowLabelH + iconRowIconD : 0;
@@ -1998,7 +1998,7 @@ async function buildProfileExportImage(post) {
     }
     const nameColumnRight = nameX + Math.max(nameTextWidth, uidTextWidth, serverTextWidth);
 
-    const iconD = 70;
+    const iconD = 82;
     const iconGap = 10;
     const oshiStartX = nameColumnRight + 28;
     const neededWidth = store.oshiChars.length * iconD + (store.oshiChars.length - 1) * iconGap;
