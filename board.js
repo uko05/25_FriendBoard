@@ -1714,7 +1714,20 @@ function wrapTextForExport(ctx, text, maxWidth) {
   return lines;
 }
 
-function drawRoundedRectForExport(ctx, x, y, w, h, r, fill) {
+// 画面上のカードデザイン(styles.cssの.board-card系)をそのままCanvasへ持ち込むための
+// 定数群。フォントも実サイトと同じ'mihoyo-zenzero'(+sans-serifフォールバック)を使う。
+const EXPORT_FONT_FAMILY = "'mihoyo-zenzero', sans-serif";
+const EXPORT_COLORS = {
+  cardBg: '#fff',
+  cardBorder: '#ffcc00',
+  uid: '#888',
+  comment: '#222',
+  chipBg: '#f2f2f2', chipColor: '#555',         // .board-card-chip
+  groupBorder: 'rgba(0,0,0,0.15)', groupBg: 'rgba(0,0,0,0.02)', groupTitle: '#a08000', // .board-card-group
+  approvalBg: '#fff6d9', approvalColor: '#8a6d00', // .board-fixed-approval-badge / .board-request-revealed-chip
+};
+
+function roundedRectPathForExport(ctx, x, y, w, h, r) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -1722,51 +1735,122 @@ function drawRoundedRectForExport(ctx, x, y, w, h, r, fill) {
   ctx.arcTo(x, y + h, x, y, r);
   ctx.arcTo(x, y, x + w, y, r);
   ctx.closePath();
+}
+function fillRoundedRectForExport(ctx, x, y, w, h, r, fill) {
+  roundedRectPathForExport(ctx, x, y, w, h, r);
   ctx.fillStyle = fill;
   ctx.fill();
 }
+function strokeRoundedRectForExport(ctx, x, y, w, h, r, stroke, lineWidth) {
+  roundedRectPathForExport(ctx, x, y, w, h, r);
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = lineWidth;
+  ctx.stroke();
+}
 
-// chips: [{text, bg, color}, ...] を、CSSのflex-wrapのように左詰め・折り返しで描画する。
-// 戻り値は描画し終えた後のyの位置(次のコンテンツの開始位置に使う)。
-function drawChipRowForExport(ctx, chips, startX, startY, maxWidth) {
-  const font = '26px sans-serif';
-  const gapX = 10;
-  const gapY = 10;
-  const chipH = 44;
-  let x = startX;
-  let y = startY;
-  ctx.font = font;
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'left';
+// 事前に各チップがどの行に収まるかだけを計算する(実際の描画はしない)。
+// 枠(.board-card-group)の高さを先に確定させたいので、描画とレイアウト計算を分けている。
+function layoutChipRowsForExport(ctx, chips, maxWidth) {
+  const chipPadX = 20;
+  const gapX = 12;
+  const rows = [];
+  let current = [];
+  let x = 0;
   chips.forEach((chip) => {
-    const chipW = ctx.measureText(chip.text).width + 32;
-    if (x + chipW > startX + maxWidth && x > startX) {
-      x = startX;
-      y += chipH + gapY;
+    ctx.font = `${chip.bold ? 'bold ' : ''}30px ${EXPORT_FONT_FAMILY}`;
+    const chipW = ctx.measureText(chip.text).width + chipPadX * 2;
+    if (x + chipW > maxWidth && current.length) {
+      rows.push(current);
+      current = [];
+      x = 0;
     }
-    drawRoundedRectForExport(ctx, x, y, chipW, chipH, chipH / 2, chip.bg);
-    ctx.fillStyle = chip.color;
-    ctx.fillText(chip.text, x + 16, y + chipH / 2 + 1);
+    current.push({ ...chip, w: chipW });
     x += chipW + gapX;
   });
-  return y + chipH;
+  if (current.length) rows.push(current);
+  return rows;
+}
+function chipRowsHeightForExport(rows) {
+  const chipH = 48;
+  const gapY = 12;
+  return rows.length ? rows.length * chipH + (rows.length - 1) * gapY : 0;
+}
+function drawChipRowsForExport(ctx, rows, startX, startY) {
+  const chipH = 48;
+  const gapX = 12;
+  const gapY = 12;
+  const chipPadX = 20;
+  let y = startY;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  rows.forEach((row) => {
+    let x = startX;
+    row.forEach((chip) => {
+      ctx.font = `${chip.bold ? 'bold ' : ''}30px ${EXPORT_FONT_FAMILY}`;
+      fillRoundedRectForExport(ctx, x, y, chip.w, chipH, chipH / 2, chip.bg);
+      ctx.fillStyle = chip.color;
+      ctx.fillText(chip.text, x + chipPadX, y + chipH / 2 + 1);
+      x += chip.w + gapX;
+    });
+    y += chipH + gapY;
+  });
+  return y - gapY;
+}
+
+// chips: [{text, bg, color, bold}, ...] を、.board-card-group と同じ「枠+浮き見出し」の
+// 箱に入れて描画する。戻り値は描画し終えた後のyの位置。
+function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width) {
+  const boxPad = 30;
+  const titleH = 44;
+  const rows = layoutChipRowsForExport(ctx, chips, width - boxPad * 2);
+  const chipsH = chipRowsHeightForExport(rows);
+  const boxHeight = titleH + chipsH + boxPad * 1.4;
+
+  fillRoundedRectForExport(ctx, x, y, width, boxHeight, 20, EXPORT_COLORS.groupBg);
+  strokeRoundedRectForExport(ctx, x, y, width, boxHeight, 20, EXPORT_COLORS.groupBorder, 2);
+
+  ctx.font = `bold 28px ${EXPORT_FONT_FAMILY}`;
+  ctx.fillStyle = EXPORT_COLORS.groupTitle;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(title, x + boxPad, y + boxPad + 14);
+
+  drawChipRowsForExport(ctx, rows, x + boxPad, y + boxPad + titleH);
+  return y + boxHeight;
+}
+
+// 承認後に公開の項目(値は出さない)を、公開項目と同じ「ラベル: 値」の見た目に揃えつつ、
+// 値の部分に visApproval(承認後に公開) + 鍵アイコンを入れて区別する。
+function maskedFieldText(lang, key) {
+  return `${fieldLabel(key, lang)}: ${s().visApproval}🔒`;
 }
 
 async function buildProfileExportImage(post) {
   const lang = currentLang();
+
+  // Canvasのテキスト描画はフォントの読み込み完了を待たないため、実サイトと同じ
+  // 'mihoyo-zenzero'を確実に使えるよう先に読み込んでおく(失敗してもsans-serif
+  // フォールバックで続行する)。
+  try {
+    await document.fonts.load(`16px ${EXPORT_FONT_FAMILY}`);
+    await document.fonts.ready;
+  } catch (e) {
+    console.warn('[board] export: font load failed, falling back', e);
+  }
+
   const scratch = document.createElement('canvas');
   scratch.width = EXPORT_CANVAS_WIDTH;
   scratch.height = EXPORT_SCRATCH_HEIGHT;
   const ctx = scratch.getContext('2d');
 
-  ctx.fillStyle = '#fffdf5';
+  ctx.fillStyle = EXPORT_COLORS.cardBg;
   ctx.fillRect(0, 0, scratch.width, scratch.height);
 
   const PAD = 48;
   let y = PAD;
 
   // ヘッダー: アバター + 名前/UID/サーバー(名前・UIDは常に承認後公開のためマスク表示)
-  const avatarSize = 150;
+  const avatarSize = 132;
   try {
     const avatarImg = await loadImageForExport(avatarUrl(post.avatarGame, post.avatarIcon));
     ctx.save();
@@ -1779,7 +1863,7 @@ async function buildProfileExportImage(post) {
   } catch (e) {
     console.warn('[board] export: avatar load failed', e);
   }
-  ctx.strokeStyle = '#ffcc00';
+  ctx.strokeStyle = EXPORT_COLORS.cardBorder;
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.arc(PAD + avatarSize / 2, y + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
@@ -1791,24 +1875,23 @@ async function buildProfileExportImage(post) {
   const nameX = PAD + avatarSize + 28;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = 'bold 36px sans-serif';
-  ctx.fillStyle = '#222';
-  ctx.fillText(`🔒 ${fieldLabel('displayName', lang)}`, nameX, y + 48);
-  ctx.font = '26px sans-serif';
-  ctx.fillStyle = '#888';
-  ctx.fillText(`🔒 ${s().uidLabel}`, nameX, y + 86);
+  ctx.font = `32px ${EXPORT_FONT_FAMILY}`;
+  ctx.fillStyle = EXPORT_COLORS.approvalColor;
+  ctx.fillText(maskedFieldText(lang, 'displayName'), nameX, y + 44);
+  ctx.font = `26px ${EXPORT_FONT_FAMILY}`;
+  ctx.fillText(`${s().uidLabel}: ${s().visApproval}🔒`, nameX, y + 82);
   if (secretSet.has('server')) {
-    ctx.fillText(`🔒 ${fieldLabel('server', lang)}`, nameX, y + 122);
+    ctx.fillText(maskedFieldText(lang, 'server'), nameX, y + 118);
   } else if (publicFields.server) {
-    ctx.fillStyle = '#555';
-    ctx.fillText(`${fieldLabel('server', lang)}: ${formatFieldValue('server', publicFields.server, lang)}`, nameX, y + 122);
+    ctx.fillStyle = EXPORT_COLORS.uid;
+    ctx.fillText(`${fieldLabel('server', lang)}: ${formatFieldValue('server', publicFields.server, lang)}`, nameX, y + 118);
   }
   y += avatarSize + 44;
 
   // なんでも一言(常に公開)
   if (post.comment) {
-    ctx.font = '28px sans-serif';
-    ctx.fillStyle = '#444';
+    ctx.font = `28px ${EXPORT_FONT_FAMILY}`;
+    ctx.fillStyle = EXPORT_COLORS.comment;
     wrapTextForExport(ctx, post.comment, scratch.width - PAD * 2).forEach((line) => {
       y += 38;
       ctx.fillText(line, PAD, y);
@@ -1818,11 +1901,13 @@ async function buildProfileExportImage(post) {
 
   // 推しキャラ: 公開なら実アイコン、承認後公開ならマスクのみ
   if (secretSet.has('oshiChars')) {
-    y = drawChipRowForExport(ctx, [{ text: `🔒 ${fieldLabel('oshiChars', lang)}`, bg: '#fff6d9', color: '#8a6d00' }], PAD, y, scratch.width - PAD * 2);
+    y = drawChipRowsForExport(ctx, layoutChipRowsForExport(ctx, [
+      { text: maskedFieldText(lang, 'oshiChars'), bg: EXPORT_COLORS.approvalBg, color: EXPORT_COLORS.approvalColor, bold: true },
+    ], scratch.width - PAD * 2), PAD, y);
     y += 26;
   } else if (Array.isArray(store.oshiChars) && store.oshiChars.length) {
-    ctx.font = 'bold 26px sans-serif';
-    ctx.fillStyle = '#a08000';
+    ctx.font = `bold 26px ${EXPORT_FONT_FAMILY}`;
+    ctx.fillStyle = EXPORT_COLORS.groupTitle;
     ctx.fillText(fieldLabel('oshiChars', lang), PAD, y + 24);
     y += 36;
     let x = PAD;
@@ -1836,7 +1921,7 @@ async function buildProfileExportImage(post) {
         ctx.clip();
         ctx.drawImage(img, x, y, 84, 84);
         ctx.restore();
-        ctx.strokeStyle = '#ffcc00';
+        ctx.strokeStyle = EXPORT_COLORS.cardBorder;
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(x + 42, y + 42, 42, 0, Math.PI * 2);
@@ -1849,16 +1934,18 @@ async function buildProfileExportImage(post) {
     y += 106;
   }
 
-  // カテゴリー枠(基本情報/あなたについて/連絡・時間帯/ボイスチャット/つながれるSNS)。
-  // 画像出力では推しキャラは上で個別描画済み、画像系(ランキング/チェックシート)は
-  // 別サイトの画像を都度取得する必要があり複雑になるため対象外にする。
+  // カテゴリー枠(基本情報/あなたについて/連絡・時間帯/ボイスチャット/つながれるSNS)を
+  // さがす一覧と同じ「枠+左上見出し」の見た目で描画する。承認後に公開の項目は値を
+  // 伏せ、公開項目と同じ「ラベル: 値」の形のまま「承認後公開🔒」を値として見せる。
+  // 推しキャラは上で個別描画済み、画像系(ランキング/チェックシート)は別サイトの
+  // 画像を都度取得する必要があり複雑になるため対象外にする。
   FIELD_GROUPS.forEach((group) => {
     const chips = [];
     group.fields
       .filter((k) => k !== 'oshiChars' && k !== 'showGenshinRanking' && k !== 'showGenshinCheck')
       .forEach((key) => {
         if (secretSet.has(key)) {
-          chips.push({ text: `🔒 ${fieldLabel(key, lang)}`, bg: '#fff6d9', color: '#8a6d00' });
+          chips.push({ text: maskedFieldText(lang, key), bg: EXPORT_COLORS.approvalBg, color: EXPORT_COLORS.approvalColor, bold: true });
           return;
         }
         const value = publicFields[key];
@@ -1867,26 +1954,22 @@ async function buildProfileExportImage(post) {
         if (key === 'playStyles') {
           value.forEach((v) => {
             const text = formatFieldValue('playStyles', [v], lang);
-            if (text) chips.push({ text, bg: '#f2f2f2', color: '#555' });
+            if (text) chips.push({ text, bg: EXPORT_COLORS.chipBg, color: EXPORT_COLORS.chipColor });
           });
           return;
         }
         const text = formatFieldValue(key, value, lang);
-        if (text) chips.push({ text: `${fieldLabel(key, lang)}: ${text}`, bg: '#f2f2f2', color: '#555' });
+        if (text) chips.push({ text: `${fieldLabel(key, lang)}: ${text}`, bg: EXPORT_COLORS.chipBg, color: EXPORT_COLORS.chipColor });
       });
     if (!chips.length) return;
 
-    ctx.font = 'bold 26px sans-serif';
-    ctx.fillStyle = '#a08000';
-    ctx.fillText(s().groupTitles[group.key] || group.key, PAD + 4, y + 24);
-    y += 36;
-    y = drawChipRowForExport(ctx, chips, PAD, y, scratch.width - PAD * 2);
-    y += 34;
+    y = drawFieldGroupBoxForExport(ctx, s().groupTitles[group.key] || group.key, chips, PAD, y, scratch.width - PAD * 2);
+    y += 26;
   });
 
   // 区切り線 + QRコード
   y += 10;
-  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.strokeStyle = EXPORT_COLORS.groupBorder;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(PAD, y);
@@ -1913,8 +1996,8 @@ async function buildProfileExportImage(post) {
   y += qrSize + 40;
 
   ctx.textAlign = 'center';
-  ctx.font = 'bold 26px sans-serif';
-  ctx.fillStyle = '#444';
+  ctx.font = `bold 26px ${EXPORT_FONT_FAMILY}`;
+  ctx.fillStyle = EXPORT_COLORS.comment;
   wrapTextForExport(ctx, s().exportQrCaption, scratch.width - PAD * 2).forEach((line) => {
     ctx.fillText(line, scratch.width / 2, y);
     y += 34;
@@ -1922,15 +2005,17 @@ async function buildProfileExportImage(post) {
   ctx.textAlign = 'left';
   y += 20;
 
-  // 下書き(scratch)の実際に使った高さぶんだけ、最終キャンバスへ切り詰めてコピーする
+  // 下書き(scratch)の実際に使った高さぶんだけ、最終キャンバスへ切り詰めてコピーし、
+  // さがす一覧のカード(.board-card)と同じ黄色い枠を最後に重ねる。
   const finalHeight = Math.max(EXPORT_MIN_HEIGHT, y + PAD);
   const final = document.createElement('canvas');
   final.width = EXPORT_CANVAS_WIDTH;
   final.height = finalHeight;
   const fctx = final.getContext('2d');
-  fctx.fillStyle = '#fffdf5';
+  fctx.fillStyle = EXPORT_COLORS.cardBg;
   fctx.fillRect(0, 0, final.width, final.height);
   fctx.drawImage(scratch, 0, 0, EXPORT_CANVAS_WIDTH, y + PAD, 0, 0, EXPORT_CANVAS_WIDTH, y + PAD);
+  strokeRoundedRectForExport(fctx, 6, 6, final.width - 12, final.height - 12, 32, EXPORT_COLORS.cardBorder, 8);
 
   return final.toDataURL('image/png');
 }
