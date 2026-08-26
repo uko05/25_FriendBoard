@@ -1801,8 +1801,10 @@ function drawChipRowsForExport(ctx, rows, startX, startY) {
 // 箱に入れて描画する。nestedGroups: [{title, chips, border, bg, titleColor}, ...] を渡すと、
 // その箱の内側にさらに小さい入れ子の枠(.board-card-group-nested相当。マルチで何を
 // したい？の「手伝います！」「手伝ってください！」用)を追加で描画する。
+// iconRow: {label, icons} を渡すと、箱の一番下にラベル付きのキャラアイコン列
+// (同担拒否キャラ用)を追加で描画する。
 // 戻り値は描画し終えた後のyの位置。
-function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width, nestedGroups = []) {
+async function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width, nestedGroups = [], iconRow = null) {
   const boxPad = 30;
   const titleH = 44;
   const innerWidth = width - boxPad * 2;
@@ -1818,9 +1820,15 @@ function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width, nestedGroups
     return { ...ng, rows: ngRows, height: nestedTitleH + ngChipsH + nestedPad * 1.3 };
   });
 
+  const iconRowIconD = 60;
+  const iconRowGap = 10;
+  const iconRowLabelH = 32;
+  const iconRowH = iconRow ? iconRowLabelH + iconRowIconD : 0;
+
   let innerHeight = titleH;
   if (chips.length) innerHeight += chipsH + 16;
   nestedLayouts.forEach((ng) => { innerHeight += ng.height + nestedGap; });
+  if (iconRow) innerHeight += iconRowH + (chips.length || nestedLayouts.length ? 16 : 0);
   const boxHeight = innerHeight + boxPad * 1.4;
 
   fillRoundedRectForExport(ctx, x, y, width, boxHeight, 20, EXPORT_COLORS.groupBg);
@@ -1837,7 +1845,7 @@ function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width, nestedGroups
     contentY = drawChipRowsForExport(ctx, rows, x + boxPad, contentY) + 16;
   }
 
-  nestedLayouts.forEach((ng) => {
+  for (const ng of nestedLayouts) {
     const nx = x + boxPad;
     const nw = innerWidth;
     fillRoundedRectForExport(ctx, nx, contentY, nw, ng.height, 14, ng.bg);
@@ -1847,7 +1855,35 @@ function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width, nestedGroups
     ctx.fillText(ng.title, nx + nestedPad, contentY + nestedPad + 4);
     drawChipRowsForExport(ctx, ng.rows, nx + nestedPad, contentY + nestedPad + nestedTitleH);
     contentY += ng.height + nestedGap;
-  });
+  }
+
+  if (iconRow) {
+    ctx.font = `bold 24px ${EXPORT_FONT_FAMILY}`;
+    ctx.fillStyle = EXPORT_COLORS.groupTitle;
+    ctx.fillText(iconRow.label, x + boxPad, contentY + 20);
+    const iconY = contentY + iconRowLabelH;
+    let ix = x + boxPad;
+    for (const icon of iconRow.icons) {
+      try {
+        const img = await loadImageForExport(GENSHIN_ICON_BASE + icon);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ix + iconRowIconD / 2, iconY + iconRowIconD / 2, iconRowIconD / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, ix, iconY, iconRowIconD, iconRowIconD);
+        ctx.restore();
+        ctx.strokeStyle = EXPORT_COLORS.cardBorder;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ix + iconRowIconD / 2, iconY + iconRowIconD / 2, iconRowIconD / 2, 0, Math.PI * 2);
+        ctx.stroke();
+      } catch (e) {
+        console.warn('[board] export: sameOshiChars icon load failed', e);
+      }
+      ix += iconRowIconD + iconRowGap;
+    }
+  }
 
   return y + boxHeight;
 }
@@ -1969,7 +2005,13 @@ async function buildProfileExportImage(post) {
     const availWidth = qrX - 24 - oshiStartX;
 
     if (availWidth >= neededWidth) {
-      const oshiY = y + (avatarSize - iconD) / 2;
+      ctx.font = `bold 22px ${EXPORT_FONT_FAMILY}`;
+      ctx.fillStyle = EXPORT_COLORS.groupTitle;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(fieldLabel('oshiChars', lang), oshiStartX, y + 22);
+
+      const oshiY = y + 34;
       let ix = oshiStartX;
       for (const icon of store.oshiChars) {
         try {
@@ -2049,14 +2091,14 @@ async function buildProfileExportImage(post) {
   // 伏せ、公開項目と同じ「ラベル: 値」の形のまま「承認後公開🔒」を値として見せる。
   // 推しキャラは上で個別描画済み、画像系(ランキング/チェックシート)は別サイトの
   // 画像を都度取得する必要があり複雑になるため対象外にする。
-  FIELD_GROUPS.forEach((group) => {
+  for (const group of FIELD_GROUPS) {
     const chips = [];
     // マルチで何をしたい？(playStyles)のうち「手伝います！」「手伝ってください！」に
     // 属する値は、さがす一覧と同じく入れ子の別枠に分ける(それ以外は通常のチップ)。
     const offerChips = [];
     const requestChips = [];
     group.fields
-      .filter((k) => k !== 'oshiChars' && k !== 'showGenshinRanking' && k !== 'showGenshinCheck')
+      .filter((k) => k !== 'oshiChars' && k !== 'sameOshiChars' && k !== 'showGenshinRanking' && k !== 'showGenshinCheck')
       .forEach((key) => {
         if (secretSet.has(key)) {
           chips.push({ text: maskedFieldText(lang, key), bg: EXPORT_COLORS.approvalBg, color: EXPORT_COLORS.approvalColor, bold: true });
@@ -2064,7 +2106,6 @@ async function buildProfileExportImage(post) {
         }
         const value = publicFields[key];
         if (value == null || value === '' || (Array.isArray(value) && !value.length)) return;
-        if (key === 'sameOshiChars') return; // アイコン画像のため画像出力では省略
         if (key === 'playStyles') {
           value.forEach((v) => {
             const text = formatFieldValue('playStyles', [v], lang);
@@ -2093,11 +2134,19 @@ async function buildProfileExportImage(post) {
         border: 'rgba(46,125,50,0.25)', bg: 'rgba(46,125,50,0.06)', titleColor: '#2e7d32',
       });
     }
-    if (!chips.length && !nestedGroups.length) return;
 
-    y = drawFieldGroupBoxForExport(ctx, s().groupTitles[group.key] || group.key, chips, PAD, y, scratch.width - PAD * 2, nestedGroups);
+    // 同担拒否キャラ(sameOshiChars)は常に公開固定の項目なので、承認後公開のマスク対象には
+    // ならない。アイコン付きなので枠の一番下にラベル+アイコン列として追加する。
+    let iconRow = null;
+    if (group.fields.includes('sameOshiChars') && Array.isArray(store.sameOshiChars) && store.sameOshiChars.length) {
+      iconRow = { label: fieldLabel('sameOshiChars', lang), icons: store.sameOshiChars };
+    }
+
+    if (!chips.length && !nestedGroups.length && !iconRow) continue;
+
+    y = await drawFieldGroupBoxForExport(ctx, s().groupTitles[group.key] || group.key, chips, PAD, y, scratch.width - PAD * 2, nestedGroups, iconRow);
     y += 26;
-  });
+  }
 
   // 下書き(scratch)の実際に使った高さぶんだけ、最終キャンバスへ切り詰めてコピーし、
   // さがす一覧のカード(.board-card)と同じ黄色い枠を最後に重ねる。
