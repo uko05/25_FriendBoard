@@ -258,6 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
       requestsDesc: "気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。",
       receivedTitle: "届いた申請",
       sentTitle: "送った申請",
+      matchTitle: "やり取り",
 
       applyMessageModalTitle: "メッセージをつけて申請",
       applyMessagePlaceholder: "「よろしくお願いします」など、一言添えてみましょう（未入力でも送信できます）",
@@ -462,6 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
       requestsDesc: "Apply to a post you're interested in and the poster gets notified. Once they accept, you'll be able to see their Genshin UID.",
       receivedTitle: "Received requests",
       sentTitle: "Sent requests",
+      matchTitle: "Chats",
 
       applyMessageModalTitle: "Apply with a message",
       applyMessagePlaceholder: "Add a short note, e.g. \"Nice to meet you!\" (optional — you can send without one)",

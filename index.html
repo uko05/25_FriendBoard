@@ -596,6 +596,7 @@
             <nav class="board-subtabs" role="tablist">
                 <button type="button" class="board-subtab-btn active" id="subtab-btn-received" data-subtab="received" role="tab" aria-selected="true"><span data-i18n="receivedTitle">届いた申請</span><span class="board-tab-badge hidden" id="received-subtab-badge"></span></button>
                 <button type="button" class="board-subtab-btn" id="subtab-btn-sent" data-subtab="sent" role="tab" aria-selected="false" data-i18n="sentTitle">送った申請</button>
+                <button type="button" class="board-subtab-btn" id="subtab-btn-match" data-subtab="match" role="tab" aria-selected="false"><span data-i18n="matchTitle">やり取り</span><span class="board-tab-badge hidden" id="match-subtab-badge"></span></button>
             </nav>
 
             <div class="board-requests-group board-subtab-panel" id="subtab-panel-received" role="tabpanel">
@@ -604,6 +605,10 @@
 
             <div class="board-requests-group board-subtab-panel hidden" id="subtab-panel-sent" role="tabpanel">
                 <div class="board-list" id="sent-list"></div>
+            </div>
+
+            <div class="board-requests-group board-subtab-panel hidden" id="subtab-panel-match" role="tabpanel">
+                <div class="board-list" id="match-list"></div>
             </div>
         </section>
 
@@ -617,7 +622,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v8.1</span>
+    <span id="site-version" class="site-version">v9.0</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

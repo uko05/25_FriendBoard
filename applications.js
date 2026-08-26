@@ -24,6 +24,8 @@ const STR = {
     rejectedToast: '申請が見送られました',
     emptyReceived: 'まだ届いた申請はありません',
     emptySent: 'まだ申請を送っていません',
+    emptyMatch: 'まだやり取りはありません',
+    matchUnreadBadge: '！新着メッセージ',
     acceptBtn: '承認する',
     rejectBtn: '見送る',
     statusPending: '返答待ち',
@@ -53,6 +55,8 @@ const STR = {
     rejectedToast: 'Your request was passed on',
     emptyReceived: 'No requests received yet',
     emptySent: "You haven't sent any requests yet",
+    emptyMatch: 'No chats yet',
+    matchUnreadBadge: '! New message',
     acceptBtn: 'Accept',
     rejectBtn: 'Pass',
     statusPending: 'Pending',
@@ -522,7 +526,13 @@ async function respondToApplication(app, accept) {
 // sender: 'owner'|'applicant'。承認後のチャット欄から送信された1通をchatMessagesへ追記する。
 async function sendChatMessage(app, sender, text) {
   const messages = [...(app.chatMessages || []), { sender, text }];
-  await updateDoc(doc(db, 'friendBoardApplications', app.id), { chatMessages: messages });
+  const updates = { chatMessages: messages };
+  // 「やり取り」タブの未読バッジ用に、受け取る側のSeenフラグをfalseへ戻す
+  // (ownerSeen/applicantSeenは元々は申請結果の通知用だが、承認後はチャットの
+  // 既読管理としても兼用する。両者の用途が時間的に重ならないため問題ない)。
+  if (sender === 'applicant') updates.ownerSeen = false;
+  else updates.applicantSeen = false;
+  await updateDoc(doc(db, 'friendBoardApplications', app.id), updates);
 
   // 誰かとチャットのやり取りをした = アクティブに探している、とみなして
   // 自分の投稿も自動更新する(board.jsのPOST_STALE_MS参照)。
@@ -533,30 +543,41 @@ async function sendChatMessage(app, sender, text) {
 }
 
 // ===== 届いた申請一覧（自分が募集主） =====
-// 届いた申請のうち、まだ返答していない件数をメインタブ・サブタブの両方のバッジに出す
-function updateReceivedBadges() {
-  const count = latestReceived.filter((a) => a.status === 'pending').length;
-  ['requests-tab-badge', 'received-subtab-badge'].forEach((id) => {
+// 届いた申請のうち、まだ返答していない件数(受付待ち)と、承認済みで未読メッセージが
+// あるやり取りの件数をそれぞれ算出し、申請タブ全体・各サブタブのバッジへ反映する。
+function updateAllBadges() {
+  const pendingCount = latestReceived.filter((a) => a.status === 'pending').length;
+  const unreadMatchCount =
+    latestReceived.filter((a) => a.status === 'accepted' && a.ownerSeen === false).length +
+    latestSent.filter((a) => a.status === 'accepted' && a.applicantSeen === false).length;
+
+  const setBadge = (id, count) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.textContent = count > 0 ? String(count) : '';
     el.classList.toggle('hidden', count === 0);
-  });
+  };
+  setBadge('received-subtab-badge', pendingCount);
+  setBadge('match-subtab-badge', unreadMatchCount);
+  setBadge('requests-tab-badge', pendingCount + unreadMatchCount);
 }
 
+// 承認済みになったものは「やり取り」タブへ移すため、ここには出さない
 function renderReceivedList() {
-  updateReceivedBadges();
+  updateAllBadges();
+  renderMatchList();
   const list = document.getElementById('received-list');
   if (!list) return;
   list.innerHTML = '';
-  if (!latestReceived.length) {
+  const apps = latestReceived.filter((a) => a.status !== 'accepted');
+  if (!apps.length) {
     const p = document.createElement('p');
     p.className = 'board-list-empty';
     p.textContent = s().emptyReceived;
     list.appendChild(p);
     return;
   }
-  latestReceived.forEach((app) => list.appendChild(buildReceivedCard(app)));
+  apps.forEach((app) => list.appendChild(buildReceivedCard(app)));
 }
 
 function buildReceivedCard(app) {
@@ -668,18 +689,22 @@ function buildReceivedCard(app) {
 }
 
 // ===== 送った申請一覧（自分が申請者） =====
+// 承認済みになったものは「やり取り」タブへ移すため、ここには出さない
 function renderSentList() {
+  updateAllBadges();
+  renderMatchList();
   const list = document.getElementById('sent-list');
   if (!list) return;
   list.innerHTML = '';
-  if (!latestSent.length) {
+  const apps = latestSent.filter((a) => a.status !== 'accepted');
+  if (!apps.length) {
     const p = document.createElement('p');
     p.className = 'board-list-empty';
     p.textContent = s().emptySent;
     list.appendChild(p);
     return;
   }
-  latestSent.forEach((app) => list.appendChild(buildSentCard(app)));
+  apps.forEach((app) => list.appendChild(buildSentCard(app)));
 }
 
 function buildSentCard(app) {
@@ -774,6 +799,163 @@ function buildSentCard(app) {
   body.appendChild(foot);
   return card;
 }
+
+// ===== やり取り一覧（承認済みの申請。届いた/送ったの両方から集約） =====
+// 承認された瞬間から、届いた申請か送った申請かという方向性は意味を持たなくなり
+// 「マッチしてチャットしている相手」という点で対等になるため、このタブへまとめる。
+function renderMatchList() {
+  const list = document.getElementById('match-list');
+  if (!list) return;
+  const entries = [
+    ...latestReceived.filter((a) => a.status === 'accepted').map((app) => ({ app, role: 'owner' })),
+    ...latestSent.filter((a) => a.status === 'accepted').map((app) => ({ app, role: 'applicant' })),
+  ].sort((a, b) => {
+    const at = typeof a.app.respondedAt?.toMillis === 'function' ? a.app.respondedAt.toMillis() : 0;
+    const bt = typeof b.app.respondedAt?.toMillis === 'function' ? b.app.respondedAt.toMillis() : 0;
+    return bt - at;
+  });
+
+  list.innerHTML = '';
+  if (!entries.length) {
+    const p = document.createElement('p');
+    p.className = 'board-list-empty';
+    p.textContent = s().emptyMatch;
+    list.appendChild(p);
+    return;
+  }
+  entries.forEach(({ app, role }) => list.appendChild(buildMatchCard(app, role)));
+}
+
+function buildMatchCard(app, role) {
+  const lang = currentLang();
+  const isOwner = role === 'owner';
+  const card = document.createElement('div');
+  card.className = 'board-card';
+
+  const avatarCol = document.createElement('div');
+  avatarCol.className = 'board-card-avatar-col';
+  card.appendChild(avatarCol);
+
+  const avatarImg = document.createElement('img');
+  avatarImg.className = 'board-card-avatar';
+  avatarImg.src = isOwner
+    ? avatarUrl(app.applicantAvatarGame, app.applicantAvatarIcon)
+    : avatarUrl(app.postOwnerAvatarGame, app.postOwnerAvatarIcon);
+  avatarImg.alt = '';
+  avatarCol.appendChild(avatarImg);
+
+  const body = document.createElement('div');
+  body.className = 'board-card-body';
+  card.appendChild(body);
+
+  const unread = isOwner ? app.ownerSeen === false : app.applicantSeen === false;
+  if (unread) {
+    const unreadBadge = document.createElement('span');
+    unreadBadge.className = 'board-match-unread-badge';
+    unreadBadge.textContent = s().matchUnreadBadge;
+    body.appendChild(unreadBadge);
+  }
+
+  if (isOwner) {
+    // 届いた申請が承認済みになった相手(=申請者)の情報。buildReceivedCardの
+    // 承認済み分岐と同じ内容(applicantSecretFieldsが承認によって初めて見える)。
+    const { rest: rows, oshiIcons } = extractOshiRow([
+      ...buildFieldRows(app.applicantFields, lang, store, false),
+      ...buildFieldRows(app.applicantSecretFields, lang, store, true),
+    ]);
+    const revealedName = app.applicantSecretFields?.displayName;
+    const revealedUid = app.applicantSecretFields?.genshinUid;
+    if (revealedName) {
+      const nameEl = document.createElement('div');
+      nameEl.className = 'board-card-name';
+      nameEl.textContent = revealedName;
+      body.appendChild(nameEl);
+    }
+    if (revealedUid) {
+      const head = document.createElement('div');
+      head.className = 'board-card-head';
+      const uid = document.createElement('span');
+      uid.className = 'board-card-uid';
+      uid.textContent = `${s().uidLabel}: ${revealedUid}`;
+      head.appendChild(uid);
+      body.appendChild(head);
+    }
+    if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang);
+    renderGroupedFields(body, rows, lang);
+  } else {
+    // 送った申請が承認済みになった相手(=募集主)の情報。buildSentCardの
+    // 承認済み分岐＋元の投稿表示と同じ内容。
+    const { rest: rows, oshiIcons } = extractOshiRow(buildFieldRows(app.revealedFields, lang, store, true));
+    const revealedName = app.revealedFields?.displayName;
+    const revealedUid = app.revealedFields?.genshinUid;
+    if (rows.length || revealedName || revealedUid || oshiIcons) {
+      const title = document.createElement('p');
+      title.className = 'board-request-revealed-title';
+      title.textContent = s().revealedTitle;
+      body.appendChild(title);
+      if (revealedName) {
+        const nameEl = document.createElement('div');
+        nameEl.className = 'board-card-name';
+        nameEl.textContent = revealedName;
+        body.appendChild(nameEl);
+      }
+      if (revealedUid) {
+        const head = document.createElement('div');
+        head.className = 'board-card-head';
+        const uid = document.createElement('span');
+        uid.className = 'board-card-uid';
+        uid.textContent = `${s().uidLabel}: ${revealedUid}`;
+        head.appendChild(uid);
+        body.appendChild(head);
+      }
+      if (oshiIcons) appendOshiIcons(avatarCol, oshiIcons, lang);
+      renderGroupedFields(body, rows, lang);
+    }
+
+    const originalTitle = document.createElement('p');
+    originalTitle.className = 'board-request-revealed-title';
+    originalTitle.textContent = s().originalPostTitle;
+    body.appendChild(originalTitle);
+    const originalContainer = document.createElement('div');
+    originalContainer.className = 'board-request-original-post';
+    body.appendChild(originalContainer);
+    renderOriginalPostInto(originalContainer, avatarCol, app, lang);
+  }
+
+  renderChatThread(body, [
+    { text: app.message, mine: !isOwner, avatarSrc: isOwner ? avatarImg.src : myAvatarSrc },
+    ...(app.chatMessages || []).map((m) => {
+      const mine = isOwner ? m.sender === 'owner' : m.sender === 'applicant';
+      return { text: m.text, mine, avatarSrc: mine ? myAvatarSrc : avatarImg.src };
+    }),
+  ]);
+  renderChatComposer(body, app, isOwner ? 'owner' : 'applicant');
+
+  const foot = document.createElement('div');
+  foot.className = 'board-card-foot';
+  const time = document.createElement('span');
+  time.className = 'board-card-time';
+  time.textContent = relTime(app.createdAt);
+  foot.appendChild(time);
+  const badge = document.createElement('span');
+  badge.className = 'board-request-status board-request-status-accepted';
+  badge.textContent = s().statusAccepted;
+  foot.appendChild(badge);
+  body.appendChild(foot);
+
+  return card;
+}
+
+// 「やり取り」タブを開いたら、今表示されている承認済みのやり取りを全て既読にする
+function markAllMatchesSeen() {
+  latestReceived.filter((a) => a.status === 'accepted' && a.ownerSeen === false).forEach((a) => {
+    updateDoc(doc(db, 'friendBoardApplications', a.id), { ownerSeen: true }).catch(() => {});
+  });
+  latestSent.filter((a) => a.status === 'accepted' && a.applicantSeen === false).forEach((a) => {
+    updateDoc(doc(db, 'friendBoardApplications', a.id), { applicantSeen: true }).catch(() => {});
+  });
+}
+document.getElementById('subtab-btn-match')?.addEventListener('click', markAllMatchesSeen);
 
 // ===== 通知トースト =====
 let toastQueue = [];
