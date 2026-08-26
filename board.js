@@ -1798,13 +1798,30 @@ function drawChipRowsForExport(ctx, rows, startX, startY) {
 }
 
 // chips: [{text, bg, color, bold}, ...] を、.board-card-group と同じ「枠+浮き見出し」の
-// 箱に入れて描画する。戻り値は描画し終えた後のyの位置。
-function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width) {
+// 箱に入れて描画する。nestedGroups: [{title, chips, border, bg, titleColor}, ...] を渡すと、
+// その箱の内側にさらに小さい入れ子の枠(.board-card-group-nested相当。マルチで何を
+// したい？の「手伝います！」「手伝ってください！」用)を追加で描画する。
+// 戻り値は描画し終えた後のyの位置。
+function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width, nestedGroups = []) {
   const boxPad = 30;
   const titleH = 44;
-  const rows = layoutChipRowsForExport(ctx, chips, width - boxPad * 2);
-  const chipsH = chipRowsHeightForExport(rows);
-  const boxHeight = titleH + chipsH + boxPad * 1.4;
+  const innerWidth = width - boxPad * 2;
+  const rows = chips.length ? layoutChipRowsForExport(ctx, chips, innerWidth) : [];
+  const chipsH = chips.length ? chipRowsHeightForExport(rows) : 0;
+
+  const nestedPad = 24;
+  const nestedGap = 16;
+  const nestedTitleH = 40;
+  const nestedLayouts = nestedGroups.map((ng) => {
+    const ngRows = layoutChipRowsForExport(ctx, ng.chips, innerWidth - nestedPad * 2);
+    const ngChipsH = chipRowsHeightForExport(ngRows);
+    return { ...ng, rows: ngRows, height: nestedTitleH + ngChipsH + nestedPad * 1.3 };
+  });
+
+  let innerHeight = titleH;
+  if (chips.length) innerHeight += chipsH + 16;
+  nestedLayouts.forEach((ng) => { innerHeight += ng.height + nestedGap; });
+  const boxHeight = innerHeight + boxPad * 1.4;
 
   fillRoundedRectForExport(ctx, x, y, width, boxHeight, 20, EXPORT_COLORS.groupBg);
   strokeRoundedRectForExport(ctx, x, y, width, boxHeight, 20, EXPORT_COLORS.groupBorder, 2);
@@ -1815,7 +1832,23 @@ function drawFieldGroupBoxForExport(ctx, title, chips, x, y, width) {
   ctx.textBaseline = 'alphabetic';
   ctx.fillText(title, x + boxPad, y + boxPad + 14);
 
-  drawChipRowsForExport(ctx, rows, x + boxPad, y + boxPad + titleH);
+  let contentY = y + boxPad + titleH;
+  if (chips.length) {
+    contentY = drawChipRowsForExport(ctx, rows, x + boxPad, contentY) + 16;
+  }
+
+  nestedLayouts.forEach((ng) => {
+    const nx = x + boxPad;
+    const nw = innerWidth;
+    fillRoundedRectForExport(ctx, nx, contentY, nw, ng.height, 14, ng.bg);
+    strokeRoundedRectForExport(ctx, nx, contentY, nw, ng.height, 14, ng.border, 2);
+    ctx.font = `bold 24px ${EXPORT_FONT_FAMILY}`;
+    ctx.fillStyle = ng.titleColor;
+    ctx.fillText(ng.title, nx + nestedPad, contentY + nestedPad + 4);
+    drawChipRowsForExport(ctx, ng.rows, nx + nestedPad, contentY + nestedPad + nestedTitleH);
+    contentY += ng.height + nestedGap;
+  });
+
   return y + boxHeight;
 }
 
@@ -2018,6 +2051,10 @@ async function buildProfileExportImage(post) {
   // 画像を都度取得する必要があり複雑になるため対象外にする。
   FIELD_GROUPS.forEach((group) => {
     const chips = [];
+    // マルチで何をしたい？(playStyles)のうち「手伝います！」「手伝ってください！」に
+    // 属する値は、さがす一覧と同じく入れ子の別枠に分ける(それ以外は通常のチップ)。
+    const offerChips = [];
+    const requestChips = [];
     group.fields
       .filter((k) => k !== 'oshiChars' && k !== 'showGenshinRanking' && k !== 'showGenshinCheck')
       .forEach((key) => {
@@ -2031,16 +2068,34 @@ async function buildProfileExportImage(post) {
         if (key === 'playStyles') {
           value.forEach((v) => {
             const text = formatFieldValue('playStyles', [v], lang);
-            if (text) chips.push({ text, bg: EXPORT_COLORS.chipBg, color: EXPORT_COLORS.chipColor });
+            if (!text) return;
+            const chip = { text, bg: EXPORT_COLORS.chipBg, color: EXPORT_COLORS.chipColor };
+            if (PLAYSTYLE_OFFER_VALUES.includes(v)) offerChips.push(chip);
+            else if (PLAYSTYLE_REQUEST_VALUES.includes(v)) requestChips.push(chip);
+            else chips.push(chip);
           });
           return;
         }
         const text = formatFieldValue(key, value, lang);
         if (text) chips.push({ text: `${fieldLabel(key, lang)}: ${text}`, bg: EXPORT_COLORS.chipBg, color: EXPORT_COLORS.chipColor });
       });
-    if (!chips.length) return;
 
-    y = drawFieldGroupBoxForExport(ctx, s().groupTitles[group.key] || group.key, chips, PAD, y, scratch.width - PAD * 2);
+    const nestedGroups = [];
+    if (offerChips.length) {
+      nestedGroups.push({
+        title: s().playStyleOfferTitle, chips: offerChips,
+        border: 'rgba(123,31,162,0.25)', bg: 'rgba(123,31,162,0.06)', titleColor: '#7b1fa2',
+      });
+    }
+    if (requestChips.length) {
+      nestedGroups.push({
+        title: s().playStyleRequestTitle, chips: requestChips,
+        border: 'rgba(46,125,50,0.25)', bg: 'rgba(46,125,50,0.06)', titleColor: '#2e7d32',
+      });
+    }
+    if (!chips.length && !nestedGroups.length) return;
+
+    y = drawFieldGroupBoxForExport(ctx, s().groupTitles[group.key] || group.key, chips, PAD, y, scratch.width - PAD * 2, nestedGroups);
     y += 26;
   });
 
