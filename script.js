@@ -240,6 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
       draftSaveFail: "一時保存に失敗しました。",
       myPostsTitle: "現在の公開状況",
       exportImageBtn: "画像として保存（QRコード付き）",
+      refreshPostBtn: "更新する（まだ募集中です）",
 
       searchTitle: "募集をさがす",
       searchServerNote: "あなたと同じサーバーのユーザーのみ表示されます",
@@ -443,6 +444,7 @@ document.addEventListener("DOMContentLoaded", () => {
       draftSaveFail: "Failed to save draft.",
       myPostsTitle: "Current Status",
       exportImageBtn: "Save as image (with QR code)",
+      refreshPostBtn: "Refresh (still looking)",
 
       searchTitle: "Search recruitment posts",
       searchServerNote: "Only users on the same server as you are shown",

@@ -24,6 +24,11 @@ const OSHI_ELEM_LABELS = {
 };
 const OSHI_MAX = 3;
 
+// 投稿(募集する)は、最終アクティブ日時からこの期間更新がないと探す一覧から自動的に
+// 非表示になる。更新扱いになるのは「更新する」ボタンを押した時と、他の投稿へ申請した時
+// (applications.jsのapplyToPost参照)。
+const POST_STALE_MS = 30 * 24 * 60 * 60 * 1000;
+
 // 管理者(私)は初回ポップの文言を何度も見直したいので、既読フラグに関わらず毎回表示する
 const ADMIN_UID = 'UPInlRxp2eM8OI3p18UU1d3OzNc2';
 
@@ -42,6 +47,9 @@ const STR = {
     draftSaved: '一時保存しました（この端末のみ）',
     draftSaveFail: '一時保存に失敗しました。',
     deleteFail: '取り下げに失敗しました。',
+    postFreshness: (lastActive, daysLeft) => `最終更新: ${lastActive}・あと${daysLeft}日で探す一覧から自動的に非表示になります（他の人に申請すると自動的に更新されます）`,
+    refreshPostOk: 'アクティブ状態を更新しました！',
+    refreshPostFail: '更新に失敗しました。時間をおいて再度お試しください。',
     fillAll: '必須項目（＊）をすべて入力してください。',
     fillAllMissing: (labels) => `必須項目（＊）をすべて入力してください。\n不足している項目: ${labels}`,
     uidLabel: 'UID',
@@ -90,6 +98,9 @@ const STR = {
     draftSaved: 'Draft saved (this device only)',
     draftSaveFail: 'Failed to save draft.',
     deleteFail: 'Failed to withdraw.',
+    postFreshness: (lastActive, daysLeft) => `Last active: ${lastActive} · Hidden from Search in ${daysLeft} day(s) unless refreshed (applying to another post also refreshes it)`,
+    refreshPostOk: 'Refreshed your active status!',
+    refreshPostFail: 'Refresh failed. Please try again later.',
     fillAll: 'Please fill in all required (＊) fields.',
     fillAllMissing: (labels) => `Please fill in all required (＊) fields.\nMissing: ${labels}`,
     uidLabel: 'UID',
@@ -139,6 +150,15 @@ function relTime(ts) {
   const hour = Math.floor(min / 60);
   if (hour < 24) return s().hourAgo(hour);
   return s().dayAgo(Math.floor(hour / 24));
+}
+
+// 30日以上アクティブ更新がない投稿を探す一覧から除外するための判定。
+// タイムスタンプがまだ書き込み確定していない(pending write)場合はfalse扱いにせず
+// 表示し続ける(誤って新規投稿を隠さないため)。
+function isPostFresh(post) {
+  const ts = post.lastActiveAt || post.createdAt;
+  if (!ts || typeof ts.toMillis !== 'function') return true;
+  return (Date.now() - ts.toMillis()) < POST_STALE_MS;
 }
 
 // タブ切替のクリック処理はscript.js(非モジュール)側で行う。
@@ -870,6 +890,7 @@ postForm?.addEventListener('submit', async (e) => {
       requiresApproval: secretFieldKeys.length > 0,
       active: true,
       createdAt: serverTimestamp(),
+      lastActiveAt: serverTimestamp(),
     });
 
     clearDraft();
@@ -1298,6 +1319,8 @@ let latestMyListing = null;
 function renderMyListing() {
   const list = document.getElementById('my-posts-list');
   const exportBtn = document.getElementById('export-profile-image-btn');
+  const refreshBtn = document.getElementById('refresh-post-btn');
+  const freshnessMsg = document.getElementById('post-freshness-msg');
   if (!list) return;
   list.innerHTML = '';
   if (!latestMyListing) {
@@ -1306,11 +1329,47 @@ function renderMyListing() {
     p.textContent = s().emptyMy;
     list.appendChild(p);
     exportBtn?.classList.add('hidden');
+    refreshBtn?.classList.add('hidden');
+    freshnessMsg?.classList.add('hidden');
     return;
   }
   list.appendChild(buildCard(latestMyListing, { mine: true }));
   exportBtn?.classList.remove('hidden');
+  refreshBtn?.classList.remove('hidden');
+  if (freshnessMsg) {
+    const ts = latestMyListing.lastActiveAt || latestMyListing.createdAt;
+    if (ts && typeof ts.toMillis === 'function') {
+      const daysLeft = Math.max(0, Math.ceil((POST_STALE_MS - (Date.now() - ts.toMillis())) / (24 * 60 * 60 * 1000)));
+      freshnessMsg.textContent = s().postFreshness(relTime(ts), daysLeft);
+      freshnessMsg.classList.toggle('warn', daysLeft <= 7);
+      freshnessMsg.classList.remove('hidden');
+    } else {
+      freshnessMsg.classList.add('hidden');
+    }
+  }
 }
+
+document.getElementById('refresh-post-btn')?.addEventListener('click', async () => {
+  const refreshBtn = document.getElementById('refresh-post-btn');
+  const msgEl = document.getElementById('export-profile-image-msg');
+  if (!latestMyListing || !refreshBtn) return;
+  refreshBtn.disabled = true;
+  try {
+    await updateDoc(doc(db, 'friendBoardPosts', getUserId()), { lastActiveAt: serverTimestamp() });
+    if (msgEl) {
+      showMsg(msgEl, s().refreshPostOk, false);
+      msgEl.classList.remove('hidden');
+    }
+  } catch (err) {
+    console.error('[board] refresh post failed', err);
+    if (msgEl) {
+      showMsg(msgEl, s().refreshPostFail, true);
+      msgEl.classList.remove('hidden');
+    }
+  } finally {
+    refreshBtn.disabled = false;
+  }
+});
 
 // プロフィールを保存済み(=friendBoardPostsに自分のドキュメントがある)でなければ
 // 「さがす」タブを使わせない。これが「全員が申請承認式を使う」ための必須ゲートになる。
@@ -1627,7 +1686,7 @@ function renderSearchList() {
   const myUserId = getUserId();
 
   const filtered = latestSearchPosts
-    .filter((post) => post.userId === myUserId || (post.publicFields?.server === store.server && matchesSearchFilters(post)))
+    .filter((post) => post.userId === myUserId || (post.publicFields?.server === store.server && matchesSearchFilters(post) && isPostFresh(post)))
     .map((post) => ({
       post,
       // 自分の「どういうフレンドがほしい？」と相手の公開フィールドを突き合わせてマッチ度を計算する。

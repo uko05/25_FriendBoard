@@ -427,6 +427,9 @@ async function loadMyAvatar(userId) {
 
 const MESSAGE_MAXLEN = 150;
 
+// 見送られた申請は、この期間が経つと同じ投稿へ再申請できるようになる(hasAppliedTo参照)。
+const REAPPLY_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
+
 // ===== 申請する =====
 // message: 申請時に任意で添えられる一言(未指定なら'')
 export async function applyToPost(post, message = '') {
@@ -475,10 +478,21 @@ export async function applyToPost(post, message = '') {
     createdAt: serverTimestamp(),
     respondedAt: null,
   });
+
+  // 他の人に申請した = アクティブに探している、とみなして自分の投稿も自動更新する
+  // (board.jsのPOST_STALE_MS参照)。自分の投稿がまだ無い場合はupdateDocが失敗するが、
+  // 申請自体の成否には関係ないため無視する。
+  updateDoc(doc(db, 'friendBoardPosts', userId), { lastActiveAt: serverTimestamp() }).catch(() => {});
 }
 
 export function hasAppliedTo(postId) {
-  return latestSent.some((a) => a.postId === postId);
+  // latestSentはcreatedAt降順のため、最初に見つかったものがその投稿への最新の申請
+  const latest = latestSent.find((a) => a.postId === postId);
+  if (!latest) return false;
+  if (latest.status === 'rejected' && typeof latest.respondedAt?.toMillis === 'function') {
+    if (Date.now() - latest.respondedAt.toMillis() >= REAPPLY_AFTER_MS) return false;
+  }
+  return true;
 }
 
 async function respondToApplication(app, accept) {
