@@ -1902,6 +1902,56 @@ async function buildProfileExportImage(post) {
     }
   }
 
+  // 推しキャラ(公開の場合)は、名前欄とQRコードの間が空くので、そこに収まるなら
+  // ヘッダー行に表示する。収まらない場合(英語表記で名前欄が長くなる場合など)は
+  // 従来通り「なんでも一言」の下に表示する。
+  let oshiDrawnInHeader = false;
+  if (!secretSet.has('oshiChars') && Array.isArray(store.oshiChars) && store.oshiChars.length) {
+    ctx.font = `32px ${EXPORT_FONT_FAMILY}`;
+    const nameTextWidth = ctx.measureText(maskedFieldText(lang, 'displayName')).width;
+    ctx.font = `26px ${EXPORT_FONT_FAMILY}`;
+    const uidTextWidth = ctx.measureText(`${s().uidLabel}: ${s().visApproval}🔒`).width;
+    let serverTextWidth = 0;
+    if (secretSet.has('server')) {
+      serverTextWidth = ctx.measureText(maskedFieldText(lang, 'server')).width;
+    } else if (publicFields.server) {
+      serverTextWidth = ctx.measureText(`${fieldLabel('server', lang)}: ${formatFieldValue('server', publicFields.server, lang)}`).width;
+    }
+    const nameColumnRight = nameX + Math.max(nameTextWidth, uidTextWidth, serverTextWidth);
+
+    const iconD = 70;
+    const iconGap = 10;
+    const oshiStartX = nameColumnRight + 28;
+    const neededWidth = store.oshiChars.length * iconD + (store.oshiChars.length - 1) * iconGap;
+    const availWidth = qrX - 24 - oshiStartX;
+
+    if (availWidth >= neededWidth) {
+      const oshiY = y + (avatarSize - iconD) / 2;
+      let ix = oshiStartX;
+      for (const icon of store.oshiChars) {
+        try {
+          const img = await loadImageForExport(GENSHIN_ICON_BASE + icon);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(ix + iconD / 2, oshiY + iconD / 2, iconD / 2, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(img, ix, oshiY, iconD, iconD);
+          ctx.restore();
+          ctx.strokeStyle = EXPORT_COLORS.cardBorder;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(ix + iconD / 2, oshiY + iconD / 2, iconD / 2, 0, Math.PI * 2);
+          ctx.stroke();
+        } catch (e) {
+          console.warn('[board] export: oshiChars icon load failed', e);
+        }
+        ix += iconD + iconGap;
+      }
+      oshiDrawnInHeader = true;
+    }
+  }
+
   y += avatarSize + 44;
 
   // なんでも一言(常に公開)
@@ -1915,13 +1965,14 @@ async function buildProfileExportImage(post) {
     y += 30;
   }
 
-  // 推しキャラ: 公開なら実アイコン、承認後公開ならマスクのみ
+  // 推しキャラ: 公開なら実アイコン(ヘッダーに収まらなかった場合のみここに表示)、
+  // 承認後公開ならマスクのみ
   if (secretSet.has('oshiChars')) {
     y = drawChipRowsForExport(ctx, layoutChipRowsForExport(ctx, [
       { text: maskedFieldText(lang, 'oshiChars'), bg: EXPORT_COLORS.approvalBg, color: EXPORT_COLORS.approvalColor, bold: true },
     ], scratch.width - PAD * 2), PAD, y);
     y += 26;
-  } else if (Array.isArray(store.oshiChars) && store.oshiChars.length) {
+  } else if (!oshiDrawnInHeader && Array.isArray(store.oshiChars) && store.oshiChars.length) {
     ctx.font = `bold 26px ${EXPORT_FONT_FAMILY}`;
     ctx.fillStyle = EXPORT_COLORS.groupTitle;
     ctx.fillText(fieldLabel('oshiChars', lang), PAD, y + 24);
