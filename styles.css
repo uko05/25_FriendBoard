@@ -1272,6 +1272,7 @@ body.portal-page {
 
 .board-chat-composer-input {
   flex: 1;
+  min-width: 0;
   font-family: inherit;
   font-size: 13px;
   padding: 8px 10px;
