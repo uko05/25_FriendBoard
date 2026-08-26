@@ -529,6 +529,36 @@ body.portal-page {
 .board-form-msg.ok { color: #2e7d32; }
 .board-form-msg.error { color: #c62828; }
 
+.board-export-image-btn {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  margin: 12px auto;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border: 1.5px solid #e0ac00;
+  border-radius: 10px;
+  background: #fff8e1;
+  color: #a67c00;
+  font-weight: bold;
+  cursor: pointer;
+}
+.board-export-image-btn:hover { background: #ffedb3; }
+.board-export-image-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.board-export-image-msg {
+  max-width: 560px;
+  margin: -4px auto 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+}
+.board-export-image-msg.error { color: #c62828; }
+
 .board-approval-notice {
   margin: 0;
   padding: 10px 14px;
@@ -799,9 +829,10 @@ body.portal-page {
   margin: 0 auto;
 }
 
-/* さがす一覧・申請タブは表示項目が多く縦に伸びやすいため、横幅いっぱいまで広げる
-   (申請タブのカードもさがす一覧と同じ枠組み(FIELD_GROUPS)で描画しているため揃える) */
-#search-list, #received-list, #sent-list {
+/* さがす一覧・申請タブ・QR等からの個別プロフィール表示は表示項目が多く縦に伸びやすい
+   ため、横幅いっぱいまで広げる(どれもさがす一覧と同じ枠組み(FIELD_GROUPS)で描画
+   しているため揃える) */
+#search-list, #received-list, #sent-list, #view-profile-card {
   max-width: none;
 }
 

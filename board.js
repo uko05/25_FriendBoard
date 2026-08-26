@@ -70,6 +70,10 @@ const STR = {
     filterGroupAttrTitle: 'あなたの追加属性',
     filterAdminTitle: '管理者用フィルター(非表示項目も含む)',
     resultCount: (n) => `${n}件`,
+    viewProfileGone: 'このプロフィールは取り下げられたか見つかりませんでした。',
+    exportGenerating: '画像を作成しています…',
+    exportFail: '画像の作成に失敗しました。時間をおいて再度お試しください。',
+    exportQrCaption: 'QRコードを読み取ると、このプロフィールのページが開きます',
   },
   en: {
     justNow: 'just now',
@@ -113,6 +117,10 @@ const STR = {
     filterGroupAttrTitle: 'Additional traits',
     filterAdminTitle: 'Admin filters (includes hidden fields)',
     resultCount: (n) => `${n} result${n === 1 ? '' : 's'}`,
+    viewProfileGone: 'This profile was withdrawn or could not be found.',
+    exportGenerating: 'Generating image…',
+    exportFail: 'Failed to generate the image. Please try again later.',
+    exportQrCaption: 'Scan the QR code to open this profile page',
   },
 };
 
@@ -859,6 +867,15 @@ postForm?.addEventListener('submit', async (e) => {
     clearDraft();
     formDirty = false;
     showMsg(postFormMsg, s().postOk, false);
+
+    // QRなどから開いた個別プロフィール表示で「マイプロフ設定後に申請する」を経由した
+    // 場合、保存が終わったら自動でさっきのプロフィール表示に戻す(一致/相性◎の色分けも
+    // 自分の情報を保存した状態で見られるようになる)。
+    if (pendingReturnUserId) {
+      const targetUserId = pendingReturnUserId;
+      pendingReturnUserId = null;
+      renderViewProfilePanel(targetUserId);
+    }
   } catch (err) {
     console.error('[board] post failed', err);
     showMsg(postFormMsg, s().postFail, true);
@@ -921,7 +938,9 @@ function pushFieldRow(rows, key, value, lang, ownerUserId) {
 }
 
 // ===== 募集カード描画 =====
-function buildCard(post, { mine, matchPercent }) {
+// onNeedProfile: 指定時、申請ボタン押下時にマイプロフィール未設定なら通常のalertの
+// 代わりにこれを呼ぶ(QRなどから開いた個別プロフィール表示専用の誘導ポップ用)。
+function buildCard(post, { mine, matchPercent, onNeedProfile } = {}) {
   const card = document.createElement('div');
   card.className = 'board-card';
 
@@ -1178,14 +1197,20 @@ function buildCard(post, { mine, matchPercent }) {
       applyMsgBtn.type = 'button';
       applyMsgBtn.className = 'board-card-apply-msg-btn';
       applyMsgBtn.textContent = s().applyWithMsgBtn;
-      applyMsgBtn.addEventListener('click', () => openApplyMessageModal(post));
+      applyMsgBtn.addEventListener('click', () => {
+        if (onNeedProfile && (!store.genshinUid || !store.server)) { onNeedProfile(); return; }
+        openApplyMessageModal(post);
+      });
       btnRow.appendChild(applyMsgBtn);
 
       const applyBtn = document.createElement('button');
       applyBtn.type = 'button';
       applyBtn.className = 'board-card-apply-btn';
       applyBtn.textContent = s().applyBtn;
-      applyBtn.addEventListener('click', () => handleApply(post));
+      applyBtn.addEventListener('click', () => {
+        if (onNeedProfile && (!store.genshinUid || !store.server)) { onNeedProfile(); return; }
+        handleApply(post);
+      });
       btnRow.appendChild(applyBtn);
 
       foot.appendChild(btnRow);
@@ -1264,6 +1289,7 @@ let latestMyListing = null;
 
 function renderMyListing() {
   const list = document.getElementById('my-posts-list');
+  const exportBtn = document.getElementById('export-profile-image-btn');
   if (!list) return;
   list.innerHTML = '';
   if (!latestMyListing) {
@@ -1271,9 +1297,11 @@ function renderMyListing() {
     p.className = 'board-list-empty';
     p.textContent = s().emptyMy;
     list.appendChild(p);
+    exportBtn?.classList.add('hidden');
     return;
   }
   list.appendChild(buildCard(latestMyListing, { mine: true }));
+  exportBtn?.classList.remove('hidden');
 }
 
 // プロフィールを保存済み(=friendBoardPostsに自分のドキュメントがある)でなければ
@@ -1298,6 +1326,78 @@ function startMyListingListener() {
     updateSearchTabLock();
   });
 }
+
+// ===== QRコード等から開く、個別プロフィール表示(?u=userId) =====
+// script.js側のタブ切替(.board-tab-btn/.board-tab-panel)と同じDOM操作を行う。
+// viewprofileは通常のタブバーに存在しないボタンのため、対応するタブボタンが
+// 無くてもエラーにならないようにしておく。
+function switchToPanel(tabName) {
+  document.querySelectorAll('.board-tab-btn').forEach((b) => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+  document.querySelectorAll('.board-tab-panel').forEach((p) => p.classList.add('hidden'));
+  const target = document.getElementById(`tab-panel-${tabName}`);
+  if (target) target.classList.remove('hidden');
+  const btn = document.getElementById(`tab-btn-${tabName}`);
+  if (btn) {
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+  }
+}
+
+async function renderViewProfilePanel(targetUserId) {
+  switchToPanel('viewprofile');
+  const container = document.getElementById('view-profile-card');
+  if (!container) return;
+  container.innerHTML = '';
+
+  let post = null;
+  try {
+    const snap = await getDoc(doc(db, 'friendBoardPosts', targetUserId));
+    post = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+  } catch (e) {
+    console.error('[board] view profile fetch failed', e);
+  }
+  if (!post || post.active === false) {
+    const p = document.createElement('p');
+    p.className = 'board-list-empty';
+    p.textContent = s().viewProfileGone;
+    container.appendChild(p);
+    return;
+  }
+
+  const mine = post.userId === getUserId();
+  const matchPercent = mine ? null : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {});
+  container.appendChild(buildCard(post, {
+    mine,
+    matchPercent,
+    onNeedProfile: () => openProfileIncompleteModal(targetUserId),
+  }));
+}
+
+function checkViewProfileFromUrl() {
+  const targetUserId = new URLSearchParams(location.search).get('u');
+  if (targetUserId) renderViewProfilePanel(targetUserId);
+}
+
+// ===== マイプロフィール未設定での申請を、設定後に自動継続するための誘導ポップ =====
+let pendingReturnUserId = null;
+const profileIncompleteModal = document.getElementById('profile-incomplete-modal');
+
+function openProfileIncompleteModal(targetUserId) {
+  pendingReturnUserId = targetUserId;
+  if (profileIncompleteModal) profileIncompleteModal.style.display = 'flex';
+}
+function closeProfileIncompleteModal() {
+  if (profileIncompleteModal) profileIncompleteModal.style.display = 'none';
+}
+document.getElementById('profile-incomplete-close')?.addEventListener('click', closeProfileIncompleteModal);
+document.querySelector('#profile-incomplete-modal .col-modal-backdrop')?.addEventListener('click', closeProfileIncompleteModal);
+document.getElementById('profile-incomplete-goto-btn')?.addEventListener('click', () => {
+  closeProfileIncompleteModal();
+  switchToPanel('post');
+});
 
 // ===== 検索一覧(さがす) =====
 // サーバーが違うと実際にフレンドになれないため、自分と同じサーバーのユーザーのみを表示する(必須の絞り込み)。
@@ -1540,6 +1640,335 @@ document.querySelectorAll('input[name="lang"]').forEach((radio) => {
   });
 });
 
+// ===== マイプロフィール画像出力(QRコード付き) =====
+// 公開設定にかかわらず全項目ぶんレイアウトしたいので、投稿時と同じ仕分けロジック
+// (buildPostFieldBuckets)を今のstore/visibilityに対してその場で計算し直す。
+// 承認後に公開の項目は値を出さず「🔒 ラベル」のマスク表示にする(申請を後押しする狙い)。
+const EXPORT_CANVAS_WIDTH = 1080;
+const EXPORT_MIN_HEIGHT = Math.round(EXPORT_CANVAS_WIDTH * 16 / 9); // インスタのストーリーズ目安(9:16)
+const EXPORT_SCRATCH_HEIGHT = 4000; // 下書き用の十分大きい高さ(最後に実際の高さへ切り詰める)
+
+function exportViewProfileUrl(userId) {
+  return `${location.origin}${location.pathname}?u=${encodeURIComponent(userId)}`;
+}
+
+// qrcode-generator(index.htmlでグローバル読み込み済み)は文字数に対してtypeNumberが
+// 小さすぎると例外を投げるため、収まるまでtypeNumberを大きくしながら試す。
+function makeQrCode(text) {
+  for (let typeNumber = 4; typeNumber <= 40; typeNumber++) {
+    try {
+      const qr = qrcode(typeNumber, 'M');
+      qr.addData(text);
+      qr.make();
+      return qr;
+    } catch (e) {
+      // このtypeNumberでは収まらない → 次のサイズで再試行
+    }
+  }
+  throw new Error('QR code generation failed: text too long');
+}
+
+function loadImageForExport(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`image load failed: ${src}`));
+    img.src = src;
+  });
+}
+
+// 日本語(空白なし)・英語(空白あり)のどちらでも自然に折り返す。
+// 通常は空白区切りの単語単位で折り返し、1単語が幅に収まらない場合(日本語の長文など)は
+// その単語だけ1文字ずつ折り返す。
+function wrapTextForExport(ctx, text, maxWidth) {
+  const lines = [];
+  String(text).split('\n').forEach((para) => {
+    if (!para) { lines.push(''); return; }
+    let line = '';
+    para.split(' ').forEach((word) => {
+      const candidate = line ? `${line} ${word}` : word;
+      if (ctx.measureText(candidate).width <= maxWidth) {
+        line = candidate;
+        return;
+      }
+      if (line) lines.push(line);
+      if (ctx.measureText(word).width <= maxWidth) {
+        line = word;
+        return;
+      }
+      let chunk = '';
+      for (const ch of word) {
+        const test = chunk + ch;
+        if (ctx.measureText(test).width <= maxWidth) {
+          chunk = test;
+        } else {
+          if (chunk) lines.push(chunk);
+          chunk = ch;
+        }
+      }
+      line = chunk;
+    });
+    if (line) lines.push(line);
+  });
+  return lines;
+}
+
+function drawRoundedRectForExport(ctx, x, y, w, h, r, fill) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fillStyle = fill;
+  ctx.fill();
+}
+
+// chips: [{text, bg, color}, ...] を、CSSのflex-wrapのように左詰め・折り返しで描画する。
+// 戻り値は描画し終えた後のyの位置(次のコンテンツの開始位置に使う)。
+function drawChipRowForExport(ctx, chips, startX, startY, maxWidth) {
+  const font = '26px sans-serif';
+  const gapX = 10;
+  const gapY = 10;
+  const chipH = 44;
+  let x = startX;
+  let y = startY;
+  ctx.font = font;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  chips.forEach((chip) => {
+    const chipW = ctx.measureText(chip.text).width + 32;
+    if (x + chipW > startX + maxWidth && x > startX) {
+      x = startX;
+      y += chipH + gapY;
+    }
+    drawRoundedRectForExport(ctx, x, y, chipW, chipH, chipH / 2, chip.bg);
+    ctx.fillStyle = chip.color;
+    ctx.fillText(chip.text, x + 16, y + chipH / 2 + 1);
+    x += chipW + gapX;
+  });
+  return y + chipH;
+}
+
+async function buildProfileExportImage(post) {
+  const lang = currentLang();
+  const scratch = document.createElement('canvas');
+  scratch.width = EXPORT_CANVAS_WIDTH;
+  scratch.height = EXPORT_SCRATCH_HEIGHT;
+  const ctx = scratch.getContext('2d');
+
+  ctx.fillStyle = '#fffdf5';
+  ctx.fillRect(0, 0, scratch.width, scratch.height);
+
+  const PAD = 48;
+  let y = PAD;
+
+  // ヘッダー: アバター + 名前/UID/サーバー(名前・UIDは常に承認後公開のためマスク表示)
+  const avatarSize = 150;
+  try {
+    const avatarImg = await loadImageForExport(avatarUrl(post.avatarGame, post.avatarIcon));
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(PAD + avatarSize / 2, y + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(avatarImg, PAD, y, avatarSize, avatarSize);
+    ctx.restore();
+  } catch (e) {
+    console.warn('[board] export: avatar load failed', e);
+  }
+  ctx.strokeStyle = '#ffcc00';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(PAD + avatarSize / 2, y + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+  ctx.stroke();
+
+  const { publicFields, secretFieldKeys } = buildPostFieldBuckets(store, store.visibility);
+  const secretSet = new Set(secretFieldKeys);
+
+  const nameX = PAD + avatarSize + 28;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = 'bold 36px sans-serif';
+  ctx.fillStyle = '#222';
+  ctx.fillText(`🔒 ${fieldLabel('displayName', lang)}`, nameX, y + 48);
+  ctx.font = '26px sans-serif';
+  ctx.fillStyle = '#888';
+  ctx.fillText(`🔒 ${s().uidLabel}`, nameX, y + 86);
+  if (secretSet.has('server')) {
+    ctx.fillText(`🔒 ${fieldLabel('server', lang)}`, nameX, y + 122);
+  } else if (publicFields.server) {
+    ctx.fillStyle = '#555';
+    ctx.fillText(`${fieldLabel('server', lang)}: ${formatFieldValue('server', publicFields.server, lang)}`, nameX, y + 122);
+  }
+  y += avatarSize + 44;
+
+  // なんでも一言(常に公開)
+  if (post.comment) {
+    ctx.font = '28px sans-serif';
+    ctx.fillStyle = '#444';
+    wrapTextForExport(ctx, post.comment, scratch.width - PAD * 2).forEach((line) => {
+      y += 38;
+      ctx.fillText(line, PAD, y);
+    });
+    y += 30;
+  }
+
+  // 推しキャラ: 公開なら実アイコン、承認後公開ならマスクのみ
+  if (secretSet.has('oshiChars')) {
+    y = drawChipRowForExport(ctx, [{ text: `🔒 ${fieldLabel('oshiChars', lang)}`, bg: '#fff6d9', color: '#8a6d00' }], PAD, y, scratch.width - PAD * 2);
+    y += 26;
+  } else if (Array.isArray(store.oshiChars) && store.oshiChars.length) {
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillStyle = '#a08000';
+    ctx.fillText(fieldLabel('oshiChars', lang), PAD, y + 24);
+    y += 36;
+    let x = PAD;
+    for (const icon of store.oshiChars) {
+      try {
+        const img = await loadImageForExport(GENSHIN_ICON_BASE + icon);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + 42, y + 42, 42, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, x, y, 84, 84);
+        ctx.restore();
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x + 42, y + 42, 42, 0, Math.PI * 2);
+        ctx.stroke();
+      } catch (e) {
+        console.warn('[board] export: oshiChars icon load failed', e);
+      }
+      x += 100;
+    }
+    y += 106;
+  }
+
+  // カテゴリー枠(基本情報/あなたについて/連絡・時間帯/ボイスチャット/つながれるSNS)。
+  // 画像出力では推しキャラは上で個別描画済み、画像系(ランキング/チェックシート)は
+  // 別サイトの画像を都度取得する必要があり複雑になるため対象外にする。
+  FIELD_GROUPS.forEach((group) => {
+    const chips = [];
+    group.fields
+      .filter((k) => k !== 'oshiChars' && k !== 'showGenshinRanking' && k !== 'showGenshinCheck')
+      .forEach((key) => {
+        if (secretSet.has(key)) {
+          chips.push({ text: `🔒 ${fieldLabel(key, lang)}`, bg: '#fff6d9', color: '#8a6d00' });
+          return;
+        }
+        const value = publicFields[key];
+        if (value == null || value === '' || (Array.isArray(value) && !value.length)) return;
+        if (key === 'sameOshiChars') return; // アイコン画像のため画像出力では省略
+        if (key === 'playStyles') {
+          value.forEach((v) => {
+            const text = formatFieldValue('playStyles', [v], lang);
+            if (text) chips.push({ text, bg: '#f2f2f2', color: '#555' });
+          });
+          return;
+        }
+        const text = formatFieldValue(key, value, lang);
+        if (text) chips.push({ text: `${fieldLabel(key, lang)}: ${text}`, bg: '#f2f2f2', color: '#555' });
+      });
+    if (!chips.length) return;
+
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillStyle = '#a08000';
+    ctx.fillText(s().groupTitles[group.key] || group.key, PAD + 4, y + 24);
+    y += 36;
+    y = drawChipRowForExport(ctx, chips, PAD, y, scratch.width - PAD * 2);
+    y += 34;
+  });
+
+  // 区切り線 + QRコード
+  y += 10;
+  ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(PAD, y);
+  ctx.lineTo(scratch.width - PAD, y);
+  ctx.stroke();
+  y += 44;
+
+  const qr = makeQrCode(exportViewProfileUrl(post.userId));
+  const moduleCount = qr.getModuleCount();
+  const qrSize = 340;
+  const cellSize = qrSize / moduleCount;
+  const qrX = (scratch.width - qrSize) / 2;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(qrX - 20, y - 20, qrSize + 40, qrSize + 40);
+  // isDark(row, col)のrow=縦方向・col=横方向という対応は、このライブラリの
+  // createDataURL/createImgTag(最も実績のある標準的な使われ方)の実装に合わせている。
+  // QRコードは特定の並び順を持つため、縦横を取り違えると読み取れなくなる。
+  for (let row = 0; row < moduleCount; row++) {
+    for (let col = 0; col < moduleCount; col++) {
+      ctx.fillStyle = qr.isDark(row, col) ? '#000000' : '#ffffff';
+      ctx.fillRect(qrX + col * cellSize, y + row * cellSize, cellSize + 0.5, cellSize + 0.5);
+    }
+  }
+  y += qrSize + 40;
+
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillStyle = '#444';
+  wrapTextForExport(ctx, s().exportQrCaption, scratch.width - PAD * 2).forEach((line) => {
+    ctx.fillText(line, scratch.width / 2, y);
+    y += 34;
+  });
+  ctx.textAlign = 'left';
+  y += 20;
+
+  // 下書き(scratch)の実際に使った高さぶんだけ、最終キャンバスへ切り詰めてコピーする
+  const finalHeight = Math.max(EXPORT_MIN_HEIGHT, y + PAD);
+  const final = document.createElement('canvas');
+  final.width = EXPORT_CANVAS_WIDTH;
+  final.height = finalHeight;
+  const fctx = final.getContext('2d');
+  fctx.fillStyle = '#fffdf5';
+  fctx.fillRect(0, 0, final.width, final.height);
+  fctx.drawImage(scratch, 0, 0, EXPORT_CANVAS_WIDTH, y + PAD, 0, 0, EXPORT_CANVAS_WIDTH, y + PAD);
+
+  return final.toDataURL('image/png');
+}
+
+function downloadDataUrlAsFile(dataUrl, filename) {
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+document.getElementById('export-profile-image-btn')?.addEventListener('click', async () => {
+  if (!latestMyListing) return;
+  const btn = document.getElementById('export-profile-image-btn');
+  const msgEl = document.getElementById('export-profile-image-msg');
+  btn.disabled = true;
+  if (msgEl) {
+    msgEl.textContent = s().exportGenerating;
+    msgEl.classList.remove('hidden', 'error');
+  }
+  try {
+    const dataUrl = await buildProfileExportImage(latestMyListing);
+    downloadDataUrlAsFile(dataUrl, `friendboard_${getUserId()}.png`);
+    if (msgEl) msgEl.classList.add('hidden');
+  } catch (e) {
+    console.error('[board] export image failed', e);
+    if (msgEl) {
+      msgEl.textContent = s().exportFail;
+      msgEl.classList.remove('hidden');
+      msgEl.classList.add('error');
+    }
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 // ===== 初期化 =====
 async function init() {
   // ログイン中ならaccountLinksから共有IDを解決してから(=正しいuserIdが確定してから)
@@ -1559,6 +1988,7 @@ async function init() {
   initApplications({ getUserId, onSentChange: renderSearchList });
   startMyListingListener();
   startSearchListener();
+  checkViewProfileFromUrl();
 }
 
 init();

@@ -239,6 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
       draftSaved: "一時保存しました（この端末のみ）",
       draftSaveFail: "一時保存に失敗しました。",
       myPostsTitle: "現在の公開状況",
+      exportImageBtn: "画像として保存（QRコード付き）",
 
       searchTitle: "募集をさがす",
       searchServerNote: "あなたと同じサーバーのユーザーのみ表示されます",
@@ -246,6 +247,11 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLegendLabel: "チップの色について:",
       matchLegendExact: "一致",
       matchLegendComplementary: "相性◎",
+
+      viewProfileTitle: "プロフィール",
+      profileIncompleteModalTitle: "マイプロフィールを設定してください",
+      profileIncompleteModalBody: "申請するには、まずあなたのマイプロフィールを保存する必要があります。保存が終わると、自動でこの画面に戻ってきます。",
+      profileIncompleteGotoBtn: "マイプロフ設定後に申請する",
 
       requestsTitle: "申請の管理",
       requestsDesc: "気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。",
@@ -436,6 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
       draftSaved: "Draft saved (this device only)",
       draftSaveFail: "Failed to save draft.",
       myPostsTitle: "Current Status",
+      exportImageBtn: "Save as image (with QR code)",
 
       searchTitle: "Search recruitment posts",
       searchServerNote: "Only users on the same server as you are shown",
@@ -443,6 +450,11 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLegendLabel: "Chip colors:",
       matchLegendExact: "Match",
       matchLegendComplementary: "Good match",
+
+      viewProfileTitle: "Profile",
+      profileIncompleteModalTitle: "Please set up your My Profile",
+      profileIncompleteModalBody: "You need to save your My Profile before you can apply. Once saved, you'll be brought back here automatically.",
+      profileIncompleteGotoBtn: "Set up profile, then apply",
 
       requestsTitle: "Manage requests",
       requestsDesc: "Apply to a post you're interested in and the poster gets notified. Once they accept, you'll be able to see their Genshin UID.",

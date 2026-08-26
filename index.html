@@ -559,6 +559,8 @@
 
             <div class="board-myposts">
                 <h3 data-i18n="myPostsTitle">現在の公開状況</h3>
+                <button type="button" class="board-export-image-btn hidden" id="export-profile-image-btn" data-i18n="exportImageBtn">画像として保存（QRコード付き）</button>
+                <p class="board-export-image-msg hidden" id="export-profile-image-msg"></p>
                 <div class="board-list" id="my-posts-list"></div>
             </div>
         </section>
@@ -603,9 +605,17 @@
             </div>
         </section>
 
+        <!-- QRコードなどのリンクから直接開いた、特定の1人だけのプロフィール表示
+             (通常のタブバーには出さず、URLの?uパラメータがある時だけJSで表示する) -->
+        <section class="portal-section board-tab-panel hidden" id="tab-panel-viewprofile" role="tabpanel">
+            <h2 data-i18n="viewProfileTitle">プロフィール</h2>
+            <p class="board-search-approval-note" data-i18n="searchApprovalNote">原神UID・名前は承認後に確認できます</p>
+            <div class="board-list" id="view-profile-card"></div>
+        </section>
+
     </main>
 
-    <span id="site-version" class="site-version">v5.2</span>
+    <span id="site-version" class="site-version">v6.0</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">
@@ -627,6 +637,18 @@
             <h3 class="apply-message-title" data-i18n="applyMessageModalTitle">メッセージをつけて申請</h3>
             <textarea id="apply-message-input" class="apply-message-textarea" rows="4" maxlength="150" data-i18n-placeholder="applyMessagePlaceholder"></textarea>
             <button type="button" id="apply-message-send" class="board-submit-btn" data-i18n="applyMessageSendBtn">この内容で申請する</button>
+        </div>
+    </div>
+
+    <!-- QRコード等から他人のプロフィールを直接開いた際、マイプロフィール未設定で
+         申請しようとした時のポップ -->
+    <div id="profile-incomplete-modal" class="col-modal" style="display:none;">
+        <div class="col-modal-backdrop"></div>
+        <div class="col-modal-content apply-message-content">
+            <button type="button" id="profile-incomplete-close" class="col-modal-close" aria-label="close">×</button>
+            <h3 class="apply-message-title" data-i18n="profileIncompleteModalTitle">マイプロフィールを設定してください</h3>
+            <p class="board-requests-desc" data-i18n="profileIncompleteModalBody">申請するには、まずあなたのマイプロフィールを保存する必要があります。保存が終わると、自動でこの画面に戻ってきます。</p>
+            <button type="button" id="profile-incomplete-goto-btn" class="board-submit-btn" data-i18n="profileIncompleteGotoBtn">マイプロフ設定後に申請する</button>
         </div>
     </div>
 
@@ -685,6 +707,10 @@
         <span data-i18n="friend">＜友達ください…</span>
     </footer>
 
+    <!-- マイプロフィール画像出力のQRコード生成用(グローバルなqrcode関数を提供する
+         古典的なscriptタグ形式のライブラリ。type=moduleではないので読み込み順は
+         board.jsより前に置く) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
     <script type="module" src="board.js"></script>
     <script src="script.js"></script>
     <script type="module" src="https://uko05.github.io/24_AccountCenter/account-status.js"></script>
