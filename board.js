@@ -804,6 +804,11 @@ const REQUIRED_FIELDS = [
   { key: 'server', el: serverInput, filled: (v) => !!v.server },
   { key: 'gender', el: document.getElementById('group-gender'), filled: (v) => !!v.gender },
   {
+    key: 'platforms',
+    el: document.getElementById('group-platforms'),
+    filled: (v) => Array.isArray(v.platforms) && v.platforms.length > 0,
+  },
+  {
     key: 'weekdayTimes',
     el: () => document.getElementById(weekdayByDayInput?.checked ? 'weekday-byday-rows' : 'weekday-range-row'),
     filled: (v) => timesFieldFilled(v.weekdayTimes),
