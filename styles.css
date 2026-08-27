@@ -1228,20 +1228,26 @@ body.portal-page {
   color: #8a6d00;
 }
 
+.board-original-post-toggle-row {
+  border-top: 1px dashed rgba(0,0,0,0.2);
+  margin: 10px 0 4px;
+  padding-top: 4px;
+  text-align: right;
+}
 .board-original-post-toggle {
-  display: block;
-  margin: 6px 0 4px auto;
+  display: inline;
+  margin: 0;
   padding: 0;
   font-family: inherit;
   font-size: 12px;
   font-weight: bold;
-  color: #8a6d00;
+  color: #555;
   background: none;
   border: none;
   text-decoration: underline;
   cursor: pointer;
 }
-.board-original-post-toggle:hover { color: #6b5400; }
+.board-original-post-toggle:hover { color: #222; }
 
 .board-request-original-post {
   margin-top: 10px;
@@ -1284,8 +1290,8 @@ body.portal-page {
 .board-chat-row-me { justify-content: flex-end; }
 
 .board-chat-avatar {
-  width: 26px;
-  height: 26px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;

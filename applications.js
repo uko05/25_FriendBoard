@@ -933,11 +933,14 @@ function buildMatchCard(app, role) {
     // collapsedOriginalPostsに保持し、チャット更新等でカードが作り直されても
     // 状態が消えないようにする。
     const isCollapsed = collapsedOriginalPosts.has(app.id);
+    const toggleRow = document.createElement('div');
+    toggleRow.className = 'board-original-post-toggle-row';
+    body.appendChild(toggleRow);
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'board-original-post-toggle';
     toggleBtn.textContent = isCollapsed ? s().originalPostShowBtn : s().originalPostHideBtn;
-    body.appendChild(toggleBtn);
+    toggleRow.appendChild(toggleBtn);
 
     const originalContainer = document.createElement('div');
     originalContainer.className = 'board-request-original-post';
