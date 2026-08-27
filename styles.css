@@ -1229,25 +1229,30 @@ body.portal-page {
 }
 
 .board-original-post-toggle-row {
-  border-top: 1px dashed rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 10px 0 4px;
-  padding-top: 4px;
-  text-align: right;
+}
+.board-original-post-toggle-line {
+  flex: 1;
+  border-top: 1px dashed rgba(0,0,0,0.25);
 }
 .board-original-post-toggle {
   display: inline;
+  flex-shrink: 0;
   margin: 0;
   padding: 0;
   font-family: inherit;
   font-size: 12px;
   font-weight: bold;
-  color: #555;
+  color: #c62828;
   background: none;
   border: none;
   text-decoration: underline;
   cursor: pointer;
 }
-.board-original-post-toggle:hover { color: #222; }
+.board-original-post-toggle:hover { color: #8e1c1c; }
 
 .board-request-original-post {
   margin-top: 10px;

@@ -936,6 +936,9 @@ function buildMatchCard(app, role) {
     const toggleRow = document.createElement('div');
     toggleRow.className = 'board-original-post-toggle-row';
     body.appendChild(toggleRow);
+    const toggleLine = document.createElement('span');
+    toggleLine.className = 'board-original-post-toggle-line';
+    toggleRow.appendChild(toggleLine);
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'board-original-post-toggle';
