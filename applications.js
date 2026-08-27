@@ -42,6 +42,8 @@ const STR = {
     uidLabel: 'UID',
     originalPostTitle: '元の投稿',
     originalPostGone: 'この投稿は取り下げられたか見つかりませんでした。',
+    originalPostShowBtn: '募集内容を表示する',
+    originalPostHideBtn: '閉じる',
     chatComposerPlaceholder: 'メッセージを入力...',
     chatSendBtn: '送信',
     chatWaitingNote: '相手の返信をお待ちください',
@@ -73,6 +75,8 @@ const STR = {
     uidLabel: 'UID',
     originalPostTitle: 'Original post',
     originalPostGone: 'This post was withdrawn or could not be found.',
+    originalPostShowBtn: 'Show their post details',
+    originalPostHideBtn: 'Hide',
     chatComposerPlaceholder: 'Type a message...',
     chatSendBtn: 'Send',
     chatWaitingNote: "Waiting for their reply",
@@ -347,6 +351,11 @@ function appendOshiIcons(avatarCol, icons, lang) {
 // メモリにキャッシュし、Firestoreへの無駄な読み取りを避ける。
 const originalPostCache = new Map();
 
+// 「やり取り」タブのカードで「元の投稿」の項目情報を閉じた申請id一覧。
+// カードはFirestoreの更新の度に作り直されるため、ここに保持しておかないと
+// 開閉状態が新着チャットのたびにリセットされてしまう。
+const collapsedOriginalPosts = new Set();
+
 async function fetchPostCached(postId) {
   if (originalPostCache.has(postId)) return originalPostCache.get(postId);
   let post = null;
@@ -365,7 +374,9 @@ async function fetchPostCached(postId) {
 // に入っている情報(=募集主が承認時に公開した項目)もあわせて表示する。
 // avatarCol: この投稿の主(募集主)のアバターは、カード上部のavatarColと同一人物なので、
 // 推しキャラもさがす一覧と同じくそこへ縦並びで追加する(横並びのboard-card-oshi-rowは使わない)。
-async function renderOriginalPostInto(container, avatarCol, app, lang) {
+// skipHeader: 呼び出し側(やり取りタブ)で既に名前/UIDを別の場所に表示済みの場合、
+// ここでの二重表示を避けるためにtrueにする。
+async function renderOriginalPostInto(container, avatarCol, app, lang, { skipHeader = false } = {}) {
   const post = await fetchPostCached(app.postId);
   container.innerHTML = '';
   if (!post) {
@@ -377,32 +388,34 @@ async function renderOriginalPostInto(container, avatarCol, app, lang) {
   }
 
   const accepted = app.status === 'accepted';
-  const displayName = (accepted && app.revealedFields?.displayName) || post.publicFields?.displayName;
-  const uidValue = (accepted && app.revealedFields?.genshinUid) || post.publicFields?.genshinUid;
+  if (!skipHeader) {
+    const displayName = (accepted && app.revealedFields?.displayName) || post.publicFields?.displayName;
+    const uidValue = (accepted && app.revealedFields?.genshinUid) || post.publicFields?.genshinUid;
 
-  if (displayName) {
-    const nameEl = document.createElement('div');
-    nameEl.className = 'board-card-name';
-    nameEl.textContent = displayName;
-    container.appendChild(nameEl);
-  }
-  if (uidValue || (!accepted && app.postSecretFieldKeys?.length)) {
-    const head = document.createElement('div');
-    head.className = 'board-card-head';
-    if (uidValue) {
-      const uid = document.createElement('span');
-      uid.className = 'board-card-uid';
-      uid.textContent = `${s().uidLabel}: ${uidValue}`;
-      head.appendChild(uid);
+    if (displayName) {
+      const nameEl = document.createElement('div');
+      nameEl.className = 'board-card-name';
+      nameEl.textContent = displayName;
+      container.appendChild(nameEl);
     }
-    if (!accepted && app.postSecretFieldKeys?.length) {
-      const note = document.createElement('span');
-      note.className = 'board-card-secret-note';
-      const labels = app.postSecretFieldKeys.map((key) => fieldLabel(key, lang));
-      note.textContent = s().secretFieldsNote(labels.join(lang === 'en' ? ', ' : '、'));
-      head.appendChild(note);
+    if (uidValue || (!accepted && app.postSecretFieldKeys?.length)) {
+      const head = document.createElement('div');
+      head.className = 'board-card-head';
+      if (uidValue) {
+        const uid = document.createElement('span');
+        uid.className = 'board-card-uid';
+        uid.textContent = `${s().uidLabel}: ${uidValue}`;
+        head.appendChild(uid);
+      }
+      if (!accepted && app.postSecretFieldKeys?.length) {
+        const note = document.createElement('span');
+        note.className = 'board-card-secret-note';
+        const labels = app.postSecretFieldKeys.map((key) => fieldLabel(key, lang));
+        note.textContent = s().secretFieldsNote(labels.join(lang === 'en' ? ', ' : '、'));
+        head.appendChild(note);
+      }
+      container.appendChild(head);
     }
-    container.appendChild(head);
   }
 
   const allRows = [
@@ -915,14 +928,30 @@ function buildMatchCard(app, role) {
       renderGroupedFields(body, rows, lang);
     }
 
-    const originalTitle = document.createElement('p');
-    originalTitle.className = 'board-request-revealed-title';
-    originalTitle.textContent = s().originalPostTitle;
-    body.appendChild(originalTitle);
+    // 名前/UIDは上の「公開された情報」で既に出しているため、ここでは項目情報
+    // (プレイスタイル等)だけを開閉できるようにする。開閉状態はapp.id単位で
+    // collapsedOriginalPostsに保持し、チャット更新等でカードが作り直されても
+    // 状態が消えないようにする。
+    const isCollapsed = collapsedOriginalPosts.has(app.id);
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'board-original-post-toggle';
+    toggleBtn.textContent = isCollapsed ? s().originalPostShowBtn : s().originalPostHideBtn;
+    body.appendChild(toggleBtn);
+
     const originalContainer = document.createElement('div');
     originalContainer.className = 'board-request-original-post';
+    if (isCollapsed) originalContainer.classList.add('hidden');
     body.appendChild(originalContainer);
-    renderOriginalPostInto(originalContainer, avatarCol, app, lang);
+    renderOriginalPostInto(originalContainer, avatarCol, app, lang, { skipHeader: true });
+
+    toggleBtn.addEventListener('click', () => {
+      const nowCollapsed = !collapsedOriginalPosts.has(app.id);
+      if (nowCollapsed) collapsedOriginalPosts.add(app.id);
+      else collapsedOriginalPosts.delete(app.id);
+      originalContainer.classList.toggle('hidden', nowCollapsed);
+      toggleBtn.textContent = nowCollapsed ? s().originalPostShowBtn : s().originalPostHideBtn;
+    });
   }
 
   renderChatThread(body, [
