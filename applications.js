@@ -46,9 +46,10 @@ const STR = {
     originalPostHideBtn: '閉じる',
     chatComposerPlaceholder: 'メッセージを入力...',
     chatSendBtn: '送信',
-    chatWaitingNote: '相手の返信をお待ちください',
-    chatEndedNote: 'やり取りは終了しました（最大10往復まで）',
-    chatRemainingNote: (n) => `あと${n}通やり取りできます`,
+    chatRemainingNote: (n) => `本日あと${n}通送れます`,
+    chatDailyLimitReachedRegistered: '本日のやり取り上限（20通）に達しました。また明日送れます',
+    chatDailyLimitReachedUnregistered: '未登録の場合は1日1通までです。アカウント登録すると1日20通まで送れるようになります',
+    chatRegisterLinkBtn: 'アカウント登録へ',
   },
   en: {
     noName: 'Nameless Traveler',
@@ -79,9 +80,10 @@ const STR = {
     originalPostHideBtn: 'Hide',
     chatComposerPlaceholder: 'Type a message...',
     chatSendBtn: 'Send',
-    chatWaitingNote: "Waiting for their reply",
-    chatEndedNote: 'This conversation has ended (up to 10 exchanges).',
-    chatRemainingNote: (n) => `${n} message${n === 1 ? '' : 's'} left in this exchange`,
+    chatRemainingNote: (n) => `${n} message${n === 1 ? '' : 's'} left today`,
+    chatDailyLimitReachedRegistered: "You've reached today's limit (20 messages). You can send more tomorrow.",
+    chatDailyLimitReachedUnregistered: 'Without an account you can only send 1 message per day. Register an account to send up to 20 per day.',
+    chatRegisterLinkBtn: 'Go to Account Center',
   },
 };
 
@@ -163,33 +165,54 @@ function renderChatThread(container, messages) {
   container.appendChild(chat);
 }
 
-// 承認後のチャットは最大10往復(=20通)まで。申請時のメッセージ(app.message)と
-// 「承認する」という行為自体はこのカウントに含めない(=chatMessagesとは別枠)。
-// そのため、承認直後でchatMessagesが空の状態に限っては、募集主・申請者どちらから
-// 送ってもよい(「無言で承認」した場合に誰も送れず詰むのを防ぐため)。それ以降は
-// 直前の送信者と同じ人は連続して送れない。
-const CHAT_MAX_MESSAGES = 20;
-function canSendChat(app, sender) {
-  if (app.status !== 'accepted') return false;
-  const msgs = app.chatMessages || [];
-  if (msgs.length >= CHAT_MAX_MESSAGES) return false;
-  if (!msgs.length) return true;
-  return msgs[msgs.length - 1].sender !== sender;
+// 承認後のチャットは、LINEのように交互発言のルールなく自由に送れる。ただし
+// 1日に送れる通数には上限があり、アカウント登録しているかどうかで変わる
+// (未登録1通/日、登録済み20通/日)。登録を後押しする狙いなので、会話の途中で
+// 登録すれば即座に上限が上がり、その日のうちに続きを送れるようになる。
+const CHAT_DAILY_LIMIT_REGISTERED = 20;
+const CHAT_DAILY_LIMIT_UNREGISTERED = 1;
+
+function myChatDailyLimit() {
+  return (_getAuthUid && _getAuthUid()) ? CHAT_DAILY_LIMIT_REGISTERED : CHAT_DAILY_LIMIT_UNREGISTERED;
 }
 
-// sender: 'owner'|'applicant'。承認後、自分の番であれば入力欄を、そうでなければ
-// 「相手の返信を待って」等の案内だけを表示する。残り送信可能数(お互い共通のプール)は
-// 何回でも送れるように見えて誤解されないよう、常に案内しておく。
+function startOfTodayMs() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+// このメッセージの送信時刻(at)を持たない古いデータ(この機能の追加より前に
+// 送信された分)は「今日」扱いにしない(=誤ってカウントに含めて既読の人を
+// ブロックしないため)。
+function countSentToday(app, sender) {
+  const start = startOfTodayMs();
+  return (app.chatMessages || []).filter((m) => m.sender === sender && typeof m.at === 'number' && m.at >= start).length;
+}
+
+// sender: 'owner'|'applicant'。今日あと何通送れるかを表示し、上限に達していれば
+// 入力欄自体を出さず案内文だけにする(未登録の場合はアカウント登録への案内を出す)。
 function renderChatComposer(container, app, sender) {
   if (app.status !== 'accepted') return;
-  const msgs = app.chatMessages || [];
-  const remaining = CHAT_MAX_MESSAGES - msgs.length;
+  const limit = myChatDailyLimit();
+  const remaining = limit - countSentToday(app, sender);
 
   if (remaining <= 0) {
     const note = document.createElement('p');
     note.className = 'board-chat-note';
-    note.textContent = s().chatEndedNote;
+    note.textContent = (_getAuthUid && _getAuthUid())
+      ? s().chatDailyLimitReachedRegistered
+      : s().chatDailyLimitReachedUnregistered;
     container.appendChild(note);
+    if (!(_getAuthUid && _getAuthUid())) {
+      const link = document.createElement('a');
+      link.className = 'board-chat-register-link';
+      link.href = 'https://uko05.github.io/24_AccountCenter/';
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = s().chatRegisterLinkBtn;
+      container.appendChild(link);
+    }
     return;
   }
 
@@ -197,14 +220,6 @@ function renderChatComposer(container, app, sender) {
   countNote.className = 'board-chat-note';
   countNote.textContent = s().chatRemainingNote(remaining);
   container.appendChild(countNote);
-
-  if (!canSendChat(app, sender)) {
-    const note = document.createElement('p');
-    note.className = 'board-chat-note';
-    note.textContent = s().chatWaitingNote;
-    container.appendChild(note);
-    return;
-  }
 
   const composer = document.createElement('div');
   composer.className = 'board-chat-composer';
@@ -428,6 +443,7 @@ async function renderOriginalPostInto(container, avatarCol, app, lang, { skipHea
 }
 
 let _getUserId = null;
+let _getAuthUid = null;
 let _onSentChange = null;
 let latestReceived = [];
 let latestSent = [];
@@ -1105,8 +1121,9 @@ document.querySelectorAll('input[name="lang"]').forEach((radio) => {
   });
 });
 
-export function initApplications({ getUserId, onSentChange }) {
+export function initApplications({ getUserId, getAuthUid, onSentChange }) {
   _getUserId = getUserId;
+  _getAuthUid = getAuthUid || null;
   _onSentChange = onSentChange || null;
   const userId = getUserId();
   loadMyAvatar(userId);

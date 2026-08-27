@@ -2339,7 +2339,7 @@ async function init() {
   fillFormFromProfile();
   populateVisibilitySelects();
   initAvatarUI({ getUserId, getAuthUid, onChange: updateLatestOwnPostAvatar });
-  initApplications({ getUserId, onSentChange: renderSearchList });
+  initApplications({ getUserId, getAuthUid, onSentChange: renderSearchList });
   startMyListingListener();
   startSearchListener();
   checkViewProfileFromUrl();

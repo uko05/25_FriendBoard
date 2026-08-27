@@ -1358,6 +1358,22 @@ body.portal-page {
   text-align: center;
 }
 
+.board-chat-register-link {
+  display: block;
+  width: fit-content;
+  margin: 6px auto 0;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #a67c00;
+  background: #fff8e1;
+  border: 1.5px solid #e0ac00;
+  border-radius: 999px;
+  text-decoration: none;
+  text-align: center;
+}
+.board-chat-register-link:hover { background: #ffedb3; }
+
 .board-chat-composer {
   display: flex;
   align-items: flex-end;
