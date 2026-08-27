@@ -1230,18 +1230,18 @@ body.portal-page {
 
 .board-original-post-toggle {
   display: block;
-  margin: 6px 0 4px;
-  padding: 4px 10px;
+  margin: 6px 0 4px auto;
+  padding: 0;
   font-family: inherit;
   font-size: 12px;
   font-weight: bold;
   color: #8a6d00;
-  background: #fff6d9;
-  border: 1px solid rgba(0,0,0,0.15);
-  border-radius: 999px;
+  background: none;
+  border: none;
+  text-decoration: underline;
   cursor: pointer;
 }
-.board-original-post-toggle:hover { background: #ffedb3; }
+.board-original-post-toggle:hover { color: #6b5400; }
 
 .board-request-original-post {
   margin-top: 10px;
