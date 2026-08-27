@@ -6,6 +6,10 @@
 
 ## 運用ルール
 - 修正するたびに `index.html` の `#site-version` を1つ上げる。
+- 同時に `index.html` の `<link rel="stylesheet" href="styles.css?v=X.X">` の
+  クエリパラメータも同じ番号に揃える（CSSだけキャッシュが古いまま反映されない
+  症状が実際にあったため。styles.cssを変更した時だけでなく、version番号を
+  上げる時は毎回揃えておくと安全）。
 - 修正するたびに commit + push まで行う（確認を挟まない）。
 
 ## データモデルの前提
