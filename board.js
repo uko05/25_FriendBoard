@@ -5,6 +5,8 @@ import { db } from './firebaseConfig.js';
 import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink } from './userData.js';
 import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js';
 import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
+import { initBlocks, isBlocked, onBlocksChange, blockUser, unblockUser, blockedByMeList } from './blocks.js';
+import { reportUser } from './reports.js';
 import {
   VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
   fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch, fieldOptions,
@@ -42,6 +44,19 @@ const STR = {
     emptySearch: '該当する募集がありません',
     deleteBtn: '取り下げる',
     deleteConfirm: 'プロフィールの公開を取り下げますか？「さがす」も使えなくなります。',
+    blockBtn: 'ブロックする',
+    blockConfirm: 'この人をブロックしますか？お互いに一覧やチャットから見えなくなります（ブロックしたことは相手に通知されません）。',
+    blockOk: 'ブロックしました。',
+    blockFail: 'ブロックに失敗しました。時間をおいて再度お試しください。',
+    unblockBtn: '解除する',
+    unblockConfirm: 'ブロックを解除しますか？',
+    unblockFail: '解除に失敗しました。時間をおいて再度お試しください。',
+    reportBtn: '通報する',
+    reportReasonPrompt: '通報理由（任意）があれば入力してください。',
+    reportOk: '通報しました。ご協力ありがとうございます。',
+    reportFail: '通報に失敗しました。時間をおいて再度お試しください。',
+    blockedListTitle: 'ブロック中のユーザー',
+    emptyBlockedList: 'ブロックしているユーザーはいません',
     postOk: '保存しました！',
     postFail: '保存に失敗しました。時間をおいて再度お試しください。',
     draftSaved: '一時保存しました（この端末のみ）',
@@ -93,6 +108,19 @@ const STR = {
     emptySearch: 'No matching posts found',
     deleteBtn: 'Withdraw',
     deleteConfirm: "Withdraw your profile from search? You'll lose access to Search until you save again.",
+    blockBtn: 'Block',
+    blockConfirm: "Block this person? You'll disappear from each other's lists and chat (they won't be notified).",
+    blockOk: 'Blocked.',
+    blockFail: 'Failed to block. Please try again later.',
+    unblockBtn: 'Unblock',
+    unblockConfirm: 'Unblock this person?',
+    unblockFail: 'Failed to unblock. Please try again later.',
+    reportBtn: 'Report',
+    reportReasonPrompt: 'Reason for reporting (optional).',
+    reportOk: 'Reported. Thank you for letting us know.',
+    reportFail: 'Failed to report. Please try again later.',
+    blockedListTitle: 'Blocked users',
+    emptyBlockedList: 'No blocked users',
     postOk: 'Saved!',
     postFail: 'Failed to save. Please try again later.',
     draftSaved: 'Draft saved (this device only)',
@@ -1247,7 +1275,53 @@ function buildCard(post, { mine, matchPercent, onNeedProfile } = {}) {
   }
 
   body.appendChild(foot);
+  if (!mine) body.appendChild(buildBlockReportRow(post.userId, { postId: post.id }));
   return card;
+}
+
+async function handleBlock(userId) {
+  if (!confirm(s().blockConfirm)) return;
+  try {
+    await blockUser(userId);
+    alert(s().blockOk);
+  } catch (e) {
+    console.error('[board] block failed', e);
+    alert(s().blockFail);
+  }
+}
+
+async function handleReport({ reportedUserId, postId, applicationId, chatMessages }) {
+  const reason = prompt(s().reportReasonPrompt);
+  if (reason === null) return; // キャンセル時は何もしない(空文字での送信はOK)
+  try {
+    await reportUser({ reporterUserId: getUserId(), reportedUserId, postId, applicationId, chatMessages, reason });
+    alert(s().reportOk);
+  } catch (e) {
+    console.error('[board] report failed', e);
+    alert(s().reportFail);
+  }
+}
+
+// 自分以外の投稿カードの一番下に置く、目立たせすぎない「ブロックする/通報する」リンク。
+function buildBlockReportRow(targetUserId, { postId } = {}) {
+  const row = document.createElement('div');
+  row.className = 'board-card-safety-row';
+
+  const blockBtn = document.createElement('button');
+  blockBtn.type = 'button';
+  blockBtn.className = 'board-card-safety-link';
+  blockBtn.textContent = s().blockBtn;
+  blockBtn.addEventListener('click', () => handleBlock(targetUserId));
+  row.appendChild(blockBtn);
+
+  const reportBtn = document.createElement('button');
+  reportBtn.type = 'button';
+  reportBtn.className = 'board-card-safety-link';
+  reportBtn.textContent = s().reportBtn;
+  reportBtn.addEventListener('click', () => handleReport({ reportedUserId: targetUserId, postId }));
+  row.appendChild(reportBtn);
+
+  return row;
 }
 
 async function handleApply(post, message) {
@@ -1311,6 +1385,53 @@ async function deletePost(postId) {
     console.error('[board] delete failed', err);
     alert(s().deleteFail);
   }
+}
+
+async function handleUnblock(userId) {
+  if (!confirm(s().unblockConfirm)) return;
+  try {
+    await unblockUser(userId);
+  } catch (err) {
+    console.error('[board] unblock failed', err);
+    alert(s().unblockFail);
+  }
+}
+
+// マイプロフィール画面の「ブロック中のユーザー」一覧。名前等は承認後公開の
+// 可能性があるためあえて出さず、アイコンと解除ボタンだけのシンプルな表示にする。
+async function renderBlockedList() {
+  const list = document.getElementById('blocked-users-list');
+  if (!list) return;
+  const ids = blockedByMeList();
+  list.innerHTML = '';
+  if (!ids.length) {
+    const p = document.createElement('p');
+    p.className = 'board-list-empty';
+    p.textContent = s().emptyBlockedList;
+    list.appendChild(p);
+    return;
+  }
+  const avatars = await Promise.all(ids.map((id) => getMyAvatar(id)));
+  list.innerHTML = '';
+  ids.forEach((id, i) => {
+    const row = document.createElement('div');
+    row.className = 'board-blocked-row';
+
+    const img = document.createElement('img');
+    img.className = 'board-card-avatar';
+    img.src = avatarUrl(avatars[i].game, avatars[i].icon);
+    img.alt = '';
+    row.appendChild(img);
+
+    const unblockBtn = document.createElement('button');
+    unblockBtn.type = 'button';
+    unblockBtn.className = 'board-blocked-unblock-btn';
+    unblockBtn.textContent = s().unblockBtn;
+    unblockBtn.addEventListener('click', () => handleUnblock(id));
+    row.appendChild(unblockBtn);
+
+    list.appendChild(row);
+  });
 }
 
 // ===== マイプロフィール(=自分のリスティング、1ユーザー1件) =====
@@ -1467,7 +1588,7 @@ async function renderViewProfilePanel(targetUserId) {
   try {
     const post = await fetchViewProfilePost(targetUserId);
     container.innerHTML = '';
-    if (!post || post.active === false) {
+    if (!post || post.active === false || (post.userId !== getUserId() && isBlocked(post.userId))) {
       const p = document.createElement('p');
       p.className = 'board-list-empty';
       p.textContent = s().viewProfileGone;
@@ -1686,7 +1807,7 @@ function renderSearchList() {
   const myUserId = getUserId();
 
   const filtered = latestSearchPosts
-    .filter((post) => post.userId === myUserId || (post.publicFields?.server === store.server && matchesSearchFilters(post) && isPostFresh(post)))
+    .filter((post) => post.userId === myUserId || (post.publicFields?.server === store.server && matchesSearchFilters(post) && isPostFresh(post) && !isBlocked(post.userId)))
     .map((post) => ({
       post,
       // 自分の「どういうフレンドがほしい？」と相手の公開フィールドを突き合わせてマッチ度を計算する。
@@ -2339,6 +2460,8 @@ async function init() {
   fillFormFromProfile();
   populateVisibilitySelects();
   initAvatarUI({ getUserId, getAuthUid, onChange: updateLatestOwnPostAvatar });
+  initBlocks({ getUserId });
+  onBlocksChange(() => { renderSearchList(); renderBlockedList(); });
   initApplications({ getUserId, getAuthUid, onSentChange: renderSearchList });
   startMyListingListener();
   startSearchListener();

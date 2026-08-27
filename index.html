@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>＃原神フレンド承認板</title>
 
-    <link rel="stylesheet" href="styles.css?v=10.1" />
+    <link rel="stylesheet" href="styles.css?v=11.0" />
 
     <!-- Favicon -->
     <link rel="icon" href="public/scripts/favicon_io/favicon.ico" type="image/x-icon">
@@ -565,6 +565,11 @@
                 <p class="board-export-image-msg hidden" id="export-profile-image-msg"></p>
                 <div class="board-list" id="my-posts-list"></div>
             </div>
+
+            <div class="board-myposts">
+                <h3 data-i18n="blockedListTitle">ブロック中のユーザー</h3>
+                <div class="board-list" id="blocked-users-list"></div>
+            </div>
         </section>
 
         <!-- さがす -->
@@ -622,7 +627,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v10.1</span>
+    <span id="site-version" class="site-version">v11.0</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

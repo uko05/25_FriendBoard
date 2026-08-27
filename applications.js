@@ -6,6 +6,8 @@
 import { db } from './firebaseConfig.js';
 import { store } from './userData.js';
 import { avatarUrl, getMyAvatar } from './avatar.js';
+import { initBlocks, isBlocked, onBlocksChange, blockUser } from './blocks.js';
+import { reportUser } from './reports.js';
 import {
   VISIBILITY_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES, GENSHIN_ICON_BASE,
   fieldLabel, formatFieldValue, buildPostFieldBuckets,
@@ -28,6 +30,14 @@ const STR = {
     matchUnreadBadge: '！新着メッセージ',
     acceptBtn: '承認する',
     rejectBtn: '見送る',
+    blockBtn: 'ブロックする',
+    blockConfirm: 'この人をブロックしますか？お互いに一覧やチャットから見えなくなります（ブロックしたことは相手に通知されません）。',
+    blockOk: 'ブロックしました。',
+    blockFail: 'ブロックに失敗しました。時間をおいて再度お試しください。',
+    reportBtn: '通報する',
+    reportReasonPrompt: '通報理由（任意）があれば入力してください。',
+    reportOk: '通報しました。ご協力ありがとうございます。',
+    reportFail: '通報に失敗しました。時間をおいて再度お試しください。',
     statusPending: '返答待ち',
     statusAccepted: '承認済み',
     statusRejected: '見送り',
@@ -62,6 +72,14 @@ const STR = {
     matchUnreadBadge: '! New message',
     acceptBtn: 'Accept',
     rejectBtn: 'Pass',
+    blockBtn: 'Block',
+    blockConfirm: "Block this person? You'll disappear from each other's lists and chat (they won't be notified).",
+    blockOk: 'Blocked.',
+    blockFail: 'Failed to block. Please try again later.',
+    reportBtn: 'Report',
+    reportReasonPrompt: 'Reason for reporting (optional).',
+    reportOk: 'Reported. Thank you for letting us know.',
+    reportFail: 'Failed to report. Please try again later.',
     statusPending: 'Pending',
     statusAccepted: 'Accepted',
     statusRejected: 'Passed',
@@ -552,6 +570,52 @@ async function respondToApplication(app, accept) {
   }
 }
 
+async function handleBlock(userId) {
+  if (!confirm(s().blockConfirm)) return;
+  try {
+    await blockUser(userId);
+    alert(s().blockOk);
+  } catch (e) {
+    console.error('[applications] block failed', e);
+    alert(s().blockFail);
+  }
+}
+
+async function handleReport({ reportedUserId, applicationId, chatMessages }) {
+  const reason = prompt(s().reportReasonPrompt);
+  if (reason === null) return; // キャンセル時は何もしない(空文字での送信はOK)
+  try {
+    await reportUser({ reporterUserId: _getUserId(), reportedUserId, applicationId, chatMessages, reason });
+    alert(s().reportOk);
+  } catch (e) {
+    console.error('[applications] report failed', e);
+    alert(s().reportFail);
+  }
+}
+
+// カードの一番下に置く、目立たせすぎない「ブロックする/通報する」リンク。
+// chatMessagesを渡すと、通報時点のチャット内容がそのままスナップショットとして残る。
+function buildBlockReportRow(targetUserId, { applicationId, chatMessages } = {}) {
+  const row = document.createElement('div');
+  row.className = 'board-card-safety-row';
+
+  const blockBtn = document.createElement('button');
+  blockBtn.type = 'button';
+  blockBtn.className = 'board-card-safety-link';
+  blockBtn.textContent = s().blockBtn;
+  blockBtn.addEventListener('click', () => handleBlock(targetUserId));
+  row.appendChild(blockBtn);
+
+  const reportBtn = document.createElement('button');
+  reportBtn.type = 'button';
+  reportBtn.className = 'board-card-safety-link';
+  reportBtn.textContent = s().reportBtn;
+  reportBtn.addEventListener('click', () => handleReport({ reportedUserId: targetUserId, applicationId, chatMessages }));
+  row.appendChild(reportBtn);
+
+  return row;
+}
+
 // sender: 'owner'|'applicant'。承認後のチャット欄から送信された1通をchatMessagesへ追記する。
 async function sendChatMessage(app, sender, text) {
   // Firestoreの制約でserverTimestamp()は配列の要素内では解決されない(nullになる)ため、
@@ -578,10 +642,10 @@ async function sendChatMessage(app, sender, text) {
 // 届いた申請のうち、まだ返答していない件数(受付待ち)と、承認済みで未読メッセージが
 // あるやり取りの件数をそれぞれ算出し、申請タブ全体・各サブタブのバッジへ反映する。
 function updateAllBadges() {
-  const pendingCount = latestReceived.filter((a) => a.status === 'pending').length;
+  const pendingCount = latestReceived.filter((a) => a.status === 'pending' && !isBlocked(a.applicantUserId)).length;
   const unreadMatchCount =
-    latestReceived.filter((a) => a.status === 'accepted' && a.ownerSeen === false).length +
-    latestSent.filter((a) => a.status === 'accepted' && a.applicantSeen === false).length;
+    latestReceived.filter((a) => a.status === 'accepted' && a.ownerSeen === false && !isBlocked(a.applicantUserId)).length +
+    latestSent.filter((a) => a.status === 'accepted' && a.applicantSeen === false && !isBlocked(a.postOwnerUserId)).length;
 
   const setBadge = (id, count) => {
     const el = document.getElementById(id);
@@ -601,7 +665,7 @@ function renderReceivedList() {
   const list = document.getElementById('received-list');
   if (!list) return;
   list.innerHTML = '';
-  const apps = latestReceived.filter((a) => a.status !== 'accepted');
+  const apps = latestReceived.filter((a) => a.status !== 'accepted' && !isBlocked(a.applicantUserId));
   if (!apps.length) {
     const p = document.createElement('p');
     p.className = 'board-list-empty';
@@ -717,6 +781,7 @@ function buildReceivedCard(app) {
   }
 
   body.appendChild(foot);
+  body.appendChild(buildBlockReportRow(app.applicantUserId, { applicationId: app.id, chatMessages: app.chatMessages }));
   return card;
 }
 
@@ -728,7 +793,7 @@ function renderSentList() {
   const list = document.getElementById('sent-list');
   if (!list) return;
   list.innerHTML = '';
-  const apps = latestSent.filter((a) => a.status !== 'accepted');
+  const apps = latestSent.filter((a) => a.status !== 'accepted' && !isBlocked(a.postOwnerUserId));
   if (!apps.length) {
     const p = document.createElement('p');
     p.className = 'board-list-empty';
@@ -829,6 +894,7 @@ function buildSentCard(app) {
   foot.appendChild(badge);
 
   body.appendChild(foot);
+  body.appendChild(buildBlockReportRow(app.postOwnerUserId, { applicationId: app.id, chatMessages: app.chatMessages }));
   return card;
 }
 
@@ -839,8 +905,8 @@ function renderMatchList() {
   const list = document.getElementById('match-list');
   if (!list) return;
   const entries = [
-    ...latestReceived.filter((a) => a.status === 'accepted').map((app) => ({ app, role: 'owner' })),
-    ...latestSent.filter((a) => a.status === 'accepted').map((app) => ({ app, role: 'applicant' })),
+    ...latestReceived.filter((a) => a.status === 'accepted' && !isBlocked(a.applicantUserId)).map((app) => ({ app, role: 'owner' })),
+    ...latestSent.filter((a) => a.status === 'accepted' && !isBlocked(a.postOwnerUserId)).map((app) => ({ app, role: 'applicant' })),
   ].sort((a, b) => {
     const at = typeof a.app.respondedAt?.toMillis === 'function' ? a.app.respondedAt.toMillis() : 0;
     const bt = typeof b.app.respondedAt?.toMillis === 'function' ? b.app.respondedAt.toMillis() : 0;
@@ -996,6 +1062,8 @@ function buildMatchCard(app, role) {
   badge.textContent = s().statusAccepted;
   foot.appendChild(badge);
   body.appendChild(foot);
+  const counterpartId = isOwner ? app.applicantUserId : app.postOwnerUserId;
+  body.appendChild(buildBlockReportRow(counterpartId, { applicationId: app.id, chatMessages: app.chatMessages }));
 
   return card;
 }
@@ -1127,6 +1195,8 @@ export function initApplications({ getUserId, getAuthUid, onSentChange }) {
   _onSentChange = onSentChange || null;
   const userId = getUserId();
   loadMyAvatar(userId);
+  initBlocks({ getUserId });
+  onBlocksChange(() => { renderReceivedList(); renderSentList(); });
   startReceivedListener(userId);
   startSentListener(userId);
 }

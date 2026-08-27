@@ -51,6 +51,33 @@
 - 承認済みの申請は、届いた/送ったの区別なく「やり取り」サブタブに集約される。
   届いた申請／送った申請のサブタブには `pending` と `rejected` だけを表示する。
 
+## ブロック・通報機能（`blocks.js`, `reports.js`, 2026-08-28追加）
+- `friendBoardBlocks/{blockerUserId}_{blockedUserId}` に1件書き込むだけの
+  シンプルな方式。ブロックは**双方向で完全に非表示**になる（探す一覧／届いた
+  申請／送った申請／やり取り／QRの個別プロフィール表示、すべてから消える）。
+  裏側の投稿・申請・チャットのデータ自体は削除しない（誤ブロックの復旧、
+  通報時に経緯を確認できるようにするため）。ブロックされたことは相手に
+  通知しない（LINE/X等と同じ作法）。
+- `blocks.js`はboard.js/applications.jsの両方から`initBlocks({getUserId})`が
+  呼ばれる想定で、実際のFirestore購読(`onSnapshot`2本)は最初の1回だけ開始する
+  （`started`フラグで二重購読を防止）。`onBlocksChange(fn)`で複数箇所から
+  再描画をフックできる。
+- **重要**: ここでの制御はすべてクライアント側の表示フィルター
+  （`isBlocked()`をリスト描画時に見ているだけ）であり、Firestoreの
+  セキュリティルールでの強制ではない（このリポジトリにはルールファイル自体が
+  無く、Firebaseコンソール側で管理されている）。悪意を持って直接Firestoreを
+  叩けば理論上は回避できるため、完全なセキュリティ境界ではなく、あくまで
+  通常利用時の摩擦（嫌がらせの抑止）としての機能と捉えること。
+- 通報は`friendBoardReports`へ`addDoc`するだけ（`reports.js`の`reportUser`）。
+  `chatMessages`は通報時点のスナップショットをコピーして保存するので、後で
+  会話が続いても通報時点の内容が変わらず確認できる。**管理者用の確認画面は
+  まだ実装していない**（後回しにする方針。それまではFirestoreコンソールで
+  `friendBoardReports`コレクションを直接確認する）。実装する際は、既存の
+  `ADMIN_UID`チェック（`board.js`, `isAdmin()`相当）を流用してアクセス制御する
+  想定だが、ユーザー本人からは「ADMIN_UIDというよりは管理者ロール」という
+  表現の方が実態に近いという指摘があった（今は単一UIDのハードコードだが、
+  将来複数管理者が必要になったらロールベースへの変更を検討すること）。
+
 ## QRコード生成の注意（board.js, `makeQrCode`）
 - `qrcode-generator`（kazuhikoarase）ライブラリは `renderTo2dContext` と
   `createDataURL`/`createImgTag` とで **row/colとx/yの対応が逆**になっている
