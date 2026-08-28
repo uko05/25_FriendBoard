@@ -793,6 +793,9 @@ body.portal-page {
 }
 
 .board-discord-server-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 8px;
 }
 .board-discord-server-link a {
@@ -806,6 +809,11 @@ body.portal-page {
   height: 40px;
   border-radius: 8px;
   object-fit: cover;
+}
+.board-discord-server-hint {
+  font-size: 13px;
+  font-weight: bold;
+  color: #5865f2;
 }
 .board-radio-group label,
 .board-checkbox-group label,

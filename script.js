@@ -222,6 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
       prefVcNotNeeded: "VCなしでも大丈夫",
       prefWorkCallOk: "作業通話だけでもOK",
       prefDiscordServer: "交流用Discordサーバーで複数人でやりたい",
+      discordServerHint: "＜これを押してね！",
 
       infoModalTitle: "このサイトは承認制です",
       infoModalBody1: "このサイトは一般的なフレンド募集とは異なり、相手に承認されないとUIDなどの公開されません。",
@@ -431,6 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
       prefVcNotNeeded: "OK without VC",
       prefWorkCallOk: "OK with just hanging out on call",
       prefDiscordServer: "Want to hang out as a group on our social Discord server",
+      discordServerHint: "＜ Click here!",
 
       infoModalTitle: "This site is approval-based",
       infoModalBody1: "Unlike typical friend-recruitment sites, your UID and other details are never shown to someone unless they've been approved by you.",
