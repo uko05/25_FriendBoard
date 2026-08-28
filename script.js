@@ -70,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tabPost: "マイプロフィール",
       tabSearch: "さがす",
       tabRequests: "申請",
+      tabAdmin: "通報一覧",
       tabLockHint: "マイプロフィールを保存すると「さがす」が使えるようになります",
 
       postFormTitle: "マイプロフィール",
@@ -256,6 +257,8 @@ document.addEventListener("DOMContentLoaded", () => {
       profileIncompleteGotoBtn: "マイプロフ設定後に申請する",
 
       requestsTitle: "申請の管理",
+      adminReportsTitle: "通報一覧",
+      adminHideHandled: "対応済みを非表示にする",
       requestsDesc: "気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。",
       receivedTitle: "届いた申請",
       sentTitle: "送った申請",
@@ -276,6 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tabPost: "My Profile",
       tabSearch: "Search",
       tabRequests: "Requests",
+      tabAdmin: "Reports",
       tabLockHint: "Save your My Profile to unlock Search",
 
       postFormTitle: "My Profile",
@@ -462,6 +466,8 @@ document.addEventListener("DOMContentLoaded", () => {
       profileIncompleteGotoBtn: "Set up profile, then apply",
 
       requestsTitle: "Manage requests",
+      adminReportsTitle: "Reports",
+      adminHideHandled: "Hide handled reports",
       requestsDesc: "Apply to a post you're interested in and the poster gets notified. Once they accept, you'll be able to see their Genshin UID.",
       receivedTitle: "Received requests",
       sentTitle: "Sent requests",

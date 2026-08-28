@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>＃原神フレンド承認板</title>
 
-    <link rel="stylesheet" href="styles.css?v=11.0" />
+    <link rel="stylesheet" href="styles.css?v=11.1" />
 
     <!-- Favicon -->
     <link rel="icon" href="public/scripts/favicon_io/favicon.ico" type="image/x-icon">
@@ -43,6 +43,7 @@
             <button type="button" class="board-tab-btn active" id="tab-btn-post" data-tab="post" role="tab" aria-selected="true" data-i18n="tabPost">マイプロフィール</button>
             <button type="button" class="board-tab-btn" id="tab-btn-search" data-tab="search" role="tab" aria-selected="false" data-i18n="tabSearch" disabled>さがす</button>
             <button type="button" class="board-tab-btn" id="tab-btn-requests" data-tab="requests" role="tab" aria-selected="false"><span data-i18n="tabRequests">申請</span><span class="board-tab-badge hidden" id="requests-tab-badge"></span></button>
+            <button type="button" class="board-tab-btn hidden" id="tab-btn-admin" data-tab="admin" role="tab" aria-selected="false" data-i18n="tabAdmin">通報一覧</button>
         </nav>
         <p class="board-tab-lock-hint" id="tab-lock-hint" data-i18n="tabLockHint">マイプロフィールを保存すると「さがす」が使えるようになります</p>
 
@@ -617,6 +618,17 @@
             </div>
         </section>
 
+        <!-- 通報一覧(管理者のみ。tab-btn-admin/tab-panel-adminはisAdminViewer()の
+             時だけboard.js側でhiddenを外して表示する) -->
+        <section class="portal-section board-tab-panel hidden" id="tab-panel-admin" role="tabpanel">
+            <h2 data-i18n="adminReportsTitle">通報一覧</h2>
+            <label class="board-admin-report-filter">
+                <input type="checkbox" id="admin-report-hide-handled" />
+                <span data-i18n="adminHideHandled">対応済みを非表示にする</span>
+            </label>
+            <div class="board-list" id="admin-reports-list"></div>
+        </section>
+
         <!-- QRコードなどのリンクから直接開いた、特定の1人だけのプロフィール表示
              (通常のタブバーには出さず、URLの?uパラメータがある時だけJSで表示する) -->
         <section class="portal-section board-tab-panel hidden" id="tab-panel-viewprofile" role="tabpanel">
@@ -627,7 +639,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v11.0</span>
+    <span id="site-version" class="site-version">v11.1</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

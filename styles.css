@@ -901,7 +901,7 @@ body.portal-page {
 /* さがす一覧・申請タブ・QR等からの個別プロフィール表示は表示項目が多く縦に伸びやすい
    ため、横幅いっぱいまで広げる(どれもさがす一覧と同じ枠組み(FIELD_GROUPS)で描画
    しているため揃える) */
-#search-list, #received-list, #sent-list, #match-list, #view-profile-card {
+#search-list, #received-list, #sent-list, #match-list, #admin-reports-list, #view-profile-card {
   max-width: none;
 }
 
@@ -1179,6 +1179,61 @@ body.portal-page {
   cursor: pointer;
 }
 .board-blocked-unblock-btn:hover { background: #eee; }
+
+.board-admin-report-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 16px;
+  font-size: 13px;
+  color: #555;
+}
+
+.board-admin-report-card {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.board-admin-report-handled { opacity: 0.55; }
+.board-admin-report-ids {
+  margin: 0;
+  font-size: 12px;
+  font-weight: bold;
+  color: #444;
+  word-break: break-all;
+}
+.board-admin-report-reason {
+  margin: 0;
+  font-size: 13px;
+  color: #222;
+  white-space: pre-wrap;
+}
+.board-admin-report-context {
+  margin: 0;
+  font-size: 11px;
+  color: #999;
+  word-break: break-all;
+}
+.board-admin-report-chat {
+  padding: 8px 10px;
+  background: #f7f7f7;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.board-admin-report-chat p {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #333;
+}
+.board-admin-report-handled-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #555;
+  margin-top: 4px;
+}
 
 .board-card-apply-btn {
   font-family: inherit;

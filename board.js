@@ -57,6 +57,11 @@ const STR = {
     reportFail: '通報に失敗しました。時間をおいて再度お試しください。',
     blockedListTitle: 'ブロック中のユーザー',
     emptyBlockedList: 'ブロックしているユーザーはいません',
+    emptyAdminReports: '通報はまだありません',
+    adminReporterLabel: '通報者',
+    adminReportedLabel: '被通報者',
+    adminChatSnapshotTitle: '通報時点のチャット内容',
+    adminMarkHandled: '対応済みにする',
     postOk: '保存しました！',
     postFail: '保存に失敗しました。時間をおいて再度お試しください。',
     draftSaved: '一時保存しました（この端末のみ）',
@@ -121,6 +126,11 @@ const STR = {
     reportFail: 'Failed to report. Please try again later.',
     blockedListTitle: 'Blocked users',
     emptyBlockedList: 'No blocked users',
+    emptyAdminReports: 'No reports yet',
+    adminReporterLabel: 'Reporter',
+    adminReportedLabel: 'Reported',
+    adminChatSnapshotTitle: 'Chat content at time of report',
+    adminMarkHandled: 'Mark handled',
     postOk: 'Saved!',
     postFail: 'Failed to save. Please try again later.',
     draftSaved: 'Draft saved (this device only)',
@@ -1669,6 +1679,103 @@ function isAdminViewer() {
   return getAuthUid() === ADMIN_UID;
 }
 
+// ===== 通報一覧(管理者のみ) =====
+let latestReports = [];
+
+function startAdminReportsListener() {
+  const q = query(collection(db, 'friendBoardReports'), orderBy('createdAt', 'desc'), limit(200));
+  onSnapshot(q, (snap) => {
+    latestReports = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderAdminReports();
+  }, (err) => console.error('[board] admin reports listen failed', err));
+}
+
+function renderAdminReports() {
+  const list = document.getElementById('admin-reports-list');
+  if (!list) return;
+  const hideHandled = document.getElementById('admin-report-hide-handled')?.checked;
+  const reports = hideHandled ? latestReports.filter((r) => !r.handled) : latestReports;
+  list.innerHTML = '';
+  if (!reports.length) {
+    const p = document.createElement('p');
+    p.className = 'board-list-empty';
+    p.textContent = s().emptyAdminReports;
+    list.appendChild(p);
+    return;
+  }
+  reports.forEach((report) => list.appendChild(buildAdminReportCard(report)));
+}
+
+document.getElementById('admin-report-hide-handled')?.addEventListener('change', renderAdminReports);
+
+function buildAdminReportCard(report) {
+  const card = document.createElement('div');
+  card.className = 'board-card board-admin-report-card';
+  if (report.handled) card.classList.add('board-admin-report-handled');
+
+  const time = document.createElement('span');
+  time.className = 'board-card-time';
+  time.textContent = relTime(report.createdAt);
+  card.appendChild(time);
+
+  const idsRow = document.createElement('p');
+  idsRow.className = 'board-admin-report-ids';
+  idsRow.textContent = `${s().adminReporterLabel}: ${report.reporterUserId}  →  ${s().adminReportedLabel}: ${report.reportedUserId}`;
+  card.appendChild(idsRow);
+
+  if (report.reason) {
+    const reason = document.createElement('p');
+    reason.className = 'board-admin-report-reason';
+    reason.textContent = report.reason;
+    card.appendChild(reason);
+  }
+
+  if (report.postId || report.applicationId) {
+    const ctx = document.createElement('p');
+    ctx.className = 'board-admin-report-context';
+    ctx.textContent = [
+      report.postId ? `postId: ${report.postId}` : null,
+      report.applicationId ? `applicationId: ${report.applicationId}` : null,
+    ].filter(Boolean).join(' / ');
+    card.appendChild(ctx);
+  }
+
+  if (report.chatMessages && report.chatMessages.length) {
+    const chatTitle = document.createElement('p');
+    chatTitle.className = 'board-request-revealed-title';
+    chatTitle.textContent = s().adminChatSnapshotTitle;
+    card.appendChild(chatTitle);
+    const chatBox = document.createElement('div');
+    chatBox.className = 'board-admin-report-chat';
+    report.chatMessages.forEach((m) => {
+      const line = document.createElement('p');
+      line.textContent = `[${m.sender}] ${m.text}`;
+      chatBox.appendChild(line);
+    });
+    card.appendChild(chatBox);
+  }
+
+  const handledLabel = document.createElement('label');
+  handledLabel.className = 'board-admin-report-handled-toggle';
+  const handledCheckbox = document.createElement('input');
+  handledCheckbox.type = 'checkbox';
+  handledCheckbox.checked = !!report.handled;
+  handledCheckbox.addEventListener('change', async () => {
+    try {
+      await updateDoc(doc(db, 'friendBoardReports', report.id), { handled: handledCheckbox.checked });
+    } catch (e) {
+      console.error('[board] mark report handled failed', e);
+      alert(s().reportFail);
+      handledCheckbox.checked = !handledCheckbox.checked;
+    }
+  });
+  handledLabel.appendChild(handledCheckbox);
+  handledLabel.appendChild(document.createTextNode(s().adminMarkHandled));
+  card.appendChild(handledLabel);
+
+  return card;
+}
+
 // 配列なら選択値のいずれかと重なるか、真偽値なら'yes'選択時のみtrue必須、
 // それ以外(文字列)は選択値に含まれるかを見る。
 function matchesFieldFilter(value, checkedValues) {
@@ -2452,6 +2559,8 @@ async function init() {
   if (getAuthUid() === ADMIN_UID) {
     const infoModal = document.getElementById('info-modal');
     if (infoModal) infoModal.style.display = 'flex';
+    document.getElementById('tab-btn-admin')?.classList.remove('hidden');
+    startAdminReportsListener();
   }
   renderSearchFilterBar();
   populateNumberAndTimeSelects();
