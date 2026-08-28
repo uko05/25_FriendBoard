@@ -332,6 +332,11 @@ function updatePlayStylesOtherEnabled() {
   if (row) row.classList.toggle('hidden', !enabled);
   if (playStylesOtherInput && !enabled) playStylesOtherInput.value = '';
 }
+// 「交流用Discordサーバーで複数人でやりたい」を選んだ時だけDiscordアイコンを表示する
+function updateDiscordServerLinkVisibility() {
+  const wrap = document.getElementById('discord-server-link-wrap');
+  if (wrap) wrap.classList.toggle('hidden', !getCheckboxValues('friendPreference').includes('discordServer'));
+}
 // マルチ頻度が「要相談」のときだけ詳細入力欄を表示する(曜日単位のときは対象外)
 function updateMultiFrequencyNoteEnabled() {
   const row = document.getElementById('row-multiFrequencyNote');
@@ -351,6 +356,7 @@ document.getElementById('group-vc')?.addEventListener('change', () => {
   updateVcNoteEnabled();
 });
 document.getElementById('group-playStyles')?.addEventListener('change', updatePlayStylesOtherEnabled);
+document.getElementById('group-friendPreference')?.addEventListener('change', updateDiscordServerLinkVisibility);
 multiFrequencyInput?.addEventListener('change', updateMultiFrequencyNoteEnabled);
 multiFrequencyByDayInput?.addEventListener('change', updateMultiFrequencyByDayVisibility);
 // 「曜日単位」チェックで、平日/休日それぞれ単一の時間帯入力と曜日別の入力を切り替える
@@ -519,6 +525,7 @@ function fillFormFromProfile() {
   setCheckboxValues('platforms', store.platforms);
   setCheckboxValues('playStyles', store.playStyles);
   setCheckboxValues('friendPreference', store.friendPreference);
+  updateDiscordServerLinkVisibility();
   updateVcExtraGroupVisibility();
   updateVcNoteEnabled();
   updatePlayStylesOtherEnabled();
@@ -740,6 +747,8 @@ function saveDraft() {
   }
 }
 draftSaveBtn?.addEventListener('click', saveDraft);
+// Discordサーバーへ移動する前に、入力内容を一時保存しておく(離脱で消えないように)
+document.getElementById('discord-server-link')?.addEventListener('click', () => saveDraft());
 
 // ===== 未保存の変更があるまま離脱しようとしたら警告する =====
 // 「保存する」「一時保存」どちらも済ませていない入力・選択の変更をformDirtyで追跡し、

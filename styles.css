@@ -791,6 +791,22 @@ body.portal-page {
   flex-wrap: wrap;
   gap: 8px 16px;
 }
+
+.board-discord-server-link {
+  margin-top: 8px;
+}
+.board-discord-server-link a {
+  display: inline-flex;
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+.board-discord-server-link a:hover { opacity: 1; }
+.board-discord-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
 .board-radio-group label,
 .board-checkbox-group label,
 .board-single-checkbox {

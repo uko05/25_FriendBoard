@@ -207,9 +207,9 @@ const OPTION_LABELS = {
     anyGender: { ja: '男女問わずフレンドがほしい', en: "Gender doesn't matter" },
     wantPartner: { ja: '恋人がほしい', en: 'Looking for a romantic partner' },
     wantOshiFriend: { ja: '推し活友達がほしい', en: 'Looking for a fellow fan friend' },
-    chatOnly: { ja: 'マルチしない雑談通話でも可', en: 'OK with just chatting, no multiplayer' },
     vcNotNeeded: { ja: 'VCなしでも大丈夫', en: 'OK without VC' },
-    workCallOk: { ja: '作業通話だけの参加でもOK', en: 'OK with just hanging out on call without playing' },
+    workCallOk: { ja: '作業通話だけでもOK', en: 'OK with just hanging out on call' },
+    discordServer: { ja: '交流用Discordサーバーで複数人でやりたい', en: 'Want to hang out as a group on our social Discord server' },
   },
 };
 
@@ -322,8 +322,8 @@ export function playStyleValueMatchKind(myValues, otherValue) {
 // myPrefs: 自分のfriendPreference配列, myGender: 自分の性別
 // candidate: 相手側の公開フィールド一式相当のオブジェクト(gender/vc/friendPreferenceを含む)
 // 判定できる項目が1つも無ければnullを返す(マッチ度を表示しない)。
-// 「男女問わず」「マルチしない雑談通話でも可」「VCなしでも大丈夫」は制限を課さない
-// 宣言のみの項目なので採点対象にしない。
+// 「男女問わず」「VCなしでも大丈夫」「作業通話だけでもOK」「交流用Discord
+// サーバーで複数人でやりたい」は制限を課さない宣言のみの項目なので採点対象にしない。
 export function computeFriendMatch(myPrefs, myGender, candidate) {
   if (!Array.isArray(myPrefs) || !myPrefs.length) return null;
   const candidatePrefs = Array.isArray(candidate.friendPreference) ? candidate.friendPreference : [];
@@ -343,7 +343,7 @@ export function computeFriendMatch(myPrefs, myGender, candidate) {
       if (candidatePrefs.includes(pref)) matched++;
       return;
     }
-    // anyGender / chatOnly / vcNotNeeded は宣言のみのため採点しない
+    // anyGender / vcNotNeeded / workCallOk / discordServer は宣言のみのため採点しない
   });
 
   if (total === 0) return null;

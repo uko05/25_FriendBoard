@@ -113,7 +113,7 @@ const PLAYSTYLE_POOL = [
   'canHelpExplore', 'canHelpBuild', 'canHelpDomain', 'canHelpIllusive', 'canHelpAchievements', 'canHelpQuestions',
   'needExploreHelp', 'needFarmHelp', 'needDomainHelp', 'needIllusiveHelp', 'wantAchievements', 'needQuestions',
 ];
-const FRIEND_PREF_POOL = ['sameGender', 'anyGender', 'wantPartner', 'wantOshiFriend', 'chatOnly', 'vcNotNeeded', 'workCallOk'];
+const FRIEND_PREF_POOL = ['sameGender', 'anyGender', 'wantPartner', 'wantOshiFriend', 'vcNotNeeded', 'workCallOk', 'discordServer'];
 const SNS_HANDLE_POOL = ['@genshin_tabi', '@uho_uho77', '@teyvat_life', '@moko_prpr', '@travelerJP'];
 
 function pick(pool, n, offset) {

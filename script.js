@@ -219,9 +219,9 @@ document.addEventListener("DOMContentLoaded", () => {
       prefAnyGender: "男女問わずフレンドがほしい",
       prefWantPartner: "恋人がほしい",
       prefWantOshiFriend: "推し活友達がほしい",
-      prefChatOnly: "マルチしない雑談通話でも可",
       prefVcNotNeeded: "VCなしでも大丈夫",
-      prefWorkCallOk: "作業通話だけの参加でもOK",
+      prefWorkCallOk: "作業通話だけでもOK",
+      prefDiscordServer: "交流用Discordサーバーで複数人でやりたい",
 
       infoModalTitle: "このサイトは承認制です",
       infoModalBody1: "このサイトは一般的なフレンド募集とは異なり、相手に承認されないとUIDなどの公開されません。",
@@ -428,9 +428,9 @@ document.addEventListener("DOMContentLoaded", () => {
       prefAnyGender: "Gender doesn't matter",
       prefWantPartner: "Looking for a romantic partner",
       prefWantOshiFriend: "Looking for a fellow fan friend",
-      prefChatOnly: "OK with just chatting, no multiplayer",
       prefVcNotNeeded: "OK without VC",
-      prefWorkCallOk: "OK with just hanging out on call without playing",
+      prefWorkCallOk: "OK with just hanging out on call",
+      prefDiscordServer: "Want to hang out as a group on our social Discord server",
 
       infoModalTitle: "This site is approval-based",
       infoModalBody1: "Unlike typical friend-recruitment sites, your UID and other details are never shown to someone unless they've been approved by you.",
