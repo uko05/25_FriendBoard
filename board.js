@@ -64,6 +64,7 @@ const STR = {
     adminMarkHandled: '対応済みにする',
     postOk: '保存しました！',
     postFail: '保存に失敗しました。時間をおいて再度お試しください。',
+    postFailDraftSaved: '保存に失敗しました。入力内容は一時保存したので、時間をおいて再度お試しください。',
     draftSaved: '一時保存しました（この端末のみ）',
     draftSaveFail: '一時保存に失敗しました。',
     deleteFail: '取り下げに失敗しました。',
@@ -133,6 +134,7 @@ const STR = {
     adminMarkHandled: 'Mark handled',
     postOk: 'Saved!',
     postFail: 'Failed to save. Please try again later.',
+    postFailDraftSaved: 'Failed to save. Your input was saved as a draft on this device — please try again later.',
     draftSaved: 'Draft saved (this device only)',
     draftSaveFail: 'Failed to save draft.',
     deleteFail: 'Failed to withdraw.',
@@ -954,7 +956,17 @@ postForm?.addEventListener('submit', async (e) => {
     }
   } catch (err) {
     console.error('[board] post failed', err);
-    showMsg(postFormMsg, s().postFail, true);
+    // Firestoreへの保存自体が失敗した場合、入力内容が消えてしまわないよう
+    // この端末への一時保存(下書き)だけは試みておく。
+    try {
+      const draft = collectFormValues();
+      draft.intro = commentInput?.value.trim() || '';
+      localStorage.setItem(DRAFT_LS_KEY, JSON.stringify(draft));
+      showMsg(postFormMsg, s().postFailDraftSaved, true);
+    } catch (draftErr) {
+      console.error('[board] fallback draft save failed', draftErr);
+      showMsg(postFormMsg, s().postFail, true);
+    }
   } finally {
     postSubmitBtn.disabled = false;
   }
