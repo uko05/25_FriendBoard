@@ -190,22 +190,17 @@ function renderChatThread(container, messages) {
 const CHAT_DAILY_LIMIT_REGISTERED = 5;
 const CHAT_DAILY_LIMIT_UNREGISTERED = 1;
 
-// うーこポイント引き換えサイト(08_UPoint)で交換した「+1」の特典を、当日分だけ上乗せする。
+// うーこポイント引き換えサイト(08_UPoint)で交換した「チャット送信可能数+5」は、
+// 交換した分だけ永続的に上乗せされ続ける(日付リセットは無い、何回でも交換できる)。
 // 14_GenshinOmikujiと同じFirestoreプロジェクトのomikujiUsersドキュメントを直接見に行く
-// (sitePerks.friendBoard = { extraChatToday, forDate })。別タブで交換してもリアルタイムに反映される。
-let _extraChatToday = 0;
-
-function todayDateStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+// (sitePerks.friendBoard.permanentExtraChat)。別タブで交換してもリアルタイムに反映される。
+let _extraChatPermanent = 0;
 
 function startSitePerksListener(userId) {
   onSnapshot(doc(db, 'omikujiUsers', userId), (snap) => {
-    const perk = snap.data()?.sitePerks?.friendBoard;
-    const nowExtra = (perk && perk.forDate === todayDateStr()) ? (perk.extraChatToday || 0) : 0;
-    if (nowExtra !== _extraChatToday) {
-      _extraChatToday = nowExtra;
+    const nowExtra = snap.data()?.sitePerks?.friendBoard?.permanentExtraChat || 0;
+    if (nowExtra !== _extraChatPermanent) {
+      _extraChatPermanent = nowExtra;
       renderReceivedList();
       renderSentList();
     }
@@ -214,7 +209,7 @@ function startSitePerksListener(userId) {
 
 function myChatDailyLimit() {
   const base = (_getAuthUid && _getAuthUid()) ? CHAT_DAILY_LIMIT_REGISTERED : CHAT_DAILY_LIMIT_UNREGISTERED;
-  return base + _extraChatToday;
+  return base + _extraChatPermanent;
 }
 
 function startOfTodayMs() {
