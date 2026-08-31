@@ -57,8 +57,8 @@ const STR = {
     chatComposerPlaceholder: 'メッセージを入力...',
     chatSendBtn: '送信',
     chatRemainingNote: (n) => `本日あと${n}通送れます`,
-    chatDailyLimitReachedRegistered: '本日のやり取り上限（20通）に達しました。0時になるとまた送れるようになります',
-    chatDailyLimitReachedUnregistered: '未登録の場合は1日1通までです。アカウント登録すると1日20通まで送れるようになります',
+    chatDailyLimitReachedRegistered: (limit) => `本日のやり取り上限（${limit}通）に達しました。0時になるとまた送れるようになります`,
+    chatDailyLimitReachedUnregistered: '未登録の場合は1日1通までです。アカウント登録すると1日5通まで送れるようになります',
     chatRegisterLinkBtn: 'アカウント登録へ',
   },
   en: {
@@ -99,8 +99,8 @@ const STR = {
     chatComposerPlaceholder: 'Type a message...',
     chatSendBtn: 'Send',
     chatRemainingNote: (n) => `${n} message${n === 1 ? '' : 's'} left today`,
-    chatDailyLimitReachedRegistered: "You've reached today's limit (20 messages). It resets at midnight and you can send more then.",
-    chatDailyLimitReachedUnregistered: 'Without an account you can only send 1 message per day. Register an account to send up to 20 per day.',
+    chatDailyLimitReachedRegistered: (limit) => `You've reached today's limit (${limit} messages). It resets at midnight and you can send more then.`,
+    chatDailyLimitReachedUnregistered: 'Without an account you can only send 1 message per day. Register an account to send up to 5 per day.',
     chatRegisterLinkBtn: 'Go to Account Center',
   },
 };
@@ -185,13 +185,36 @@ function renderChatThread(container, messages) {
 
 // 承認後のチャットは、LINEのように交互発言のルールなく自由に送れる。ただし
 // 1日に送れる通数には上限があり、アカウント登録しているかどうかで変わる
-// (未登録1通/日、登録済み20通/日)。登録を後押しする狙いなので、会話の途中で
+// (未登録1通/日、登録済み5通/日)。登録を後押しする狙いなので、会話の途中で
 // 登録すれば即座に上限が上がり、その日のうちに続きを送れるようになる。
-const CHAT_DAILY_LIMIT_REGISTERED = 20;
+const CHAT_DAILY_LIMIT_REGISTERED = 5;
 const CHAT_DAILY_LIMIT_UNREGISTERED = 1;
 
+// うーこポイント引き換えサイト(08_UPoint)で交換した「+1」の特典を、当日分だけ上乗せする。
+// 14_GenshinOmikujiと同じFirestoreプロジェクトのomikujiUsersドキュメントを直接見に行く
+// (sitePerks.friendBoard = { extraChatToday, forDate })。別タブで交換してもリアルタイムに反映される。
+let _extraChatToday = 0;
+
+function todayDateStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function startSitePerksListener(userId) {
+  onSnapshot(doc(db, 'omikujiUsers', userId), (snap) => {
+    const perk = snap.data()?.sitePerks?.friendBoard;
+    const nowExtra = (perk && perk.forDate === todayDateStr()) ? (perk.extraChatToday || 0) : 0;
+    if (nowExtra !== _extraChatToday) {
+      _extraChatToday = nowExtra;
+      renderReceivedList();
+      renderSentList();
+    }
+  }, (e) => console.error('[applications] site perks listen failed', e));
+}
+
 function myChatDailyLimit() {
-  return (_getAuthUid && _getAuthUid()) ? CHAT_DAILY_LIMIT_REGISTERED : CHAT_DAILY_LIMIT_UNREGISTERED;
+  const base = (_getAuthUid && _getAuthUid()) ? CHAT_DAILY_LIMIT_REGISTERED : CHAT_DAILY_LIMIT_UNREGISTERED;
+  return base + _extraChatToday;
 }
 
 function startOfTodayMs() {
@@ -219,7 +242,7 @@ function renderChatComposer(container, app, sender) {
     const note = document.createElement('p');
     note.className = 'board-chat-note';
     note.textContent = (_getAuthUid && _getAuthUid())
-      ? s().chatDailyLimitReachedRegistered
+      ? s().chatDailyLimitReachedRegistered(limit)
       : s().chatDailyLimitReachedUnregistered;
     container.appendChild(note);
     if (!(_getAuthUid && _getAuthUid())) {
@@ -1197,6 +1220,7 @@ export function initApplications({ getUserId, getAuthUid, onSentChange }) {
   loadMyAvatar(userId);
   initBlocks({ getUserId });
   onBlocksChange(() => { renderReceivedList(); renderSentList(); });
+  startSitePerksListener(userId);
   startReceivedListener(userId);
   startSentListener(userId);
 }
