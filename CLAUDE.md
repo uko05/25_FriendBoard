@@ -42,9 +42,14 @@
 - 承認後のチャットは`chatMessages`配列に追記していく方式で、LINEのように
   交互発言のルールなく自由に送れる（2026-08-28以前は最大10往復・交互発言必須の
   「ラリー制度」だったが廃止した）。代わりに1日あたりの送信数に上限があり、
-  アカウント登録済みかどうかで変わる（未登録1通/日・登録済み20通/日,
-  `CHAT_DAILY_LIMIT_UNREGISTERED`/`CHAT_DAILY_LIMIT_REGISTERED`）。登録を
-  後押しする狙いなので、会話の途中で登録すればその日のうちに上限が上がる。
+  アカウント登録済みかどうかで変わる（未登録1通/日・登録済み5通/日,
+  `CHAT_DAILY_LIMIT_UNREGISTERED`/`CHAT_DAILY_LIMIT_REGISTERED`。v12.0で
+  登録済み分は20→5に引き下げ済み）。登録を後押しする狙いなので、会話の
+  途中で登録すればその日のうちに上限が上がる。さらに08_UPoint（うーこ
+  ポイント交換所）で交換した「チャット送信可能数+5」は
+  `omikujiUsers/{userId}.sitePerks.friendBoard.permanentExtraChat`として
+  永続加算される（日付リセット無し、何回でも交換可、`myChatDailyLimit()`が
+  base+この値を返す。`applications.js`の`startSitePerksListener`）。
   「今日」の判定は各メッセージの`at`(Date.now())をその場のローカル日付の
   0時と比較して行う（`startOfTodayMs()`）。`at`を持たない古いメッセージは
   「今日」に含めない。
@@ -64,8 +69,12 @@
   再描画をフックできる。
 - **重要**: ここでの制御はすべてクライアント側の表示フィルター
   （`isBlocked()`をリスト描画時に見ているだけ）であり、Firestoreの
-  セキュリティルールでの強制ではない（このリポジトリにはルールファイル自体が
-  無く、Firebaseコンソール側で管理されている）。悪意を持って直接Firestoreを
+  セキュリティルールでの強制ではない。ルールファイル自体はBakatare01
+  リポジトリ（`genshin-bakatare01`プロジェクト、共有Firebase）側で管理されて
+  おり、このリポジトリには無い。ただしそのルールでも`friendBoardProfiles`/
+  `friendBoardPosts`/`friendBoardApplications`は`allow read, write: if true`
+  で意図的に全開放されている（匿名運用のサイト群方針に合わせたもので、
+  console側の場当たり運用ではなく明示的な設計）。悪意を持って直接Firestoreを
   叩けば理論上は回避できるため、完全なセキュリティ境界ではなく、あくまで
   通常利用時の摩擦（嫌がらせの抑止）としての機能と捉えること。
 - 通報は`friendBoardReports`へ`addDoc`するだけ（`reports.js`の`reportUser`）。
