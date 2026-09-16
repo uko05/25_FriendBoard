@@ -470,9 +470,9 @@ function fillFormFromProfile() {
   if (tiktokInput && store.tiktokId) tiktokInput.value = store.tiktokId;
   if (lineInput && store.lineId) lineInput.value = store.lineId;
   if (instagramInput && store.instagramId) instagramInput.value = store.instagramId;
-  if (jokingOkInput) jokingOkInput.value = store.jokingOk ? 'yes' : '';
-  if (yuriOkInput) yuriOkInput.value = store.yuriOk ? 'yes' : '';
-  if (fujoshiOkInput) fujoshiOkInput.value = store.fujoshiOk ? 'yes' : '';
+  if (jokingOkInput) jokingOkInput.value = store.jokingOk || '';
+  if (yuriOkInput) yuriOkInput.value = store.yuriOk || '';
+  if (fujoshiOkInput) fujoshiOkInput.value = store.fujoshiOk || '';
   if (roughTalkInput) roughTalkInput.value = store.roughTalk || '';
   if (sameOshiRejectInput) sameOshiRejectInput.value = store.sameOshiReject || '';
   if (vcNoteInput && store.vcNote) vcNoteInput.value = store.vcNote;
@@ -828,9 +828,9 @@ function collectFormValues() {
     vcLineId,
     vcAppsOtherText,
     casualOk: casualOkInput?.value || '',
-    jokingOk: jokingOkInput?.value === 'yes',
-    yuriOk: yuriOkInput?.value === 'yes',
-    fujoshiOk: fujoshiOkInput?.value === 'yes',
+    jokingOk: jokingOkInput?.value || '',
+    yuriOk: yuriOkInput?.value || '',
+    fujoshiOk: fujoshiOkInput?.value || '',
     roughTalk: roughTalkInput?.value || '',
     sameOshiReject: sameOshiRejectInput?.value || '',
     sameOshiChars: sameOshiRejectYes ? store.sameOshiChars : [],
@@ -1676,7 +1676,9 @@ let latestSearchPosts = [];
 
 // ===== さがす一覧のフィルター =====
 // OPTION_LABELSに選択肢が無い真偽値項目は、チェックひとつ("yes")のみのフィルターにする。
-const BOOLEAN_ONLY_FILTER_FIELDS = ['jokingOk', 'yuriOk', 'fujoshiOk', 'ageGroup', 'showGenshinRanking', 'showGenshinCheck'];
+// jokingOk/yuriOk/fujoshiOkはyes/either/no(OPTION_LABELSに定義済み)を持つ通常の選択式項目なので、
+// ここには含めない(fieldOptions経由でyes/either/noの3択フィルターになる)。
+const BOOLEAN_ONLY_FILTER_FIELDS = ['ageGroup', 'showGenshinRanking', 'showGenshinCheck'];
 function booleanFilterLabel(key, lang) {
   // ageGroupは「年齢」だけだと分かりにくいため、実際の表示文言(成人済)を使う
   if (key === 'ageGroup') return formatFieldValue('ageGroup', true, lang);

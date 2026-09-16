@@ -108,9 +108,9 @@ const FIELD_LABELS = {
   weekdayTimes: { ja: '平日のマルチ可能時間帯', en: 'Weekday availability' },
   weekendTimes: { ja: '休日のマルチ可能時間帯', en: 'Weekend availability' },
   casualOk: { ja: 'タメ口', en: 'Casual speech' },
-  jokingOk: { ja: 'おふざけOK', en: 'Joking around OK' },
-  yuriOk: { ja: '百合いけます', en: 'OK with yuri (girls’ love)' },
-  fujoshiOk: { ja: '腐いけます', en: 'OK with BL (boys’ love)' },
+  jokingOk: { ja: 'おふざけ', en: 'Joking around' },
+  yuriOk: { ja: '百合', en: 'Yuri' },
+  fujoshiOk: { ja: '腐', en: 'BL' },
   roughTalk: { ja: '暴言', en: 'Rough language' },
   sameOshiReject: { ja: '同担拒否', en: 'Same-favorite rejection' },
   sameOshiChars: { ja: '同担拒否キャラ', en: 'Rejected characters' },
@@ -175,8 +175,24 @@ const OPTION_LABELS = {
     either: { ja: 'どっちでもOK', en: 'Either is fine' },
     no: { ja: 'タメ口なし', en: 'No casual speech' },
   },
+  jokingOk: {
+    yes: { ja: 'おふざけします', en: 'I like to joke around' },
+    either: { ja: 'おふざけどちらでも', en: 'Either way with joking' },
+    no: { ja: 'おふざけ無理です', en: 'Not into joking around' },
+  },
+  yuriOk: {
+    yes: { ja: '百合いけます', en: 'Into yuri (girls’ love)' },
+    either: { ja: '百合どちらでも', en: 'Either way with yuri' },
+    no: { ja: '百合無理です', en: 'Not into yuri' },
+  },
+  fujoshiOk: {
+    yes: { ja: '腐いけます', en: 'Into BL (boys’ love)' },
+    either: { ja: '腐どちらでも', en: 'Either way with BL' },
+    no: { ja: '腐無理です', en: 'Not into BL' },
+  },
   roughTalk: {
     no: { ja: '暴言NG', en: 'No rough language' },
+    either: { ja: '暴言どちらでも', en: 'Either way with rough language' },
     yes: { ja: '暴言出ます', en: 'I use rough language' },
   },
   sameOshiReject: {
@@ -354,15 +370,12 @@ export function computeFriendMatch(myPrefs, myGender, candidate) {
 // oshiCharsだけはアイコン画像なのでここでは扱わず、呼び出し側でアイコン表示する。
 export function formatFieldValue(key, value, lang) {
   if (isEmptyValue(value)) return '';
-  if (key === 'jokingOk' || key === 'yuriOk' || key === 'fujoshiOk') {
-    return value ? 'OK' : '';
-  }
   if (key === 'ageGroup') {
     return value ? (lang === 'en' ? "Adult (confirmed)" : '成人済') : '';
   }
-  if (key === 'sameOshiReject' && typeof value === 'boolean') {
-    // 過去は真偽値で保存されていたため(まだ再保存していない他ユーザーの投稿に残る)、
-    // ここでも新しい選択肢の文言に変換して表示する
+  if ((key === 'jokingOk' || key === 'yuriOk' || key === 'fujoshiOk' || key === 'sameOshiReject') && typeof value === 'boolean') {
+    // 過去は真偽値(OK/未OKの2択)で保存されていたため(まだ再保存していない他ユーザーの投稿に残る)、
+    // ここでも新しい選択肢(yes/either/no)の文言に変換して表示する
     return value ? optionLabel(key, 'yes', lang) : '';
   }
   if (key === 'adventureRank') return String(value);
