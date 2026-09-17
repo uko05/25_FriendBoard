@@ -405,6 +405,34 @@ export function computeFriendMatch(myPrefs, myGender, candidate) {
   return Math.round((matched / total) * 100);
 }
 
+// prefsの中の同性/異性/男女問わずの指定から、gender(自分)の人がotherGenderの人を
+// 受け入れるかどうかを判定する。以下はすべて「制限なし(=受け入れる)」として扱う:
+//  - 3つとも未選択(何もチェックしていない)
+//  - 男女問わずを選択している
+//  - 同性と異性を両方選択している(矛盾した組み合わせなので、男女問わずと同義とみなす)
+// otherGenderが未設定(相手が性別を非公開にしている等)の場合も、判定不能なので
+// 誤って隠さないよう受け入れる側に倒す。
+function genderPreferenceAllows(prefs, otherGender, myGender) {
+  const wantsSame = prefs.includes('sameGender');
+  const wantsOpposite = prefs.includes('oppositeGender');
+  if (!otherGender || prefs.includes('anyGender') || (wantsSame && wantsOpposite) || (!wantsSame && !wantsOpposite)) return true;
+  if (wantsSame) return otherGender === myGender;
+  return otherGender !== myGender; // wantsOpposite
+}
+
+// 「同性/異性/男女問わずのフレンドがほしい」を、さがす一覧の表示可否を決める
+// ハードフィルターとして使う(computeFriendMatchは並び順への影響のみで除外はしない)。
+// 双方向判定: 自分の希望×相手の性別 と 相手の希望×自分の性別 の両方を満たす人だけ通す
+// (例: 自分が「同性のフレンドがほしい」を選んでいても、相手が「異性のフレンドが
+// ほしい」を選んでいれば表示されない)。
+// candidate: 相手側の公開フィールド一式相当のオブジェクト(gender/friendPreferenceを含む)
+export function matchesGenderPreference(myPrefs, myGender, candidate) {
+  const mine = Array.isArray(myPrefs) ? myPrefs : [];
+  const theirs = Array.isArray(candidate.friendPreference) ? candidate.friendPreference : [];
+  return genderPreferenceAllows(mine, candidate.gender, myGender)
+    && genderPreferenceAllows(theirs, myGender, candidate.gender);
+}
+
 // 保存されている値(文字列/配列/真偽値/数値/{start,end})を画面表示用の文字列に整形する。
 // oshiCharsだけはアイコン画像なのでここでは扱わず、呼び出し側でアイコン表示する。
 export function formatFieldValue(key, value, lang) {

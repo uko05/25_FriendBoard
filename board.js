@@ -9,7 +9,7 @@ import { initBlocks, isBlocked, onBlocksChange, blockUser, unblockUser, blockedB
 import { reportUser } from './reports.js';
 import {
   VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
-  fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch,
+  fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch, matchesGenderPreference,
   fieldMatchKind, playStyleValueMatchKind, GENSHIN_ICON_BASE,
 } from './fields.js';
 import { matchesFilters, renderFilterBar } from './filterBar.js';
@@ -1941,7 +1941,13 @@ function renderSearchList() {
   const myUserId = getUserId();
 
   const filtered = latestSearchPosts
-    .filter((post) => post.userId === myUserId || (post.publicFields?.server === store.server && matchesSearchFilters(post) && isPostFresh(post) && !isBlocked(post.userId)))
+    .filter((post) => post.userId === myUserId || (
+      post.publicFields?.server === store.server
+      && matchesSearchFilters(post)
+      && matchesGenderPreference(store.friendPreference, store.gender, post.publicFields || {})
+      && isPostFresh(post)
+      && !isBlocked(post.userId)
+    ))
     .map((post) => ({
       post,
       // 自分の「どういうフレンドがほしい？」と相手の公開フィールドを突き合わせてマッチ度を算出し、
