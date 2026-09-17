@@ -109,7 +109,35 @@
   各書き込み処理でのチェックが必要になる（未実装、将来必要になったら検討）。
 - ユーザー本人からは「ADMIN_UIDというよりは管理者ロール」という表現の方が
   実態に近いという指摘があった（今は単一UIDのハードコードだが、将来複数
-  管理者が必要になったらロールベースへの変更を検討すること）。
+  管理者が必要になったらロールベースへの変更を検討すること）。v12.7で
+  `ADMIN_UID`は`board.js`から`userData.js`へ移動し`export`した
+  （`applications.js`もインポートして使うため。`board.js`が`applications.js`を
+  importする関係上、逆方向のimportは循環参照になるので不可）。
+
+## フィルターバー（`filterBar.js`, v12.7追加）
+- 「さがす」一覧（board.js）と「届いた申請」一覧（applications.js）は、
+  フィルターのフィールド構成を意図的に完全一致させている
+  （vc/playStyles(手伝います/手伝ってください込み)/inviteStyle/vcApps/属性系 +
+  管理者専用の追加フィールド）。この共通ロジックを`filterBar.js`
+  （`matchesFilters`/`renderFilterBar`）に集約しているので、フィルター対象の
+  フィールドを増減する時は両画面に影響する前提で触ること。個別の画面だけ
+  変えたい場合は`filterBar.js`を分岐させず、呼び出し側で完結させる方法を
+  先に検討する。
+- 管理者専用フィルター（gender/ageGroup/platforms/spending/multiFrequency/
+  showGenshinRanking/showGenshinCheck/friendPreference）は、`friendBoardProfiles`
+  の生データ（非表示項目も含む）をuserId単位で遅延取得するキャッシュ
+  （board.jsの`adminProfileCache`、applications.jsの`adminApplicantProfileCache`。
+  それぞれ独立したMapで、共有はしていない）を通して判定する。取得タイミングは
+  「一覧が絞り込まれる前の生データ」に対して行うこと
+  （`onSnapshot`のコールバック内で`ensureAdmin*ProfilesLoaded(絞り込み前の配列)`
+  を呼ぶ。絞り込み後の配列を渡すと、キャッシュが空の初回描画時に管理者フィルターの
+  対象外フィールドを持つユーザーが誤って除外され、その人のプロフィール取得
+  自体が発生せず一覧に戻ってこない不具合になる）。
+- 届いた申請一覧のフィルターは`app.applicantFields`（申請時点で公開されていた
+  項目、さがす一覧の`post.publicFields`相当）を対象にする。「承認後に公開」の
+  項目（`app.applicantSecretFields`）はそもそも未承認の間はここに無いため
+  フィルター対象外だが、承認済みの申請は「やり取り」タブに移りこの一覧自体の
+  対象外になるので実害はない。
 
 ## QRコード生成の注意（board.js, `makeQrCode`）
 - `qrcode-generator`（kazuhikoarase）ライブラリは `renderTo2dContext` と

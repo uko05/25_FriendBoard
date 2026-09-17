@@ -254,6 +254,23 @@ export function fieldOptions(key, lang) {
   return Object.keys(group).map((value) => ({ value, label: optionLabel(key, value, lang) }));
 }
 
+// フィルターUI用。OPTION_LABELSに選択肢が無い真偽値項目は、チェックひとつ("yes")のみのフィルターにする。
+// jokingOk/yuriOk/fujoshiOkはyes/either/no(OPTION_LABELSに定義済み)を持つ通常の選択式項目なので、
+// ここには含めない(fieldOptions経由でyes/either/noの3択フィルターになる)。
+// さがす一覧・届いた申請一覧のフィルターバーで共通利用する(filterBar.js参照)。
+const BOOLEAN_ONLY_FILTER_FIELDS = ['ageGroup', 'showGenshinRanking', 'showGenshinCheck'];
+function booleanFilterLabel(key, lang) {
+  // ageGroupは「年齢」だけだと分かりにくいため、実際の表示文言(成人済)を使う
+  if (key === 'ageGroup') return formatFieldValue('ageGroup', true, lang);
+  return fieldLabel(key, lang);
+}
+export function filterFieldOptions(key, lang) {
+  if (BOOLEAN_ONLY_FILTER_FIELDS.includes(key)) {
+    return [{ value: 'yes', label: booleanFilterLabel(key, lang) }];
+  }
+  return fieldOptions(key, lang);
+}
+
 function isEmptyValue(v) {
   if (Array.isArray(v)) return v.length === 0;
   if (v && typeof v === 'object') {

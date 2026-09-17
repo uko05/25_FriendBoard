@@ -4,7 +4,7 @@
 // 通知トーストは 14_GenshinOmikuji/feed.js の いいね通知(showLikeToast) と同じ仕組み。
 
 import { db } from './firebaseConfig.js';
-import { store } from './userData.js';
+import { store, ADMIN_UID } from './userData.js';
 import { avatarUrl, getMyAvatar } from './avatar.js';
 import { initBlocks, isBlocked, onBlocksChange, blockUser } from './blocks.js';
 import { reportUser } from './reports.js';
@@ -13,6 +13,7 @@ import {
   fieldLabel, formatFieldValue, buildPostFieldBuckets,
   fieldMatchKind, playStyleValueMatchKind,
 } from './fields.js';
+import { matchesFilters, renderFilterBar } from './filterBar.js';
 import {
   collection, addDoc, updateDoc, doc, getDoc, onSnapshot,
   query, where, orderBy, serverTimestamp,
@@ -49,6 +50,10 @@ const STR = {
     groupTitles: { basic: '基本情報', style: 'あなたについて', contact: '連絡・時間帯', voice: 'ボイスチャット', sns: 'つながれるSNS' },
     playStyleOfferTitle: '手伝います！',
     playStyleRequestTitle: '手伝ってください！',
+    filterBarTitle: '絞り込み',
+    filterResetBtn: 'リセット',
+    filterGroupAttrTitle: 'あなたの追加属性',
+    filterAdminTitle: '管理者用フィルター(非表示項目も含む)',
     uidLabel: 'UID',
     originalPostTitle: '元の投稿',
     originalPostGone: 'この投稿は取り下げられたか見つかりませんでした。',
@@ -58,7 +63,7 @@ const STR = {
     chatSendBtn: '送信',
     chatRemainingNote: (n) => `本日あと${n}通送れます`,
     chatDailyLimitReachedRegistered: (limit) => `本日のやり取り上限（${limit}通）に達しました。0時になるとまた送れるようになります`,
-    chatDailyLimitReachedUnregistered: '未登録の場合は1日1通までです。アカウント登録すると1日5通まで送れるようになります',
+    chatDailyLimitReachedUnregistered: (limit) => `未登録の場合は1日1通までです。アカウント登録すると1日${limit}通まで送れるようになります`,
     chatRegisterLinkBtn: 'アカウント登録へ',
   },
   en: {
@@ -91,6 +96,10 @@ const STR = {
     groupTitles: { basic: 'Basic Info', style: 'About You', contact: 'Contact & Availability', voice: 'Voice Chat', sns: 'SNS' },
     playStyleOfferTitle: 'I can help with...',
     playStyleRequestTitle: 'Please help me with...',
+    filterBarTitle: 'Filter',
+    filterResetBtn: 'Reset',
+    filterGroupAttrTitle: 'Additional traits',
+    filterAdminTitle: 'Admin filters (includes hidden fields)',
     uidLabel: 'UID',
     originalPostTitle: 'Original post',
     originalPostGone: 'This post was withdrawn or could not be found.',
@@ -100,7 +109,7 @@ const STR = {
     chatSendBtn: 'Send',
     chatRemainingNote: (n) => `${n} message${n === 1 ? '' : 's'} left today`,
     chatDailyLimitReachedRegistered: (limit) => `You've reached today's limit (${limit} messages). It resets at midnight and you can send more then.`,
-    chatDailyLimitReachedUnregistered: 'Without an account you can only send 1 message per day. Register an account to send up to 5 per day.',
+    chatDailyLimitReachedUnregistered: (limit) => `Without an account you can only send 1 message per day. Register an account to send up to ${limit} per day.`,
     chatRegisterLinkBtn: 'Go to Account Center',
   },
 };
@@ -238,7 +247,7 @@ function renderChatComposer(container, app, sender) {
     note.className = 'board-chat-note';
     note.textContent = (_getAuthUid && _getAuthUid())
       ? s().chatDailyLimitReachedRegistered(limit)
-      : s().chatDailyLimitReachedUnregistered;
+      : s().chatDailyLimitReachedUnregistered(CHAT_DAILY_LIMIT_REGISTERED);
     container.appendChild(note);
     if (!(_getAuthUid && _getAuthUid())) {
       const link = document.createElement('a');
@@ -660,6 +669,67 @@ async function sendChatMessage(app, sender, text) {
 }
 
 // ===== 届いた申請一覧（自分が募集主） =====
+
+function isAdminViewer() {
+  return !!(_getAuthUid && _getAuthUid() === ADMIN_UID);
+}
+
+// ===== 届いた申請一覧のフィルター =====
+// さがす一覧(board.js)と同じフィールド構成でフィルターできるようにする(filterBar.js参照)。
+// フィールドキー -> 選択中の値のSet。値が1つも無いフィールドは絞り込み対象外(=全件通す)。
+const receivedFilters = {};
+// フィルターは基本閉じておき、開閉状態は再描画(言語切替など)をまたいで保持する
+let receivedFilterBarOpen = false;
+// 管理者専用: applicantUserId -> friendBoardProfilesの生データ(非表示項目を含む全項目)
+const adminApplicantProfileCache = new Map();
+
+// app.applicantFields(申請時点で公開されている項目、さがす一覧のpublicFields相当)を対象に
+// フィルターする。承認後に公開の項目はここには無い(承認前提のため)が、そもそも承認済みの
+// 申請は「やり取り」タブへ移りこの一覧・フィルターの対象外になるので実害はない。
+// 管理者は非表示項目も含めてfriendBoardProfilesの生データを参照して判定する。
+function matchesReceivedFilters(app) {
+  const source = isAdminViewer()
+    ? (adminApplicantProfileCache.get(app.applicantUserId) || app.applicantFields || {})
+    : (app.applicantFields || {});
+  return matchesFilters(source, receivedFilters);
+}
+
+// 表示中の申請ぶんだけ、未取得のプロフィールを遅延取得する(コレクション全体は購読しない)。
+async function ensureAdminApplicantProfilesLoaded(apps) {
+  if (!isAdminViewer()) return;
+  const missing = [...new Set(apps.map((a) => a.applicantUserId))].filter((uid) => uid && !adminApplicantProfileCache.has(uid));
+  if (!missing.length) return;
+  await Promise.all(missing.map(async (uid) => {
+    try {
+      const snap = await getDoc(doc(db, 'friendBoardProfiles', uid));
+      adminApplicantProfileCache.set(uid, snap.exists() ? snap.data() : {});
+    } catch (e) {
+      console.warn('[applications] admin profile fetch failed', uid, e);
+    }
+  }));
+  renderReceivedList();
+}
+
+function renderReceivedFilterBar() {
+  renderFilterBar({
+    containerId: 'received-filter-bar',
+    filters: receivedFilters,
+    lang: currentLang(),
+    isAdmin: isAdminViewer(),
+    isOpen: () => receivedFilterBarOpen,
+    setOpen: (open) => { receivedFilterBarOpen = open; },
+    onChange: renderReceivedList,
+    strings: {
+      barTitle: s().filterBarTitle,
+      resetBtn: s().filterResetBtn,
+      attrGroupTitle: s().filterGroupAttrTitle,
+      offerTitle: s().playStyleOfferTitle,
+      requestTitle: s().playStyleRequestTitle,
+      adminTitle: s().filterAdminTitle,
+    },
+  });
+}
+
 // 届いた申請のうち、まだ返答していない件数(受付待ち)と、承認済みで未読メッセージが
 // あるやり取りの件数をそれぞれ算出し、申請タブ全体・各サブタブのバッジへ反映する。
 function updateAllBadges() {
@@ -686,7 +756,7 @@ function renderReceivedList() {
   const list = document.getElementById('received-list');
   if (!list) return;
   list.innerHTML = '';
-  const apps = latestReceived.filter((a) => a.status !== 'accepted' && !isBlocked(a.applicantUserId));
+  const apps = latestReceived.filter((a) => a.status !== 'accepted' && !isBlocked(a.applicantUserId) && matchesReceivedFilters(a));
   if (!apps.length) {
     const p = document.createElement('p');
     p.className = 'board-list-empty';
@@ -1148,6 +1218,7 @@ function startReceivedListener(userId) {
   onSnapshot(q, (snap) => {
     latestReceived = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderReceivedList();
+    ensureAdminApplicantProfilesLoaded(latestReceived);
 
     snap.docChanges().filter((c) => c.type === 'added').forEach((c) => {
       const app = { id: c.doc.id, ...c.doc.data() };
@@ -1202,6 +1273,7 @@ function startSentListener(userId) {
 document.querySelectorAll('input[name="lang"]').forEach((radio) => {
   radio.addEventListener('change', () => {
     setTimeout(() => {
+      renderReceivedFilterBar();
       renderReceivedList();
       renderSentList();
     }, 0);
@@ -1216,6 +1288,7 @@ export function initApplications({ getUserId, getAuthUid, onSentChange }) {
   loadMyAvatar(userId);
   initBlocks({ getUserId });
   onBlocksChange(() => { renderReceivedList(); renderSentList(); });
+  renderReceivedFilterBar();
   startSitePerksListener(userId);
   startReceivedListener(userId);
   startSentListener(userId);

@@ -18,6 +18,11 @@ import { VISIBILITY_FIELDS, defaultVisibility, normalizeVisibility } from './fie
 // (accountLinks: authUid -> omikujiUserId)がそのまま効くようになる。
 const LS_SHARED_UID = 'genshinOmikuji_userId';
 
+// 管理者判定用。board.js/applications.js両方から参照するためここで一元管理する
+// (実体は単一UIDのハードコードだが、将来複数管理者が必要になったらロールベースへの
+// 変更を検討すること。CLAUDE.md参照)。
+export const ADMIN_UID = 'UPInlRxp2eM8OI3p18UU1d3OzNc2';
+
 const auth = getAuth(app);
 let _authUid = null;
 

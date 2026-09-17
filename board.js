@@ -2,16 +2,17 @@
 // ＃原神フレンド承認板：タブ切替・プロフィール自動反映・投稿(募集する)・一覧購読(さがす)
 
 import { db } from './firebaseConfig.js';
-import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink } from './userData.js';
+import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink, ADMIN_UID } from './userData.js';
 import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js';
 import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
 import { initBlocks, isBlocked, onBlocksChange, blockUser, unblockUser, blockedByMeList } from './blocks.js';
 import { reportUser } from './reports.js';
 import {
   VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
-  fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch, fieldOptions,
+  fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch,
   fieldMatchKind, playStyleValueMatchKind, GENSHIN_ICON_BASE,
 } from './fields.js';
+import { matchesFilters, renderFilterBar } from './filterBar.js';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
@@ -30,9 +31,6 @@ const OSHI_MAX = 3;
 // 非表示になる。更新扱いになるのは「更新する」ボタンを押した時と、他の投稿へ申請した時
 // (applications.jsのapplyToPost参照)。
 const POST_STALE_MS = 30 * 24 * 60 * 60 * 1000;
-
-// 管理者(私)は初回ポップの文言を何度も見直したいので、既読フラグに関わらず毎回表示する
-const ADMIN_UID = 'UPInlRxp2eM8OI3p18UU1d3OzNc2';
 
 const STR = {
   ja: {
@@ -1664,22 +1662,6 @@ document.getElementById('profile-incomplete-goto-btn')?.addEventListener('click'
 let latestSearchPosts = [];
 
 // ===== さがす一覧のフィルター =====
-// OPTION_LABELSに選択肢が無い真偽値項目は、チェックひとつ("yes")のみのフィルターにする。
-// jokingOk/yuriOk/fujoshiOkはyes/either/no(OPTION_LABELSに定義済み)を持つ通常の選択式項目なので、
-// ここには含めない(fieldOptions経由でyes/either/noの3択フィルターになる)。
-const BOOLEAN_ONLY_FILTER_FIELDS = ['ageGroup', 'showGenshinRanking', 'showGenshinCheck'];
-function booleanFilterLabel(key, lang) {
-  // ageGroupは「年齢」だけだと分かりにくいため、実際の表示文言(成人済)を使う
-  if (key === 'ageGroup') return formatFieldValue('ageGroup', true, lang);
-  return fieldLabel(key, lang);
-}
-function filterFieldOptions(key, lang) {
-  if (BOOLEAN_ONLY_FILTER_FIELDS.includes(key)) {
-    return [{ value: 'yes', label: booleanFilterLabel(key, lang) }];
-  }
-  return fieldOptions(key, lang);
-}
-
 // フィールドキー -> 選択中の値のSet。値が1つも無いフィールドは絞り込み対象外(=全件通す)。
 const searchFilters = {};
 // フィルターは基本閉じておき、開閉状態は再描画(言語切替など)をまたいで保持する
@@ -1788,24 +1770,13 @@ function buildAdminReportCard(report) {
   return card;
 }
 
-// 配列なら選択値のいずれかと重なるか、真偽値なら'yes'選択時のみtrue必須、
-// それ以外(文字列)は選択値に含まれるかを見る。
-function matchesFieldFilter(value, checkedValues) {
-  if (Array.isArray(value)) return value.some((v) => checkedValues.has(v));
-  if (typeof value === 'boolean') return checkedValues.has('yes') ? value === true : true;
-  return checkedValues.has(value);
-}
-
 // 管理者は非表示項目も含めてfriendBoardProfilesの生データを参照して判定する。
 // 非管理者は今まで通りpost.publicFields(公開設定を反映済み)のみを参照する。
 function matchesSearchFilters(post) {
   const source = isAdminViewer()
     ? (adminProfileCache.get(post.userId) || post.publicFields || {})
     : (post.publicFields || {});
-  return Object.entries(searchFilters).every(([key, checked]) => {
-    if (!checked || !checked.size) return true;
-    return matchesFieldFilter(source[key], checked);
-  });
+  return matchesFilters(source, searchFilters);
 }
 
 // 表示中の投稿ぶんだけ、未取得のプロフィールを遅延取得する(コレクション全体は購読しない)。
@@ -1824,100 +1795,24 @@ async function ensureAdminProfilesLoaded(posts) {
   renderSearchList();
 }
 
-function appendFilterGroup(parent, titleText, entries) {
-  if (!entries.length) return;
-  const group = document.createElement('div');
-  group.className = 'board-filter-field-group';
-  const groupTitle = document.createElement('p');
-  groupTitle.className = 'board-filter-field-title';
-  groupTitle.textContent = titleText;
-  group.appendChild(groupTitle);
-  const checks = document.createElement('div');
-  checks.className = 'board-checkbox-group';
-  entries.forEach(({ fieldKey, value, label }) => {
-    const lbl = document.createElement('label');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = !!searchFilters[fieldKey]?.has(value);
-    cb.addEventListener('change', () => {
-      if (!searchFilters[fieldKey]) searchFilters[fieldKey] = new Set();
-      if (cb.checked) searchFilters[fieldKey].add(value);
-      else searchFilters[fieldKey].delete(value);
-      renderSearchList();
-    });
-    const span = document.createElement('span');
-    span.textContent = label;
-    lbl.appendChild(cb);
-    lbl.appendChild(span);
-    checks.appendChild(lbl);
-  });
-  group.appendChild(checks);
-  parent.appendChild(group);
-}
-
 function renderSearchFilterBar() {
-  const container = document.getElementById('search-filter-bar');
-  if (!container) return;
-  const lang = currentLang();
-  const toEntries = (fieldKey, options) => options.map((o) => ({ fieldKey, ...o }));
-
-  container.innerHTML = '';
-
-  const rootDetails = document.createElement('details');
-  rootDetails.className = 'board-filter-details';
-  rootDetails.open = filterBarOpen;
-  rootDetails.addEventListener('toggle', () => { filterBarOpen = rootDetails.open; });
-  const summary = document.createElement('summary');
-  summary.className = 'board-filter-bar-title';
-  summary.textContent = s().filterBarTitle;
-  rootDetails.appendChild(summary);
-
-  const header = document.createElement('div');
-  header.className = 'board-filter-bar-header';
-  const resetBtn = document.createElement('button');
-  resetBtn.type = 'button';
-  resetBtn.className = 'board-filter-reset-btn';
-  resetBtn.textContent = s().filterResetBtn;
-  resetBtn.addEventListener('click', () => {
-    Object.values(searchFilters).forEach((set) => set.clear());
-    renderSearchFilterBar();
-    renderSearchList();
+  renderFilterBar({
+    containerId: 'search-filter-bar',
+    filters: searchFilters,
+    lang: currentLang(),
+    isAdmin: isAdminViewer(),
+    isOpen: () => filterBarOpen,
+    setOpen: (open) => { filterBarOpen = open; },
+    onChange: renderSearchList,
+    strings: {
+      barTitle: s().filterBarTitle,
+      resetBtn: s().filterResetBtn,
+      attrGroupTitle: s().filterGroupAttrTitle,
+      offerTitle: s().playStyleOfferTitle,
+      requestTitle: s().playStyleRequestTitle,
+      adminTitle: s().filterAdminTitle,
+    },
   });
-  header.appendChild(resetBtn);
-  rootDetails.appendChild(header);
-
-  const body = document.createElement('div');
-  body.className = 'board-filter-bar-body';
-  appendFilterGroup(body, fieldLabel('vc', lang), toEntries('vc', filterFieldOptions('vc', lang)));
-  const psOptions = filterFieldOptions('playStyles', lang);
-  const generalPs = psOptions.filter((o) => !PLAYSTYLE_OFFER_VALUES.includes(o.value) && !PLAYSTYLE_REQUEST_VALUES.includes(o.value));
-  const offerPs = psOptions.filter((o) => PLAYSTYLE_OFFER_VALUES.includes(o.value));
-  const requestPs = psOptions.filter((o) => PLAYSTYLE_REQUEST_VALUES.includes(o.value));
-  appendFilterGroup(body, fieldLabel('playStyles', lang), toEntries('playStyles', generalPs));
-  appendFilterGroup(body, s().playStyleOfferTitle, toEntries('playStyles', offerPs));
-  appendFilterGroup(body, s().playStyleRequestTitle, toEntries('playStyles', requestPs));
-  appendFilterGroup(body, fieldLabel('inviteStyle', lang), toEntries('inviteStyle', filterFieldOptions('inviteStyle', lang)));
-  appendFilterGroup(body, fieldLabel('vcApps', lang), toEntries('vcApps', filterFieldOptions('vcApps', lang)));
-  const attrEntries = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject']
-    .flatMap((fk) => toEntries(fk, filterFieldOptions(fk, lang)));
-  appendFilterGroup(body, s().filterGroupAttrTitle, attrEntries);
-  rootDetails.appendChild(body);
-
-  if (isAdminViewer()) {
-    const adminDetails = document.createElement('details');
-    adminDetails.className = 'board-filter-admin-details';
-    const adminSummary = document.createElement('summary');
-    adminSummary.textContent = s().filterAdminTitle;
-    adminDetails.appendChild(adminSummary);
-    const adminBody = document.createElement('div');
-    adminBody.className = 'board-filter-bar-body';
-    ['gender', 'ageGroup', 'platforms', 'spending', 'multiFrequency', 'showGenshinRanking', 'showGenshinCheck', 'friendPreference'].forEach((fk) => {
-      appendFilterGroup(adminBody, fieldLabel(fk, lang), toEntries(fk, filterFieldOptions(fk, lang)));
-    });
-    adminDetails.appendChild(adminBody);
-    rootDetails.appendChild(adminDetails);
-  }
-  container.appendChild(rootDetails);
 }
 
 function renderSearchList() {
@@ -2568,6 +2463,7 @@ async function init() {
   // ログイン中ならaccountLinksから共有IDを解決してから(=正しいuserIdが確定してから)
   // プロフィール読み込み・一覧購読を始める
   await waitForAccountLink();
+  // 管理者(私)は初回ポップの文言を何度も見直したいので、既読フラグに関わらず毎回表示する
   if (getAuthUid() === ADMIN_UID) {
     const infoModal = document.getElementById('info-modal');
     if (infoModal) infoModal.style.display = 'flex';
