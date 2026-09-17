@@ -187,7 +187,7 @@ function renderChatThread(container, messages) {
 // 1日に送れる通数には上限があり、アカウント登録しているかどうかで変わる
 // (未登録1通/日、登録済み5通/日)。登録を後押しする狙いなので、会話の途中で
 // 登録すれば即座に上限が上がり、その日のうちに続きを送れるようになる。
-const CHAT_DAILY_LIMIT_REGISTERED = 5;
+const CHAT_DAILY_LIMIT_REGISTERED = 10;
 const CHAT_DAILY_LIMIT_UNREGISTERED = 1;
 
 // うーこポイント引き換えサイト(08_UPoint)で交換した「チャット送信可能数+5」は、
