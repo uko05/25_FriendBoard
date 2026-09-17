@@ -16,7 +16,7 @@ import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCente
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
   collection, setDoc, updateDoc, deleteDoc, doc, getDoc, onSnapshot,
-  query, where, orderBy, limit, serverTimestamp,
+  query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const OSHI_ELEMS = ['hi', 'mizu', 'koori', 'kaminari', 'kusa', 'kaze', 'iwa'];
@@ -1706,7 +1706,7 @@ function isAdminViewer() {
 let latestReports = [];
 
 function startAdminReportsListener() {
-  const q = query(collection(db, 'friendBoardReports'), orderBy('createdAt', 'desc'), limit(200));
+  const q = query(collection(db, 'friendBoardReports'), orderBy('createdAt', 'desc'));
   onSnapshot(q, (snap) => {
     latestReports = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderAdminReports();

@@ -137,6 +137,14 @@
   型が違う**ので、`relTime()`にそのまま渡さず扱うこと。またこの変更より前に
   送信された既存の`chatMessages`には`at`が無いので、読み取り側は欠損を
   前提にすること。
+- 同じ理由で`friendBoardApplications/{id}`にも`lastChatAt`
+  （画面には出さない、Firestore Timestamp）を追加済み(v12.3, `sendChatMessage`)。
+  チャット送信のたび`serverTimestamp()`で更新する。`chatMessages`配列要素内の
+  `at`とは違いドキュメント直下のフィールドなので、こちらは`serverTimestamp()`が
+  正常に解決される。将来トップページ側で「会話単位」の通知を作る際、
+  どの申請（＝会話）が直近やり取りされたかを`orderBy('lastChatAt', 'desc')`
+  等で拾えるようにする狙い。v12.3より前に作られた申請にはこのフィールドが
+  無いので、読み取り側は欠損を前提にすること。
 - トップページを開いている間のリアルタイム通知も技術的には問題ない見込み
   （2026-08-27時点で確認済み）。FriendBoard内で既に使っている`onSnapshot`の
   リアルタイム購読の仕組みがそのままトップページ側でも使える。Firestoreの

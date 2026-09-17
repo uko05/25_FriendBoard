@@ -15,7 +15,7 @@ import {
 } from './fields.js';
 import {
   collection, addDoc, updateDoc, doc, getDoc, onSnapshot,
-  query, where, orderBy, limit, serverTimestamp,
+  query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const STR = {
@@ -640,7 +640,10 @@ async function sendChatMessage(app, sender, text) {
   // 送信時刻はクライアント時計のDate.now()で記録する。数秒〜数分のずれは、将来ここから
   // 「◯時間前」のような相対表示を作る用途では許容範囲。
   const messages = [...(app.chatMessages || []), { sender, text, at: Date.now() }];
-  const updates = { chatMessages: messages };
+  // 画面には出さないが、将来のトップページ通知集約(CLAUDE.md参照)を見越して
+  // 「最後にチャットが送られた日時」をドキュメント直下に持たせておく。
+  // chatMessages配列の要素内とは違いトップレベルのフィールドなのでserverTimestamp()が解決される。
+  const updates = { chatMessages: messages, lastChatAt: serverTimestamp() };
   // 「やり取り」タブの未読バッジ用に、受け取る側のSeenフラグをfalseへ戻す
   // (ownerSeen/applicantSeenは元々は申請結果の通知用だが、承認後はチャットの
   // 既読管理としても兼用する。両者の用途が時間的に重ならないため問題ない)。
@@ -1140,8 +1143,7 @@ function startReceivedListener(userId) {
   const q = query(
     collection(db, 'friendBoardApplications'),
     where('postOwnerUserId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    limit(100)
+    orderBy('createdAt', 'desc')
   );
   onSnapshot(q, (snap) => {
     latestReceived = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -1170,8 +1172,7 @@ function startSentListener(userId) {
   const q = query(
     collection(db, 'friendBoardApplications'),
     where('applicantUserId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    limit(100)
+    orderBy('createdAt', 'desc')
   );
   onSnapshot(q, (snap) => {
     latestSent = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
