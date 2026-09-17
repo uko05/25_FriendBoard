@@ -223,6 +223,46 @@ body.portal-page {
   color: #888;
   text-align: left;
 }
+.board-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 10px;
+}
+.board-result-row .board-result-count {
+  margin: 0;
+}
+.board-gender-mutual-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.board-gender-mutual-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #555;
+  cursor: pointer;
+}
+.board-gender-mutual-toggle input[type="checkbox"] {
+  cursor: pointer;
+}
+.board-gender-mutual-help {
+  font-family: inherit;
+  font-size: 11px;
+  width: 16px;
+  height: 16px;
+  line-height: 14px;
+  padding: 0;
+  border: 1px solid rgba(0,0,0,0.25);
+  border-radius: 50%;
+  background: #fff;
+  color: #666;
+  cursor: pointer;
+}
 .board-filter-details > summary.board-filter-bar-title {
   font-size: 13px;
   font-weight: bold;

@@ -6,6 +6,17 @@
 
 import { fieldLabel, filterFieldOptions, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES } from './fields.js';
 
+// 「性別相互フィルター」のon/off。さがす一覧・届いた申請一覧の両方に同じチェック
+// ボックスを置くが、どちらで切り替えても同じ1つの状態を共有する(セッション内のみ、
+// Firestoreには保存しない。他のフィルター項目と同じ扱い)。
+let genderMutualFilterOn = false;
+export function isGenderMutualFilterOn() {
+  return genderMutualFilterOn;
+}
+export function setGenderMutualFilterOn(on) {
+  genderMutualFilterOn = !!on;
+}
+
 // 配列なら選択値のいずれかと重なるか、真偽値なら'yes'選択時のみtrue必須、
 // それ以外(文字列)は選択値に含まれるかを見る。
 function matchesFieldFilter(value, checkedValues) {

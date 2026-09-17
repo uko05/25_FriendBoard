@@ -12,7 +12,7 @@ import {
   fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch, matchesGenderPreference,
   fieldMatchKind, playStyleValueMatchKind, GENSHIN_ICON_BASE,
 } from './fields.js';
-import { matchesFilters, renderFilterBar } from './filterBar.js';
+import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
@@ -99,6 +99,7 @@ const STR = {
     filterResetBtn: 'リセット',
     filterGroupAttrTitle: 'あなたの追加属性',
     filterAdminTitle: '管理者用フィルター(非表示項目も含む)',
+    genderMutualFilterHelp: 'オンにすると、「どういうフレンドがほしい？」の同性/異性/男女問わずの希望が、自分と相手の両方で一致する人だけが一覧に表示されます。オフの場合は今まで通り全員表示されます。',
     resultCount: (n) => `${n}件`,
     viewProfileGone: 'このプロフィールは取り下げられたか見つかりませんでした。',
     viewProfileLoading: '読み込み中…',
@@ -172,6 +173,7 @@ const STR = {
     filterResetBtn: 'Reset',
     filterGroupAttrTitle: 'Additional traits',
     filterAdminTitle: 'Admin filters (includes hidden fields)',
+    genderMutualFilterHelp: "When on, only people whose same-gender/opposite-gender/no-preference choice under \"What kind of friend are you looking for?\" mutually matches both you and them are shown. When off, everyone is shown as before.",
     resultCount: (n) => `${n} result${n === 1 ? '' : 's'}`,
     viewProfileGone: 'This profile was withdrawn or could not be found.',
     viewProfileLoading: 'Loading…',
@@ -1944,7 +1946,7 @@ function renderSearchList() {
     .filter((post) => post.userId === myUserId || (
       post.publicFields?.server === store.server
       && matchesSearchFilters(post)
-      && matchesGenderPreference(store.friendPreference, store.gender, post.publicFields || {})
+      && (!isGenderMutualFilterOn() || matchesGenderPreference(store.friendPreference, store.gender, post.publicFields || {}))
       && isPostFresh(post)
       && !isBlocked(post.userId)
     ))
@@ -1961,6 +1963,8 @@ function renderSearchList() {
 
   const countEl = document.getElementById('search-result-count');
   if (countEl) countEl.textContent = s().resultCount(filtered.length);
+  const genderToggle = document.getElementById('search-gender-mutual-toggle');
+  if (genderToggle) genderToggle.checked = isGenderMutualFilterOn();
 
   list.innerHTML = '';
   if (!filtered.length) {
@@ -1972,6 +1976,12 @@ function renderSearchList() {
   }
   filtered.forEach(({ post }) => list.appendChild(buildCard(post, { mine: post.userId === myUserId })));
 }
+
+document.getElementById('search-gender-mutual-toggle')?.addEventListener('change', (e) => {
+  setGenderMutualFilterOn(e.target.checked);
+  renderSearchList();
+});
+document.getElementById('search-gender-mutual-help')?.addEventListener('click', () => alert(s().genderMutualFilterHelp));
 
 function startSearchListener() {
   const q = query(

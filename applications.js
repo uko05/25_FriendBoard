@@ -10,10 +10,10 @@ import { initBlocks, isBlocked, onBlocksChange, blockUser } from './blocks.js';
 import { reportUser } from './reports.js';
 import {
   VISIBILITY_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES, GENSHIN_ICON_BASE,
-  fieldLabel, formatFieldValue, buildPostFieldBuckets,
+  fieldLabel, formatFieldValue, buildPostFieldBuckets, matchesGenderPreference,
   fieldMatchKind, playStyleValueMatchKind,
 } from './fields.js';
-import { matchesFilters, renderFilterBar } from './filterBar.js';
+import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js';
 import {
   collection, addDoc, updateDoc, doc, getDoc, onSnapshot,
   query, where, orderBy, serverTimestamp,
@@ -54,6 +54,7 @@ const STR = {
     filterResetBtn: 'リセット',
     filterGroupAttrTitle: 'あなたの追加属性',
     filterAdminTitle: '管理者用フィルター(非表示項目も含む)',
+    genderMutualFilterHelp: 'オンにすると、「どういうフレンドがほしい？」の同性/異性/男女問わずの希望が、自分と相手の両方で一致する人だけが一覧に表示されます。オフの場合は今まで通り全員表示されます。',
     resultCount: (n) => `${n}件`,
     uidLabel: 'UID',
     originalPostTitle: '元の投稿',
@@ -101,6 +102,7 @@ const STR = {
     filterResetBtn: 'Reset',
     filterGroupAttrTitle: 'Additional traits',
     filterAdminTitle: 'Admin filters (includes hidden fields)',
+    genderMutualFilterHelp: "When on, only people whose same-gender/opposite-gender/no-preference choice under \"What kind of friend are you looking for?\" mutually matches both you and them are shown. When off, everyone is shown as before.",
     resultCount: (n) => `${n} result${n === 1 ? '' : 's'}`,
     uidLabel: 'UID',
     originalPostTitle: 'Original post',
@@ -758,9 +760,12 @@ function renderReceivedList() {
   const list = document.getElementById('received-list');
   if (!list) return;
   list.innerHTML = '';
-  const apps = latestReceived.filter((a) => a.status !== 'accepted' && !isBlocked(a.applicantUserId) && matchesReceivedFilters(a));
+  const apps = latestReceived.filter((a) => a.status !== 'accepted' && !isBlocked(a.applicantUserId) && matchesReceivedFilters(a)
+    && (!isGenderMutualFilterOn() || matchesGenderPreference(store.friendPreference, store.gender, a.applicantFields || {})));
   const countEl = document.getElementById('received-result-count');
   if (countEl) countEl.textContent = s().resultCount(apps.length);
+  const genderToggle = document.getElementById('received-gender-mutual-toggle');
+  if (genderToggle) genderToggle.checked = isGenderMutualFilterOn();
   if (!apps.length) {
     const p = document.createElement('p');
     p.className = 'board-list-empty';
@@ -770,6 +775,12 @@ function renderReceivedList() {
   }
   apps.forEach((app) => list.appendChild(buildReceivedCard(app)));
 }
+
+document.getElementById('received-gender-mutual-toggle')?.addEventListener('change', (e) => {
+  setGenderMutualFilterOn(e.target.checked);
+  renderReceivedList();
+});
+document.getElementById('received-gender-mutual-help')?.addEventListener('click', () => alert(s().genderMutualFilterHelp));
 
 function buildReceivedCard(app) {
   const lang = currentLang();

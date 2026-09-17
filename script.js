@@ -265,6 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLegendLabel: "チップの色について:",
       matchLegendExact: "一致",
       matchLegendComplementary: "相性◎",
+      genderMutualFilterLabel: "性別相互フィルター",
 
       viewProfileTitle: "プロフィール",
       profileIncompleteModalTitle: "マイプロフィールを設定してください",
@@ -493,6 +494,7 @@ document.addEventListener("DOMContentLoaded", () => {
       matchLegendLabel: "Chip colors:",
       matchLegendExact: "Match",
       matchLegendComplementary: "Good match",
+      genderMutualFilterLabel: "Mutual gender filter",
 
       viewProfileTitle: "Profile",
       profileIncompleteModalTitle: "Please set up your My Profile",

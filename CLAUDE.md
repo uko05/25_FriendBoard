@@ -41,6 +41,14 @@
   （誤って隠さない方に倒す）。QRの個別プロフィール表示（`renderViewProfilePanel`）
   には適用していない（一覧の絞り込みだけが対象で、直接共有されたリンクは
   ブロック関係とは違い意図的に対象外）。
+- 上記`matchesGenderPreference`のon/off切り替え（v12.14追加、デフォルトoff）は
+  「性別相互フィルター」チェックボックスとして、さがす一覧・届いた申請一覧の
+  両方の「件数」表示と同じ行に右寄せで置いている（`filterBar.js`の
+  `isGenderMutualFilterOn`/`setGenderMutualFilterOn`という**1つの共有フラグ**で、
+  どちらの画面で切り替えても同じ状態を指す。他の絞り込み項目
+  （`searchFilters`/`receivedFilters`）と同じくセッション内のみでFirestoreには
+  保存しない）。`searchFilters`側の絞り込み（フィールド値ベース）とは別枠の
+  独立したON/OFFなので、`matchesFilters`とは組み合わせるが混同しないこと。
 - `friendBoardApplications/{id}`：申請1件＝1ドキュメント。承認まで、双方の
   「承認後に公開」項目は**お互い完全に隠す**（`buildPostFieldBuckets`を投稿・
   申請どちらの作成時にも対称に使うことで実現。過去に非対称で漏れていたことがある
