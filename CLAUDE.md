@@ -139,6 +139,35 @@
   フィルター対象外だが、承認済みの申請は「やり取り」タブに移りこの一覧自体の
   対象外になるので実害はない。
 
+## お知らせ機能（`friendBoardAnnouncements`, v12.11追加）
+- タブバー一番右の「お知らせ」タブ（`#tab-btn-announcements`/`#tab-panel-announcements`）。
+  一般ユーザーは閲覧のみ、投稿は管理者ロール（`getAuthUid() === ADMIN_UID`）だけが
+  `#announcement-post-form`（`init()`内でisAdminViewer相当の判定時にhiddenを外す）
+  から`title`/`body`/`createdAt`(`serverTimestamp()`)で`addDoc`する。フィールドは
+  この3つだけで、既読管理用のフィールドはFirestore側に一切持たない。
+- 本文の改行はそのまま保持する。`<textarea>.value`は元々改行を含むので特別な処理は
+  不要だが、表示側は`textContent`代入＋CSS `white-space: pre-wrap`
+  （`.board-announcement-body`）の組み合わせで改行を反映している
+  （`innerHTML`+`<br>`変換は使っていない。XSS対策と実装の単純さを優先）。
+- 日時表示は`relTime()`（「3時間前」のような相対表示）ではなく、あえて
+  `formatDateTime()`で`YYYY-MM-DD HH:mm`の絶対表示にしている。理由は、他の
+  「投稿」「申請」と違い、お知らせは後から読み返す一覧（ちょっとしたお知らせの
+  archiveのようなもの）なので、日が経つと「3日前」より具体的な日付の方が
+  読み返しやすいと判断したため。
+- 未読バッジ（タブの①のような赤丸数字、他のタブと同じ`board-tab-badge`の仕組み）は
+  Firestoreにユーザーごとの既読フラグを持たせず、**この端末のlocalStorage**
+  （`friendBoard_lastSeenAnnouncementAt`キー、最後に読んだお知らせの投稿日時の
+  ミリ秒を保存するだけ）で判定している。このサイトが匿名ID中心の運用（ユーザー
+  識別の項参照）なことに合わせた設計で、「お知らせタブを開いた瞬間」に現在時刻を
+  書き込んでバッジを消す(`markAnnouncementsSeen()`、`#tab-btn-announcements`の
+  クリックで発火)。裏を返すと、お知らせタブを開かずに別タブへ直接URLで
+  飛んだ場合などは既読にならない。
+- Firestoreルール（`24_AccountCenter/firestore.rules`）は`friendBoardReports`と
+  ちょうど逆の非対称構成: `friendBoardReports`は「誰でも作成できるが閲覧は管理者
+  のみ」、`friendBoardAnnouncements`は「誰でも閲覧できるが作成/更新/削除は管理者
+  のみ」。両方とも`isAdmin()`関数（単一UIDのハードコード＋`sharedUserRoles`での
+  ロール付与、両対応）を使っている。
+
 ## QRコード生成の注意（board.js, `makeQrCode`）
 - `qrcode-generator`（kazuhikoarase）ライブラリは `renderTo2dContext` と
   `createDataURL`/`createImgTag` とで **row/colとx/yの対応が逆**になっている

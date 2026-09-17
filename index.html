@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>＃原神フレンド承認板</title>
 
-    <link rel="stylesheet" href="styles.css?v=12.10" />
+    <link rel="stylesheet" href="styles.css?v=12.11" />
 
     <!-- Favicon -->
     <link rel="icon" href="public/scripts/favicon_io/favicon.ico" type="image/x-icon">
@@ -43,6 +43,7 @@
             <button type="button" class="board-tab-btn" id="tab-btn-search" data-tab="search" role="tab" aria-selected="false" data-i18n="tabSearch" disabled>さがす</button>
             <button type="button" class="board-tab-btn" id="tab-btn-requests" data-tab="requests" role="tab" aria-selected="false"><span data-i18n="tabRequests">申請</span><span class="board-tab-badge hidden" id="requests-tab-badge"></span></button>
             <button type="button" class="board-tab-btn hidden" id="tab-btn-admin" data-tab="admin" role="tab" aria-selected="false" data-i18n="tabAdmin">通報一覧</button>
+            <button type="button" class="board-tab-btn" id="tab-btn-announcements" data-tab="announcements" role="tab" aria-selected="false"><span data-i18n="tabAnnouncements">お知らせ</span><span class="board-tab-badge hidden" id="announcements-tab-badge"></span></button>
         </nav>
         <p class="board-tab-lock-hint" id="tab-lock-hint" data-i18n="tabLockHint">マイプロフィールを保存すると「さがす」が使えるようになります</p>
 
@@ -654,6 +655,27 @@
             <div class="board-list" id="admin-reports-list"></div>
         </section>
 
+        <!-- お知らせ(全員に見える。投稿は管理者ロールのみ、announcement-post-formは
+             isAdminViewer()の時だけboard.js側でhiddenを外す) -->
+        <section class="portal-section board-tab-panel hidden" id="tab-panel-announcements" role="tabpanel">
+            <h2 data-i18n="announcementsTitle">お知らせ</h2>
+
+            <div class="board-announcement-post hidden" id="announcement-post-form">
+                <div class="board-form-row">
+                    <label for="announcement-title-input" data-i18n="announcementTitleLabel">タイトル</label>
+                    <input type="text" id="announcement-title-input" maxlength="60" />
+                </div>
+                <div class="board-form-row">
+                    <label for="announcement-body-input" data-i18n="announcementBodyLabel">本文</label>
+                    <textarea id="announcement-body-input" rows="5"></textarea>
+                </div>
+                <button type="button" class="board-submit-btn" id="announcement-post-btn" data-i18n="announcementPostBtn">投稿する</button>
+                <p class="board-form-msg" id="announcement-post-msg"></p>
+            </div>
+
+            <div class="board-list" id="announcements-list"></div>
+        </section>
+
         <!-- QRコードなどのリンクから直接開いた、特定の1人だけのプロフィール表示
              (通常のタブバーには出さず、URLの?uパラメータがある時だけJSで表示する) -->
         <section class="portal-section board-tab-panel hidden" id="tab-panel-viewprofile" role="tabpanel">
@@ -664,7 +686,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v12.10</span>
+    <span id="site-version" class="site-version">v12.11</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

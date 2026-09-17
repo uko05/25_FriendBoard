@@ -16,7 +16,7 @@ import { matchesFilters, renderFilterBar } from './filterBar.js';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
-  collection, setDoc, updateDoc, deleteDoc, doc, getDoc, onSnapshot,
+  collection, setDoc, addDoc, updateDoc, deleteDoc, doc, getDoc, onSnapshot,
   query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
@@ -60,6 +60,10 @@ const STR = {
     adminReportedLabel: '被通報者',
     adminChatSnapshotTitle: '通報時点のチャット内容',
     adminMarkHandled: '対応済みにする',
+    emptyAnnouncements: 'まだお知らせはありません',
+    announcementValidation: 'タイトルと本文を入力してください。',
+    announcementPostOk: 'お知らせを投稿しました！',
+    announcementPostFail: '投稿に失敗しました。時間をおいて再度お試しください。',
     postOk: '保存しました！',
     postFail: '保存に失敗しました。時間をおいて再度お試しください。',
     postFailDraftSaved: '保存に失敗しました。入力内容は一時保存したので、時間をおいて再度お試しください。',
@@ -129,6 +133,10 @@ const STR = {
     adminReportedLabel: 'Reported',
     adminChatSnapshotTitle: 'Chat content at time of report',
     adminMarkHandled: 'Mark handled',
+    emptyAnnouncements: 'No announcements yet',
+    announcementValidation: 'Please enter a title and body.',
+    announcementPostOk: 'Announcement posted!',
+    announcementPostFail: 'Failed to post. Please try again later.',
     postOk: 'Saved!',
     postFail: 'Failed to save. Please try again later.',
     postFailDraftSaved: 'Failed to save. Your input was saved as a draft on this device — please try again later.',
@@ -1773,6 +1781,115 @@ function buildAdminReportCard(report) {
   return card;
 }
 
+// ===== お知らせ(全員が閲覧、投稿は管理者ロールのみ) =====
+const ANNOUNCEMENT_SEEN_LS_KEY = 'friendBoard_lastSeenAnnouncementAt';
+let latestAnnouncements = [];
+
+function startAnnouncementsListener() {
+  const q = query(collection(db, 'friendBoardAnnouncements'), orderBy('createdAt', 'desc'));
+  onSnapshot(q, (snap) => {
+    latestAnnouncements = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    renderAnnouncements();
+    updateAnnouncementBadge();
+  }, (err) => console.error('[board] announcements listen failed', err));
+}
+
+// relTime()の「◯時間前」ではなく固定のYYYY-MM-DD HH:mm表示にする
+// (後から見返す「お知らせ」の日付として、相対表示だと分かりにくくなるため)。
+function formatDateTime(ts) {
+  if (!ts || typeof ts.toMillis !== 'function') return '';
+  const d = new Date(ts.toMillis());
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function buildAnnouncementCard(a) {
+  const card = document.createElement('div');
+  card.className = 'board-card board-announcement-card';
+
+  const title = document.createElement('p');
+  title.className = 'board-announcement-title';
+  title.textContent = a.title || '';
+  card.appendChild(title);
+
+  const time = document.createElement('span');
+  time.className = 'board-card-time';
+  time.textContent = formatDateTime(a.createdAt);
+  card.appendChild(time);
+
+  // white-space: pre-wrap(CSS側)と組み合わせて、本文の改行をそのまま表示する
+  const body = document.createElement('p');
+  body.className = 'board-announcement-body';
+  body.textContent = a.body || '';
+  card.appendChild(body);
+
+  return card;
+}
+
+function renderAnnouncements() {
+  const list = document.getElementById('announcements-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!latestAnnouncements.length) {
+    const p = document.createElement('p');
+    p.className = 'board-list-empty';
+    p.textContent = s().emptyAnnouncements;
+    list.appendChild(p);
+    return;
+  }
+  latestAnnouncements.forEach((a) => list.appendChild(buildAnnouncementCard(a)));
+}
+
+// 既読管理はFirestoreを使わず、この端末のlocalStorageに「最後に読んだお知らせの
+// 投稿日時」だけ持たせる(このサイトの匿名運用に合わせ、サーバー側に既読フラグは
+// 持たない)。pending write中(createdAtがまだ解決していない)ものは未読数に含めない。
+function updateAnnouncementBadge() {
+  const el = document.getElementById('announcements-tab-badge');
+  if (!el) return;
+  const lastSeen = Number(localStorage.getItem(ANNOUNCEMENT_SEEN_LS_KEY) || 0);
+  const unreadCount = latestAnnouncements.filter((a) => a.createdAt?.toMillis && a.createdAt.toMillis() > lastSeen).length;
+  el.textContent = unreadCount > 0 ? String(unreadCount) : '';
+  el.classList.toggle('hidden', unreadCount === 0);
+}
+
+function markAnnouncementsSeen() {
+  localStorage.setItem(ANNOUNCEMENT_SEEN_LS_KEY, String(Date.now()));
+  updateAnnouncementBadge();
+}
+document.getElementById('tab-btn-announcements')?.addEventListener('click', markAnnouncementsSeen);
+
+// ===== お知らせの投稿(管理者ロールのみ。#announcement-post-formはinit()で
+// isAdminViewer()がtrueの時だけhiddenを外している) =====
+const announcementTitleInput = document.getElementById('announcement-title-input');
+const announcementBodyInput = document.getElementById('announcement-body-input');
+const announcementPostBtn = document.getElementById('announcement-post-btn');
+const announcementPostMsg = document.getElementById('announcement-post-msg');
+
+announcementPostBtn?.addEventListener('click', async () => {
+  const title = announcementTitleInput?.value.trim() || '';
+  const body = announcementBodyInput?.value.trim() || '';
+  if (!announcementPostMsg) return;
+  if (!title || !body) {
+    announcementPostMsg.textContent = s().announcementValidation;
+    announcementPostMsg.className = 'board-form-msg error';
+    return;
+  }
+  announcementPostBtn.disabled = true;
+  try {
+    await addDoc(collection(db, 'friendBoardAnnouncements'), { title, body, createdAt: serverTimestamp() });
+    announcementTitleInput.value = '';
+    announcementBodyInput.value = '';
+    announcementPostMsg.textContent = s().announcementPostOk;
+    announcementPostMsg.className = 'board-form-msg ok';
+  } catch (e) {
+    console.error('[board] announcement post failed', e);
+    announcementPostMsg.textContent = s().announcementPostFail;
+    announcementPostMsg.className = 'board-form-msg error';
+  } finally {
+    announcementPostBtn.disabled = false;
+  }
+});
+
 // 管理者は非表示項目も含めてfriendBoardProfilesの生データを参照して判定する。
 // 非管理者は今まで通りpost.publicFields(公開設定を反映済み)のみを参照する。
 function matchesSearchFilters(post) {
@@ -1888,6 +2005,7 @@ document.querySelectorAll('input[name="lang"]').forEach((radio) => {
       renderMyListing();
       renderSearchFilterBar();
       renderSearchList();
+      renderAnnouncements();
       populateVisibilitySelects();
       oshiPicker.renderElemTabs();
       oshiPicker.renderCharList();
@@ -2471,6 +2589,7 @@ async function init() {
     const infoModal = document.getElementById('info-modal');
     if (infoModal) infoModal.style.display = 'flex';
     document.getElementById('tab-btn-admin')?.classList.remove('hidden');
+    document.getElementById('announcement-post-form')?.classList.remove('hidden');
     startAdminReportsListener();
   }
   renderSearchFilterBar();
@@ -2485,6 +2604,7 @@ async function init() {
   initApplications({ getUserId, getAuthUid, onSentChange: renderSearchList });
   startMyListingListener();
   startSearchListener();
+  startAnnouncementsListener();
   checkViewProfileFromUrl();
 }
 

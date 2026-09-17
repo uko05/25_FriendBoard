@@ -71,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tabSearch: "さがす",
       tabRequests: "申請",
       tabAdmin: "通報一覧",
+      tabAnnouncements: "お知らせ",
       tabLockHint: "マイプロフィールを保存すると「さがす」が使えるようになります",
 
       postFormTitle: "マイプロフィール",
@@ -275,6 +276,10 @@ document.addEventListener("DOMContentLoaded", () => {
       receivedTitle: "届いた申請",
       sentTitle: "送った申請",
       matchTitle: "やり取り",
+      announcementsTitle: "お知らせ",
+      announcementTitleLabel: "タイトル",
+      announcementBodyLabel: "本文",
+      announcementPostBtn: "投稿する",
 
       applyMessageModalTitle: "メッセージをつけて申請",
       applyMessagePlaceholder: "「よろしくお願いします」など、一言添えてみましょう（未入力でも送信できます）",
@@ -292,6 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tabSearch: "Search",
       tabRequests: "Requests",
       tabAdmin: "Reports",
+      tabAnnouncements: "Announcements",
       tabLockHint: "Save your My Profile to unlock Search",
 
       postFormTitle: "My Profile",
@@ -496,6 +502,10 @@ document.addEventListener("DOMContentLoaded", () => {
       receivedTitle: "Received requests",
       sentTitle: "Sent requests",
       matchTitle: "Chats",
+      announcementsTitle: "Announcements",
+      announcementTitleLabel: "Title",
+      announcementBodyLabel: "Body",
+      announcementPostBtn: "Post",
 
       applyMessageModalTitle: "Apply with a message",
       applyMessagePlaceholder: "Add a short note, e.g. \"Nice to meet you!\" (optional — you can send without one)",
