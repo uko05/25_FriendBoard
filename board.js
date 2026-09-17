@@ -1966,8 +1966,7 @@ function startSearchListener() {
   const q = query(
     collection(db, 'friendBoardPosts'),
     where('active', '==', true),
-    orderBy('createdAt', 'desc'),
-    limit(100)
+    orderBy('createdAt', 'desc')
   );
   onSnapshot(q, (snap) => {
     latestSearchPosts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
