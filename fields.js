@@ -230,7 +230,9 @@ const OPTION_LABELS = {
   },
   friendPreference: {
     sameGender: { ja: '同性のフレンドがほしい', en: 'Looking for a same-gender friend' },
+    oppositeGender: { ja: '異性のフレンドがほしい', en: 'Looking for an opposite-gender friend' },
     anyGender: { ja: '男女問わずフレンドがほしい', en: "Gender doesn't matter" },
+    wantArtFriend: { ja: 'お絵描き友達がほしい', en: 'Looking for a drawing/art friend' },
     wantPartner: { ja: '恋人がほしい', en: 'Looking for a romantic partner' },
     wantOshiFriend: { ja: '推し活友達がほしい', en: 'Looking for a fellow fan friend' },
     vcNotNeeded: { ja: 'VCなしでも大丈夫', en: 'OK without VC' },
@@ -367,6 +369,9 @@ export function playStyleValueMatchKind(myValues, otherValue) {
 // 判定できる項目が1つも無ければnullを返す(マッチ度を表示しない)。
 // 「男女問わず」「VCなしでも大丈夫」「作業通話だけでもOK」「交流用Discord
 // サーバーで複数人でやりたい」は制限を課さない宣言のみの項目なので採点対象にしない。
+// 「異性のフレンドがほしい」はsameGenderの逆(gender不一致で加点)、
+// 「お絵描き友達がほしい」はwantPartner/wantOshiFriendと同じく相手も同じ
+// 項目を選んでいるか(双方向)で判定する。
 export function computeFriendMatch(myPrefs, myGender, candidate) {
   if (!Array.isArray(myPrefs) || !myPrefs.length) return null;
   const candidatePrefs = Array.isArray(candidate.friendPreference) ? candidate.friendPreference : [];
@@ -381,7 +386,14 @@ export function computeFriendMatch(myPrefs, myGender, candidate) {
       }
       return;
     }
-    if (pref === 'wantPartner' || pref === 'wantOshiFriend') {
+    if (pref === 'oppositeGender') {
+      if (candidate.gender) {
+        total++;
+        if (candidate.gender !== myGender) matched++;
+      }
+      return;
+    }
+    if (pref === 'wantPartner' || pref === 'wantOshiFriend' || pref === 'wantArtFriend') {
       total++;
       if (candidatePrefs.includes(pref)) matched++;
       return;
