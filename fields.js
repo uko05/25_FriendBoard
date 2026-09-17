@@ -58,12 +58,15 @@ const FIXED_VISIBILITY = {
 };
 
 // 既定の公開設定。genshinUidは常に承認制で固定(フォームにセレクトを出していない)。
-// 名前も承認後に公開が初期値。性別は非公開始まり、SNSは承認後に公開始まり、他は公開始まり。
+// 名前も承認後に公開が初期値。SNSは承認後に公開始まり、他(性別含む)は公開始まり。
+// この既定値は新規ユーザー(まだ一度もvisibilityを保存していない人)にのみ適用される
+// (userData.jsのloadProfileFromFirestore参照。既存ユーザーが過去に保存した値は
+// そのまま読み込まれるので、v12.8で性別のデフォルトをhidden→publicに変えても
+// 既に「非公開」で保存済みの人が勝手に公開になることはない)。
 export function defaultVisibility() {
   const v = {};
   VISIBILITY_FIELDS.forEach((k) => {
     if (FIXED_VISIBILITY[k]) v[k] = FIXED_VISIBILITY[k];
-    else if (k === 'gender') v[k] = 'hidden';
     else if (NO_PUBLIC_FIELDS.includes(k)) v[k] = 'approval';
     else v[k] = 'public';
   });
