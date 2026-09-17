@@ -12,7 +12,7 @@ export const VISIBILITY_FIELDS = [
   'oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck',
   'multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle',
   'vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText',
-  'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject', 'sameOshiChars',
+  'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'yumeOk', 'roughTalk', 'sameOshiReject', 'sameOshiChars',
   'twitterId', 'tiktokId', 'lineId', 'instagramId',
   'friendPreference',
 ];
@@ -25,7 +25,7 @@ export const FIELD_GROUPS = [
   { key: 'basic', fields: ['adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms'] },
   { key: 'style', fields: ['oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck'] },
   { key: 'contact', fields: ['multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle'] },
-  { key: 'voice', fields: ['vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject', 'sameOshiChars'] },
+  { key: 'voice', fields: ['vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'yumeOk', 'roughTalk', 'sameOshiReject', 'sameOshiChars'] },
   { key: 'sns', fields: ['twitterId', 'tiktokId', 'lineId', 'instagramId'] },
 ];
 
@@ -52,6 +52,7 @@ const FIXED_VISIBILITY = {
   jokingOk: 'public',
   yuriOk: 'public',
   fujoshiOk: 'public',
+  yumeOk: 'public',
   roughTalk: 'public',
   sameOshiReject: 'public',
   sameOshiChars: 'public',
@@ -114,6 +115,7 @@ const FIELD_LABELS = {
   jokingOk: { ja: 'おふざけ', en: 'Joking around' },
   yuriOk: { ja: '百合', en: 'Yuri' },
   fujoshiOk: { ja: '腐', en: 'BL' },
+  yumeOk: { ja: '夢', en: 'Yume' },
   roughTalk: { ja: '暴言', en: 'Rough language' },
   sameOshiReject: { ja: '同担拒否', en: 'Same-favorite rejection' },
   sameOshiChars: { ja: '同担拒否キャラ', en: 'Rejected characters' },
@@ -192,6 +194,11 @@ const OPTION_LABELS = {
     yes: { ja: '腐いけます', en: 'Into BL (boys’ love)' },
     either: { ja: '腐どちらでも', en: 'Either way with BL' },
     no: { ja: '腐無理です', en: 'Not into BL' },
+  },
+  yumeOk: {
+    yes: { ja: '夢いけます', en: 'Into yume (self-insert)' },
+    either: { ja: '夢どちらでも', en: 'Either way with yume' },
+    no: { ja: '夢無理です', en: 'Not into yume' },
   },
   roughTalk: {
     no: { ja: '暴言NG', en: 'No rough language' },

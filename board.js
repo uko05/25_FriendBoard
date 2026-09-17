@@ -215,11 +215,12 @@ const instagramInput = document.getElementById('input-instagram');
 const jokingOkInput = document.getElementById('input-jokingOk');
 const yuriOkInput = document.getElementById('input-yuriOk');
 const fujoshiOkInput = document.getElementById('input-fujoshiOk');
+const yumeOkInput = document.getElementById('input-yumeOk');
 const ageGroupInput = document.getElementById('input-ageGroup');
 const casualOkInput = document.getElementById('input-casualOk');
 const roughTalkInput = document.getElementById('input-roughTalk');
 // あなたの追加属性: チェックを入れた項目だけリストを表示する
-const ATTR_TOGGLE_FIELDS = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject'];
+const ATTR_TOGGLE_FIELDS = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'yumeOk', 'roughTalk', 'sameOshiReject'];
 const attrToggleInputs = Object.fromEntries(ATTR_TOGGLE_FIELDS.map((k) => [k, document.getElementById(`attr-toggle-${k}`)]));
 const vcNoteInput = document.getElementById('input-vcNote');
 const vcDiscordIdInput = document.getElementById('input-vcDiscordId');
@@ -469,6 +470,7 @@ function fillFormFromProfile() {
   if (jokingOkInput) jokingOkInput.value = store.jokingOk || '';
   if (yuriOkInput) yuriOkInput.value = store.yuriOk || '';
   if (fujoshiOkInput) fujoshiOkInput.value = store.fujoshiOk || '';
+  if (yumeOkInput) yumeOkInput.value = store.yumeOk || '';
   if (roughTalkInput) roughTalkInput.value = store.roughTalk || '';
   if (sameOshiRejectInput) sameOshiRejectInput.value = store.sameOshiReject || '';
   if (vcNoteInput && store.vcNote) vcNoteInput.value = store.vcNote;
@@ -827,6 +829,7 @@ function collectFormValues() {
     jokingOk: jokingOkInput?.value || '',
     yuriOk: yuriOkInput?.value || '',
     fujoshiOk: fujoshiOkInput?.value || '',
+    yumeOk: yumeOkInput?.value || '',
     roughTalk: roughTalkInput?.value || '',
     sameOshiReject: sameOshiRejectInput?.value || '',
     sameOshiChars: sameOshiRejectYes ? store.sameOshiChars : [],

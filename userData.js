@@ -102,6 +102,7 @@ export const store = {
   jokingOk: '', // ''=未回答, 'yes'=おふざけします, 'either'=どっちでもOK, 'no'=おふざけ無理です
   yuriOk: '',
   fujoshiOk: '',
+  yumeOk: '',
   roughTalk: '',
   sameOshiReject: '', // ''=未回答, 'no'=同担拒否なし, 'yes'=同担拒否あり
   sameOshiChars: [], // 原神キャラのicon名、人数制限なし
@@ -152,6 +153,7 @@ export async function loadProfileFromFirestore() {
       if (d.jokingOk != null) store.jokingOk = (d.jokingOk === true) ? 'yes' : (d.jokingOk === false ? '' : d.jokingOk);
       if (d.yuriOk != null) store.yuriOk = (d.yuriOk === true) ? 'yes' : (d.yuriOk === false ? '' : d.yuriOk);
       if (d.fujoshiOk != null) store.fujoshiOk = (d.fujoshiOk === true) ? 'yes' : (d.fujoshiOk === false ? '' : d.fujoshiOk);
+      if (d.yumeOk != null) store.yumeOk = d.yumeOk;
       if (d.roughTalk != null) store.roughTalk = d.roughTalk;
       // 過去は真偽値だったため、trueのときだけ'yes'として移行する('false'は'未回答'扱い)
       if (d.sameOshiReject != null) store.sameOshiReject = (d.sameOshiReject === true) ? 'yes' : (d.sameOshiReject === false ? '' : d.sameOshiReject);
@@ -228,6 +230,7 @@ export async function syncProfileToFirestore() {
       jokingOk: store.jokingOk,
       yuriOk: store.yuriOk,
       fujoshiOk: store.fujoshiOk,
+      yumeOk: store.yumeOk,
       roughTalk: store.roughTalk,
       sameOshiReject: store.sameOshiReject,
       sameOshiChars: store.sameOshiChars,

@@ -166,6 +166,7 @@ function buildPersona(i) {
     jokingOk: n % 3 === 0,
     yuriOk: n % 6 === 0,
     fujoshiOk: n % 6 === 3,
+    yumeOk: n % 6 === 1,
     roughTalk: n % 5 === 0 ? '' : (n % 2 === 0 ? 'no' : 'yes'),
     sameOshiReject: n % 4 === 0 ? '' : (n % 2 === 0 ? 'no' : 'yes'),
     sameOshiChars: (n % 2 === 1) ? pick(OSHI_ICON_POOL, 1 + (n % 2), n + 5) : [],

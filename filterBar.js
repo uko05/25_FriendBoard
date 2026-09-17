@@ -104,7 +104,7 @@ export function renderFilterBar({ containerId, filters, lang, isAdmin, isOpen, s
   appendFilterGroup(body, strings.requestTitle, toEntries('playStyles', requestPs), filters, onChange);
   appendFilterGroup(body, fieldLabel('inviteStyle', lang), toEntries('inviteStyle', filterFieldOptions('inviteStyle', lang)), filters, onChange);
   appendFilterGroup(body, fieldLabel('vcApps', lang), toEntries('vcApps', filterFieldOptions('vcApps', lang)), filters, onChange);
-  const attrEntries = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'roughTalk', 'sameOshiReject']
+  const attrEntries = ['casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'yumeOk', 'roughTalk', 'sameOshiReject']
     .flatMap((fk) => toEntries(fk, filterFieldOptions(fk, lang)));
   appendFilterGroup(body, strings.attrGroupTitle, attrEntries, filters, onChange);
   rootDetails.appendChild(body);
