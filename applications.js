@@ -54,6 +54,7 @@ const STR = {
     filterResetBtn: 'リセット',
     filterGroupAttrTitle: 'あなたの追加属性',
     filterAdminTitle: '管理者用フィルター(非表示項目も含む)',
+    resultCount: (n) => `${n}件`,
     uidLabel: 'UID',
     originalPostTitle: '元の投稿',
     originalPostGone: 'この投稿は取り下げられたか見つかりませんでした。',
@@ -100,6 +101,7 @@ const STR = {
     filterResetBtn: 'Reset',
     filterGroupAttrTitle: 'Additional traits',
     filterAdminTitle: 'Admin filters (includes hidden fields)',
+    resultCount: (n) => `${n} result${n === 1 ? '' : 's'}`,
     uidLabel: 'UID',
     originalPostTitle: 'Original post',
     originalPostGone: 'This post was withdrawn or could not be found.',
@@ -757,6 +759,8 @@ function renderReceivedList() {
   if (!list) return;
   list.innerHTML = '';
   const apps = latestReceived.filter((a) => a.status !== 'accepted' && !isBlocked(a.applicantUserId) && matchesReceivedFilters(a));
+  const countEl = document.getElementById('received-result-count');
+  if (countEl) countEl.textContent = s().resultCount(apps.length);
   if (!apps.length) {
     const p = document.createElement('p');
     p.className = 'board-list-empty';
