@@ -69,14 +69,23 @@
   再描画をフックできる。
 - **重要**: ここでの制御はすべてクライアント側の表示フィルター
   （`isBlocked()`をリスト描画時に見ているだけ）であり、Firestoreの
-  セキュリティルールでの強制ではない。ルールファイル自体はBakatare01
-  リポジトリ（`genshin-bakatare01`プロジェクト、共有Firebase）側で管理されて
-  おり、このリポジトリには無い。ただしそのルールでも`friendBoardProfiles`/
-  `friendBoardPosts`/`friendBoardApplications`は`allow read, write: if true`
-  で意図的に全開放されている（匿名運用のサイト群方針に合わせたもので、
+  セキュリティルールでの強制ではない。ルールファイル自体は
+  `24_AccountCenter`リポジトリ（`genshin-bakatare01`プロジェクト、共有
+  Firebase）側の`firestore.rules`で管理されており、このリポジトリには無い。
+  `friendBoardProfiles`/`friendBoardPosts`は`allow read, write: if true`で
+  意図的に全開放されている（匿名運用のサイト群方針に合わせたもので、
   console側の場当たり運用ではなく明示的な設計）。悪意を持って直接Firestoreを
   叩けば理論上は回避できるため、完全なセキュリティ境界ではなく、あくまで
   通常利用時の摩擦（嫌がらせの抑止）としての機能と捉えること。
+  **ただし`friendBoardApplications`だけは例外で、`read`こそ`if true`だが
+  `update`には`request.resource.data.diff(resource.data).affectedKeys().hasOnly([...])`
+  による更新可能フィールドの許可リストがある**（postId/postOwnerUserId/
+  applicantUserIdの改ざん防止と合わせて設定）。そのため
+  `applications.js`側でこのドキュメントに新しいフィールドを追記する処理を
+  足す時は、`24_AccountCenter/firestore.rules`の許可リストにもそのフィールド名を
+  追加してデプロイしないと、Permission Deniedで書き込みが失敗する
+  （2026-09-17、`lastChatAt`追加時にこれを忘れてチャット送信が全滅する
+  実障害が発生・修正済み）。
 - 通報は`friendBoardReports`へ`addDoc`するだけ（`reports.js`の`reportUser`）。
   `chatMessages`は通報時点のスナップショットをコピーして保存するので、後で
   会話が続いても通報時点の内容が変わらず確認できる。
