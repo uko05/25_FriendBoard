@@ -363,48 +363,6 @@ export function playStyleValueMatchKind(myValues, otherValue) {
   return isComplementary ? 'complementary' : null;
 }
 
-// 「どういうフレンドがほしい？」のマッチ度を計算する。
-// myPrefs: 自分のfriendPreference配列, myGender: 自分の性別
-// candidate: 相手側の公開フィールド一式相当のオブジェクト(gender/vc/friendPreferenceを含む)
-// 判定できる項目が1つも無ければnullを返す(マッチ度を表示しない)。
-// 「男女問わず」「VCなしでも大丈夫」「作業通話だけでもOK」「交流用Discord
-// サーバーで複数人でやりたい」は制限を課さない宣言のみの項目なので採点対象にしない。
-// 「異性のフレンドがほしい」はsameGenderの逆(gender不一致で加点)、
-// 「お絵描き友達がほしい」はwantPartner/wantOshiFriendと同じく相手も同じ
-// 項目を選んでいるか(双方向)で判定する。
-export function computeFriendMatch(myPrefs, myGender, candidate) {
-  if (!Array.isArray(myPrefs) || !myPrefs.length) return null;
-  const candidatePrefs = Array.isArray(candidate.friendPreference) ? candidate.friendPreference : [];
-  let total = 0;
-  let matched = 0;
-
-  myPrefs.forEach((pref) => {
-    if (pref === 'sameGender') {
-      if (candidate.gender) {
-        total++;
-        if (candidate.gender === myGender) matched++;
-      }
-      return;
-    }
-    if (pref === 'oppositeGender') {
-      if (candidate.gender) {
-        total++;
-        if (candidate.gender !== myGender) matched++;
-      }
-      return;
-    }
-    if (pref === 'wantPartner' || pref === 'wantOshiFriend' || pref === 'wantArtFriend') {
-      total++;
-      if (candidatePrefs.includes(pref)) matched++;
-      return;
-    }
-    // anyGender / vcNotNeeded / workCallOk / discordServer は宣言のみのため採点しない
-  });
-
-  if (total === 0) return null;
-  return Math.round((matched / total) * 100);
-}
-
 // prefsの中の同性/異性/男女問わずの指定から、gender(自分)の人がotherGenderの人を
 // 受け入れるかどうかを判定する。以下はすべて「制限なし(=受け入れる)」として扱う:
 //  - 3つとも未選択(何もチェックしていない)
@@ -421,7 +379,8 @@ function genderPreferenceAllows(prefs, otherGender, myGender) {
 }
 
 // 「同性/異性/男女問わずのフレンドがほしい」を、さがす一覧の表示可否を決める
-// ハードフィルターとして使う(computeFriendMatchは並び順への影響のみで除外はしない)。
+// ハードフィルターとして使う(v12.15より前はマッチ度スコアも計算していたが、
+// 並び順を登録・更新順に戻したことで不要になったため削除した)。
 // 双方向判定: 自分の希望×相手の性別 と 相手の希望×自分の性別 の両方を満たす人だけ通す
 // (例: 自分が「同性のフレンドがほしい」を選んでいても、相手が「異性のフレンドが
 // ほしい」を選んでいれば表示されない)。

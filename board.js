@@ -9,7 +9,7 @@ import { initBlocks, isBlocked, onBlocksChange, blockUser, unblockUser, blockedB
 import { reportUser } from './reports.js';
 import {
   VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
-  fieldLabel, formatFieldValue, buildPostFieldBuckets, computeFriendMatch, matchesGenderPreference,
+  fieldLabel, formatFieldValue, buildPostFieldBuckets, matchesGenderPreference,
   fieldMatchKind, playStyleValueMatchKind, GENSHIN_ICON_BASE,
 } from './fields.js';
 import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js';
@@ -1942,6 +1942,8 @@ function renderSearchList() {
   if (!list) return;
   const myUserId = getUserId();
 
+  // latestSearchPostsはstartSearchListenerのFirestoreクエリ(orderBy('createdAt', 'desc'))
+  // の順のまま届くので、追加のソートはしない(=登録・更新順、新しい方が上)。
   const filtered = latestSearchPosts
     .filter((post) => post.userId === myUserId || (
       post.publicFields?.server === store.server
@@ -1949,17 +1951,7 @@ function renderSearchList() {
       && (!isGenderMutualFilterOn() || matchesGenderPreference(store.friendPreference, store.gender, post.publicFields || {}))
       && isPostFresh(post)
       && !isBlocked(post.userId)
-    ))
-    .map((post) => ({
-      post,
-      // 自分の「どういうフレンドがほしい？」と相手の公開フィールドを突き合わせてマッチ度を算出し、
-      // 並び順だけに使う(数値そのものはバッジ表示せず0%の人に申請しづらくなるのを避ける)。
-      // 自分の投稿(mine)は並び替えの意味がないので計算しない。
-      matchPercent: post.userId === myUserId
-        ? null
-        : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {}),
-    }))
-    .sort((a, b) => (b.matchPercent ?? -1) - (a.matchPercent ?? -1));
+    ));
 
   const countEl = document.getElementById('search-result-count');
   if (countEl) countEl.textContent = s().resultCount(filtered.length);
@@ -1974,7 +1966,7 @@ function renderSearchList() {
     list.appendChild(p);
     return;
   }
-  filtered.forEach(({ post }) => list.appendChild(buildCard(post, { mine: post.userId === myUserId })));
+  filtered.forEach((post) => list.appendChild(buildCard(post, { mine: post.userId === myUserId })));
 }
 
 document.getElementById('search-gender-mutual-toggle')?.addEventListener('change', (e) => {
