@@ -89,7 +89,6 @@ const STR = {
     visCloseFriend: '仲良くなったら',
     oshiPickerFull: '推しキャラは3人まで選べます',
     secretFieldsNote: (labels) => `🔒 ${labels} は承認後に確認できます`,
-    matchLabel: (pct) => `マッチ度 ${pct}%`,
     savedImageShowLabel: { genshinRanking: '推しキャラランキングを表示', genshinCheck: '原神チェックシートを表示' },
     groupTitles: { basic: '基本情報', style: 'あなたについて', contact: '連絡・時間帯', voice: 'ボイスチャット', sns: 'つながれるSNS' },
     playStyleOfferTitle: '手伝います！',
@@ -159,7 +158,6 @@ const STR = {
     visCloseFriend: "Once we're close",
     oshiPickerFull: 'You can select up to 3 favorite characters',
     secretFieldsNote: (labels) => `🔒 ${labels} available after approval`,
-    matchLabel: (pct) => `${pct}% match`,
     savedImageShowLabel: { genshinRanking: 'Show Genshin Character Ranking', genshinCheck: 'Show Genshin Check Sheet' },
     groupTitles: { basic: 'Basic Info', style: 'About You', contact: 'Contact & Availability', voice: 'Voice Chat', sns: 'SNS' },
     playStyleOfferTitle: 'I can help with...',
@@ -1028,7 +1026,7 @@ function pushFieldRow(rows, key, value, lang, ownerUserId) {
 // ===== 募集カード描画 =====
 // onNeedProfile: 指定時、申請ボタン押下時にマイプロフィール未設定なら通常のalertの
 // 代わりにこれを呼ぶ(QRなどから開いた個別プロフィール表示専用の誘導ポップ用)。
-function buildCard(post, { mine, matchPercent, onNeedProfile } = {}) {
+function buildCard(post, { mine, onNeedProfile } = {}) {
   const card = document.createElement('div');
   card.className = 'board-card';
 
@@ -1084,13 +1082,6 @@ function buildCard(post, { mine, matchPercent, onNeedProfile } = {}) {
 
   const head = document.createElement('div');
   head.className = 'board-card-head';
-
-  if (!mine && matchPercent != null) {
-    const matchBadge = document.createElement('span');
-    matchBadge.className = 'board-card-match-badge';
-    matchBadge.textContent = s().matchLabel(matchPercent);
-    head.appendChild(matchBadge);
-  }
 
   if (secretLabels.length) {
     const note = document.createElement('span');
@@ -1626,10 +1617,8 @@ async function renderViewProfilePanel(targetUserId) {
       container.appendChild(p);
     } else {
       const mine = post.userId === getUserId();
-      const matchPercent = mine ? null : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {});
       container.appendChild(buildCard(post, {
         mine,
-        matchPercent,
         onNeedProfile: () => openProfileIncompleteModal(targetUserId),
       }));
     }
@@ -1940,8 +1929,9 @@ function renderSearchList() {
     .filter((post) => post.userId === myUserId || (post.publicFields?.server === store.server && matchesSearchFilters(post) && isPostFresh(post) && !isBlocked(post.userId)))
     .map((post) => ({
       post,
-      // 自分の「どういうフレンドがほしい？」と相手の公開フィールドを突き合わせてマッチ度を計算する。
-      // 自分の投稿(mine)には表示しないので、そちらは計算しない。
+      // 自分の「どういうフレンドがほしい？」と相手の公開フィールドを突き合わせてマッチ度を算出し、
+      // 並び順だけに使う(数値そのものはバッジ表示せず0%の人に申請しづらくなるのを避ける)。
+      // 自分の投稿(mine)は並び替えの意味がないので計算しない。
       matchPercent: post.userId === myUserId
         ? null
         : computeFriendMatch(store.friendPreference, store.gender, post.publicFields || {}),
@@ -1959,7 +1949,7 @@ function renderSearchList() {
     list.appendChild(p);
     return;
   }
-  filtered.forEach(({ post, matchPercent }) => list.appendChild(buildCard(post, { mine: post.userId === myUserId, matchPercent })));
+  filtered.forEach(({ post }) => list.appendChild(buildCard(post, { mine: post.userId === myUserId })));
 }
 
 function startSearchListener() {
