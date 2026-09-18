@@ -1539,12 +1539,13 @@ function updateSearchTabLock() {
 // 無ければ自動で開く仕様だが、Firestoreからの読み込みより先(DOMContentLoaded時点)に
 // 判定してしまうため、マイプロフ登録済みの人でも一瞬開いてしまうことがある。
 // ここでは登録済み(=latestMyListingがある)と分かった時点で、既に開いていれば閉じて
-// 既読フラグも立てておく(以後は二度と自動で開かない)。script.js側とキーを
-// 合わせること。管理者は文言レビューのため従来通り毎回表示させたいので対象外にする
-// (init()のADMIN_UID分岐参照)。
+// 既読フラグも立てておく(以後は二度と自動で開かない)。script.js側とキーを合わせること。
+// 2026-09-19: 以前は管理者だけ文言レビューのため対象外にしていたが、管理者自身も
+// 登録済みなら出さなくてよいとのことで対象外を廃止した(init()側の強制オープンも
+// 合わせて削除済み)。
 const INFO_SEEN_LS_KEY = 'friendBoard_infoSeen';
 function suppressInfoModalIfRegistered() {
-  if (!latestMyListing || getAuthUid() === ADMIN_UID) return;
+  if (!latestMyListing) return;
   const infoModal = document.getElementById('info-modal');
   if (infoModal) infoModal.style.display = 'none';
   localStorage.setItem(INFO_SEEN_LS_KEY, '1');
@@ -2608,10 +2609,7 @@ async function init() {
   // ログイン中ならaccountLinksから共有IDを解決してから(=正しいuserIdが確定してから)
   // プロフィール読み込み・一覧購読を始める
   await waitForAccountLink();
-  // 管理者(私)は初回ポップの文言を何度も見直したいので、既読フラグに関わらず毎回表示する
   if (getAuthUid() === ADMIN_UID) {
-    const infoModal = document.getElementById('info-modal');
-    if (infoModal) infoModal.style.display = 'flex';
     document.getElementById('tab-btn-admin')?.classList.remove('hidden');
     document.getElementById('announcement-post-form')?.classList.remove('hidden');
     startAdminReportsListener();

@@ -166,19 +166,23 @@
   （`friendBoard_infoSeen`）が無ければ`DOMContentLoaded`時点で自動的に開く
   （board.js等Firebaseに依存するモジュールとは独立させてあるので、Firestoreの
   読み込みを待たずに動く）。
-- 管理者（`getAuthUid() === ADMIN_UID`）だけは、この既読フラグに関係なく
-  毎回表示される（`board.js`の`init()`内。文言レビューを何度もしたいという
-  管理者本人の要望による意図的な特例）。
-- v(2026-09-18)で追加: マイプロフ登録済み（`friendBoardPosts`に自分の
-  ドキュメントがある＝`latestMyListing`が非null）の人には、二度と自動表示
-  されないようにした（`board.js`の`suppressInfoModalIfRegistered()`、
+- v12.16で追加: マイプロフ登録済み（`friendBoardPosts`に自分のドキュメントが
+  ある＝`latestMyListing`が非null）の人には、二度と自動表示されないように
+  した（`board.js`の`suppressInfoModalIfRegistered()`、
   `startMyListingListener()`のFirestore購読コールバック内で呼ぶ）。script.js側の
   自動オープンはFirestore読み込み前に動いてしまうため、登録済みの人でも
   ページ読み込み直後に一瞬だけ開いてすぐ閉じることがある（Firestoreの応答待ち
   分のラグ）。これは許容している。`suppressInfoModalIfRegistered()`は
   script.js側と同じlocalStorageキー名を使って既読フラグも一緒に立てるので、
-  以後はscript.js側の自動オープン自体も起こらなくなる。管理者はこの関数の
-  対象外（上記の特例を維持するため）。
+  以後はscript.js側の自動オープン自体も起こらなくなる。
+- 元々は管理者（`getAuthUid() === ADMIN_UID`）だけ、文言レビューのため
+  既読フラグに関係なく毎回表示する特例が`init()`にあった。v12.16リリース直後、
+  管理者自身がテスト中に「登録済みなのにまだ出る」と気づき、この特例が原因と
+  判明（`suppressInfoModalIfRegistered()`も当初は管理者を対象外にしていた）。
+  v12.16の同日中に両方とも撤廃し、管理者も登録済みなら他ユーザーと同じ扱いに
+  なった。もし将来また「管理者だけ毎回見たい」という要望が出たら、この2箇所
+  （`init()`の強制オープンと`suppressInfoModalIfRegistered()`の早期return）を
+  両方復活させる必要がある。
 
 ## お知らせ機能（`friendBoardAnnouncements`, v12.11追加）
 - タブバー一番右の「お知らせ」タブ（`#tab-btn-announcements`/`#tab-panel-announcements`）。
