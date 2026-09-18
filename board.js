@@ -1535,11 +1535,27 @@ function updateSearchTabLock() {
   if (hint) hint.classList.toggle('hidden', unlocked);
 }
 
+// script.js側の「このサイトについて」ポップは初回訪問時にlocalStorageの既読フラグが
+// 無ければ自動で開く仕様だが、Firestoreからの読み込みより先(DOMContentLoaded時点)に
+// 判定してしまうため、マイプロフ登録済みの人でも一瞬開いてしまうことがある。
+// ここでは登録済み(=latestMyListingがある)と分かった時点で、既に開いていれば閉じて
+// 既読フラグも立てておく(以後は二度と自動で開かない)。script.js側とキーを
+// 合わせること。管理者は文言レビューのため従来通り毎回表示させたいので対象外にする
+// (init()のADMIN_UID分岐参照)。
+const INFO_SEEN_LS_KEY = 'friendBoard_infoSeen';
+function suppressInfoModalIfRegistered() {
+  if (!latestMyListing || getAuthUid() === ADMIN_UID) return;
+  const infoModal = document.getElementById('info-modal');
+  if (infoModal) infoModal.style.display = 'none';
+  localStorage.setItem(INFO_SEEN_LS_KEY, '1');
+}
+
 function startMyListingListener() {
   onSnapshot(doc(db, 'friendBoardPosts', getUserId()), (snap) => {
     latestMyListing = snap.exists() ? { id: snap.id, ...snap.data() } : null;
     renderMyListing();
     updateSearchTabLock();
+    suppressInfoModalIfRegistered();
   }, (err) => {
     console.error('[board] my listing listen failed', err);
     latestMyListing = null;

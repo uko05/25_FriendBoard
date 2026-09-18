@@ -161,6 +161,25 @@
   フィルター対象外だが、承認済みの申請は「やり取り」タブに移りこの一覧自体の
   対象外になるので実害はない。
 
+## 「このサイトについて」ポップ(`#info-modal`)の表示条件
+- 基本ロジックはscript.js側にある。初回訪問時、localStorageの既読フラグ
+  （`friendBoard_infoSeen`）が無ければ`DOMContentLoaded`時点で自動的に開く
+  （board.js等Firebaseに依存するモジュールとは独立させてあるので、Firestoreの
+  読み込みを待たずに動く）。
+- 管理者（`getAuthUid() === ADMIN_UID`）だけは、この既読フラグに関係なく
+  毎回表示される（`board.js`の`init()`内。文言レビューを何度もしたいという
+  管理者本人の要望による意図的な特例）。
+- v(2026-09-18)で追加: マイプロフ登録済み（`friendBoardPosts`に自分の
+  ドキュメントがある＝`latestMyListing`が非null）の人には、二度と自動表示
+  されないようにした（`board.js`の`suppressInfoModalIfRegistered()`、
+  `startMyListingListener()`のFirestore購読コールバック内で呼ぶ）。script.js側の
+  自動オープンはFirestore読み込み前に動いてしまうため、登録済みの人でも
+  ページ読み込み直後に一瞬だけ開いてすぐ閉じることがある（Firestoreの応答待ち
+  分のラグ）。これは許容している。`suppressInfoModalIfRegistered()`は
+  script.js側と同じlocalStorageキー名を使って既読フラグも一緒に立てるので、
+  以後はscript.js側の自動オープン自体も起こらなくなる。管理者はこの関数の
+  対象外（上記の特例を維持するため）。
+
 ## お知らせ機能（`friendBoardAnnouncements`, v12.11追加）
 - タブバー一番右の「お知らせ」タブ（`#tab-btn-announcements`/`#tab-panel-announcements`）。
   一般ユーザーは閲覧のみ、投稿は管理者ロール（`getAuthUid() === ADMIN_UID`）だけが
