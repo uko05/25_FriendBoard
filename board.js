@@ -1473,6 +1473,7 @@ let latestMyListing = null;
 function renderMyListing() {
   const list = document.getElementById('my-posts-list');
   const exportBtn = document.getElementById('export-profile-image-btn');
+  const exportFullBtn = document.getElementById('export-profile-image-full-btn');
   const refreshBtn = document.getElementById('refresh-post-btn');
   const freshnessMsg = document.getElementById('post-freshness-msg');
   if (!list) return;
@@ -1483,12 +1484,14 @@ function renderMyListing() {
     p.textContent = s().emptyMy;
     list.appendChild(p);
     exportBtn?.classList.add('hidden');
+    exportFullBtn?.classList.add('hidden');
     refreshBtn?.classList.add('hidden');
     freshnessMsg?.classList.add('hidden');
     return;
   }
   list.appendChild(buildCard(latestMyListing, { mine: true }));
   exportBtn?.classList.remove('hidden');
+  exportFullBtn?.classList.remove('hidden');
   refreshBtn?.classList.remove('hidden');
   if (freshnessMsg) {
     const ts = latestMyListing.lastActiveAt || latestMyListing.createdAt;
@@ -2294,7 +2297,10 @@ function maskedFieldText(lang, key) {
   return `${fieldLabel(key, lang)}: ${s().visApproval}🔒`;
 }
 
-async function buildProfileExportImage(post) {
+// revealApproval=true(「承認後公開も表示」ボタン)のときは、承認後に公開の項目もマスクせず
+// 実際の値で描く(名前・UID・連絡先IDを含む)。非公開/仲良くなったら の項目は
+// buildPostFieldBuckets の時点で除外されるので、どちらのボタンでも画像には出ない。
+async function buildProfileExportImage(post, { revealApproval = false } = {}) {
   const lang = currentLang();
 
   // Canvasのテキスト描画はフォントの読み込み完了を待たないため、実サイトと同じ
@@ -2347,16 +2353,25 @@ async function buildProfileExportImage(post) {
   ctx.stroke();
 
   const { publicFields, secretFieldKeys } = buildPostFieldBuckets(store, store.visibility);
-  const secretSet = new Set(secretFieldKeys);
+  if (revealApproval) {
+    secretFieldKeys.forEach((key) => { publicFields[key] = store[key]; });
+  }
+  const secretSet = new Set(revealApproval ? [] : secretFieldKeys);
+
+  // 名前・UIDは常に承認後公開の固定項目なので、通常はマスク表示。全項目表示のときだけ実際の値。
+  const nameText = revealApproval && publicFields.displayName ? publicFields.displayName : maskedFieldText(lang, 'displayName');
+  const uidText = revealApproval && publicFields.genshinUid ? `${s().uidLabel}: ${publicFields.genshinUid}` : `${s().uidLabel}: ${s().visApproval}🔒`;
 
   const nameX = PAD + avatarSize + 28;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `32px ${EXPORT_FONT_FAMILY}`;
-  ctx.fillStyle = EXPORT_COLORS.approvalColor;
-  ctx.fillText(maskedFieldText(lang, 'displayName'), nameX, y + 44);
+  ctx.font = `${revealApproval ? 'bold ' : ''}32px ${EXPORT_FONT_FAMILY}`;
+  ctx.fillStyle = revealApproval ? EXPORT_COLORS.comment : EXPORT_COLORS.approvalColor;
+  ctx.fillText(nameText, nameX, y + 44);
   ctx.font = `26px ${EXPORT_FONT_FAMILY}`;
-  ctx.fillText(`${s().uidLabel}: ${s().visApproval}🔒`, nameX, y + 82);
+  ctx.fillStyle = revealApproval ? EXPORT_COLORS.uid : EXPORT_COLORS.approvalColor;
+  ctx.fillText(uidText, nameX, y + 82);
+  ctx.fillStyle = EXPORT_COLORS.approvalColor;
   if (secretSet.has('server')) {
     ctx.fillText(maskedFieldText(lang, 'server'), nameX, y + 118);
   } else if (publicFields.server) {
@@ -2386,10 +2401,10 @@ async function buildProfileExportImage(post) {
   // 従来通り「なんでも一言」の下に表示する。
   let oshiDrawnInHeader = false;
   if (!secretSet.has('oshiChars') && Array.isArray(store.oshiChars) && store.oshiChars.length) {
-    ctx.font = `32px ${EXPORT_FONT_FAMILY}`;
-    const nameTextWidth = ctx.measureText(maskedFieldText(lang, 'displayName')).width;
+    ctx.font = `${revealApproval ? 'bold ' : ''}32px ${EXPORT_FONT_FAMILY}`;
+    const nameTextWidth = ctx.measureText(nameText).width;
     ctx.font = `26px ${EXPORT_FONT_FAMILY}`;
-    const uidTextWidth = ctx.measureText(`${s().uidLabel}: ${s().visApproval}🔒`).width;
+    const uidTextWidth = ctx.measureText(uidText).width;
     let serverTextWidth = 0;
     if (secretSet.has('server')) {
       serverTextWidth = ctx.measureText(maskedFieldText(lang, 'server')).width;
@@ -2579,18 +2594,21 @@ function timestampForFilename() {
   return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
 }
 
-document.getElementById('export-profile-image-btn')?.addEventListener('click', async () => {
+// 公開項目のみ版(export-profile-image-btn)と、承認後公開も表示する版(export-profile-image-full-btn)。
+// 生成中は両方のボタンを押せなくする(連打で2枚同時に作り始めないように)。
+async function exportProfileImage(revealApproval) {
   if (!latestMyListing) return;
-  const btn = document.getElementById('export-profile-image-btn');
+  const btns = ['export-profile-image-btn', 'export-profile-image-full-btn']
+    .map((id) => document.getElementById(id)).filter(Boolean);
   const msgEl = document.getElementById('export-profile-image-msg');
-  btn.disabled = true;
+  btns.forEach((b) => { b.disabled = true; });
   if (msgEl) {
     msgEl.textContent = s().exportGenerating;
     msgEl.classList.remove('hidden', 'error');
   }
   try {
-    const dataUrl = await buildProfileExportImage(latestMyListing);
-    downloadDataUrlAsFile(dataUrl, `friendboard_${timestampForFilename()}.png`);
+    const dataUrl = await buildProfileExportImage(latestMyListing, { revealApproval });
+    downloadDataUrlAsFile(dataUrl, `friendboard_${revealApproval ? 'full_' : ''}${timestampForFilename()}.png`);
     if (msgEl) msgEl.classList.add('hidden');
   } catch (e) {
     console.error('[board] export image failed', e);
@@ -2600,9 +2618,11 @@ document.getElementById('export-profile-image-btn')?.addEventListener('click', a
       msgEl.classList.add('error');
     }
   } finally {
-    btn.disabled = false;
+    btns.forEach((b) => { b.disabled = false; });
   }
-});
+}
+document.getElementById('export-profile-image-btn')?.addEventListener('click', () => exportProfileImage(false));
+document.getElementById('export-profile-image-full-btn')?.addEventListener('click', () => exportProfileImage(true));
 
 // ===== 初期化 =====
 async function init() {

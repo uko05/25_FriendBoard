@@ -40,7 +40,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@uko_dayo_">
 
-    <link rel="stylesheet" href="styles.css?v=12.17" />
+    <link rel="stylesheet" href="styles.css?v=12.18" />
 
     <!-- Favicon -->
     <link rel="icon" href="public/scripts/favicon_io/favicon.ico" type="image/x-icon">
@@ -622,7 +622,8 @@
             <div class="board-myposts">
                 <h3 data-i18n="myPostsTitle">現在の公開状況</h3>
                 <p class="board-post-freshness hidden" id="post-freshness-msg"></p>
-                <button type="button" class="board-export-image-btn hidden" id="export-profile-image-btn" data-i18n="exportImageBtn">画像として保存（QRコード付き）</button>
+                <button type="button" class="board-export-image-btn hidden" id="export-profile-image-btn" data-i18n="exportImageBtn">画像として保存（公開項目のみ・QRコード付き）</button>
+                <button type="button" class="board-export-image-btn hidden" id="export-profile-image-full-btn" data-i18n="exportImageFullBtn">画像として保存（承認後公開も表示・QRコード付き）</button>
                 <button type="button" class="board-refresh-post-btn hidden" id="refresh-post-btn" data-i18n="refreshPostBtn">更新する（まだ募集中です）</button>
                 <p class="board-export-image-msg hidden" id="export-profile-image-msg"></p>
                 <div class="board-list" id="my-posts-list"></div>
@@ -741,7 +742,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v12.17</span>
+    <span id="site-version" class="site-version">v12.18</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">

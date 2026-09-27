@@ -255,7 +255,8 @@ document.addEventListener("DOMContentLoaded", () => {
       draftSaved: "一時保存しました（この端末のみ）",
       draftSaveFail: "一時保存に失敗しました。",
       myPostsTitle: "現在の公開状況",
-      exportImageBtn: "画像として保存（QRコード付き）",
+      exportImageBtn: "画像として保存（公開項目のみ・QRコード付き）",
+      exportImageFullBtn: "画像として保存（承認後公開も表示・QRコード付き）",
       refreshPostBtn: "更新する（まだ募集中です）",
       blockedListTitle: "ブロック中のユーザー",
 
@@ -484,7 +485,8 @@ document.addEventListener("DOMContentLoaded", () => {
       draftSaved: "Draft saved (this device only)",
       draftSaveFail: "Failed to save draft.",
       myPostsTitle: "Current Status",
-      exportImageBtn: "Save as image (with QR code)",
+      exportImageBtn: "Save as image (public items only, with QR code)",
+      exportImageFullBtn: "Save as image (incl. approval-only items, with QR code)",
       refreshPostBtn: "Refresh (still looking)",
       blockedListTitle: "Blocked users",
 
