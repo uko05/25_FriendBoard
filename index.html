@@ -851,5 +851,26 @@
     <!-- 本番（GitHub Pages公開後はこちらに切り替え）:
     <script src="https://uko05.github.io/00_TopPage/shared/sidebar.js"></script>
     -->
+  <!-- サイト説明(検索向け)。画像保存の範囲外に置くこと -->
+  <style>
+  .uko-about{max-width:760px;margin:32px auto 24px;padding:0 16px;box-sizing:border-box;text-align:left;font-size:14px;line-height:1.75;color:inherit;-webkit-user-select:text;user-select:text}
+  .uko-about>summary{cursor:pointer;list-style:none;display:inline-block;padding:6px 14px;border:1px solid rgba(128,128,128,.35);border-radius:999px;font-size:13px;opacity:.75}
+  .uko-about>summary:hover{opacity:1}
+  .uko-about>summary::-webkit-details-marker{display:none}
+  .uko-about>summary::before{content:"▶ "}
+  .uko-about[open]>summary::before{content:"▼ "}
+  .uko-about-body{margin-top:12px;padding:16px 20px;border:1px solid rgba(128,128,128,.25);border-radius:12px;background:rgba(128,128,128,.06)}
+  .uko-about h2{font-size:15px;font-weight:bold;margin:14px 0 6px;padding:0;border:0;background:none;color:inherit;text-align:left}
+  .uko-about h2:first-child{margin-top:0}
+  .uko-about p,.uko-about dl{margin:0 0 8px}
+  .uko-about ul,.uko-about ol{margin:0 0 8px;padding-left:1.5em}
+  .uko-about li{margin:2px 0;list-style:revert}
+  .uko-about dt{font-weight:bold;margin-top:6px}
+  .uko-about dd{margin:0 0 4px 1em}
+  </style>
+  <details class="uko-about">
+    <summary>このサイトについて</summary>
+    <div class="uko-about-body"><h2>＃原神フレンド承認板とは</h2><p>原神で一緒に遊ぶフレンドを探せる、無料の掲示板です。推しキャラ・マルチでやりたいこと・遊べる時間帯などをプロフィールに登録して、気の合う相手を探せます。申請を承認した相手とだけつながる承認制なので、安心して使えます。</p><h2>安心して使える仕組み</h2><ul><li>UIDや名前、DiscordなどのIDは、あなたが申請を承認した相手にだけ公開されます。</li><li>タメ口OKか、同担拒否かなどの「追加属性」で、相性の合う相手を探せます。</li><li>困った相手は通報できます。</li></ul><h2>使い方</h2><ol><li>マイプロフィールを入力して保存します。</li><li>「さがす」から相手を探して、フレンド申請を送ります。</li><li>相手が承認すると、お互いのUIDが見られるようになります。</li></ol></div>
+  </details>
 </body>
 </html>
