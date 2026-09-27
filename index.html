@@ -867,10 +867,32 @@
   .uko-about li{margin:2px 0;list-style:revert}
   .uko-about dt{font-weight:bold;margin-top:6px}
   .uko-about dd{margin:0 0 4px 1em}
+  .uko-about [hidden]{display:none!important}
   </style>
   <details class="uko-about">
-    <summary>このサイトについて</summary>
-    <div class="uko-about-body"><h2>＃原神フレンド承認板とは</h2><p>原神で一緒に遊ぶフレンドを探せる、無料の掲示板です。推しキャラ・マルチでやりたいこと・遊べる時間帯などをプロフィールに登録して、気の合う相手を探せます。申請を承認した相手とだけつながる承認制なので、安心して使えます。</p><h2>安心して使える仕組み</h2><ul><li>UIDや名前、DiscordなどのIDは、あなたが申請を承認した相手にだけ公開されます。</li><li>タメ口OKか、同担拒否かなどの「追加属性」で、相性の合う相手を探せます。</li><li>困った相手は通報できます。</li></ul><h2>使い方</h2><ol><li>マイプロフィールを入力して保存します。</li><li>「さがす」から相手を探して、フレンド申請を送ります。</li><li>相手が承認すると、お互いのUIDが見られるようになります。</li></ol></div>
+    <summary><span data-uko-lang="ja">このサイトについて</span><span data-uko-lang="en" hidden>About this site</span></summary>
+    <div class="uko-about-body" data-uko-lang="ja"><h2>＃原神フレンド承認板とは</h2><p>原神で一緒に遊ぶフレンドを探せる、無料の掲示板です。推しキャラ・マルチでやりたいこと・遊べる時間帯などをプロフィールに登録して、気の合う相手を探せます。申請を承認した相手とだけつながる承認制なので、安心して使えます。</p><h2>安心して使える仕組み</h2><ul><li>UIDや名前、DiscordなどのIDは、あなたが申請を承認した相手にだけ公開されます。</li><li>タメ口OKか、同担拒否かなどの「追加属性」で、相性の合う相手を探せます。</li><li>困った相手は通報できます。</li></ul><h2>使い方</h2><ol><li>マイプロフィールを入力して保存します。</li><li>「さがす」から相手を探して、フレンド申請を送ります。</li><li>相手が承認すると、お互いのUIDが見られるようになります。</li></ol></div>
+    <div class="uko-about-body" data-uko-lang="en" lang="en" hidden><h2>What is #Genshin Friend Approval Board?</h2><p>A free board for finding friends to play Genshin Impact with. Register your favorite characters, what you want to do in co-op, and when you can play in your profile, and find people you get along with. You only connect with people whose requests you approve, so you can use it with peace of mind.</p><h2>Built for peace of mind</h2><ul><li>Your UID, name, and IDs such as Discord are only shown to people whose requests you approve.</li><li>Use "Extra attributes" such as whether casual speech is OK or whether you share favorites to find people who match you.</li><li>You can report people who cause trouble.</li></ul><h2>How to use</h2><ol><li>Fill in your profile and save it.</li><li>Find people from "Search" and send a friend request.</li><li>Once the other person approves, you can see each other's UIDs.</li></ol></div>
   </details>
+  <script>
+  (function(){
+    // 説明文の日英切り替え。言語ラジオがあるサイトはその選択、ないサイトは共通のlocalStorage('lang')に合わせる
+    var box=document.currentScript.previousElementSibling;
+    function cur(){
+      var r=document.querySelector('input[name="lang"]:checked');
+      if(r) return r.value==='en'?'en':'ja';
+      try{return localStorage.getItem('lang')==='en'?'en':'ja';}catch(e){return 'ja';}
+    }
+    function apply(){
+      var l=cur();
+      box.querySelectorAll('[data-uko-lang]').forEach(function(n){n.hidden=n.getAttribute('data-uko-lang')!==l;});
+    }
+    apply();
+    document.addEventListener('change',function(e){if(e.target&&e.target.name==='lang')setTimeout(apply,0);});
+    document.addEventListener('DOMContentLoaded',apply);
+    window.addEventListener('load',apply);
+    new MutationObserver(apply).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+  })();
+  </script>
 </body>
 </html>
