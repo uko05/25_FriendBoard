@@ -809,6 +809,9 @@ window.addEventListener('beforeunload', (e) => {
   e.preventDefault();
   e.returnValue = '';
 });
+// 新バージョンの自動読み込み直し(TopPage00/shared/auto-reload.js)は、未保存の入力がある間は
+// 行わず「新しいバージョンがあります」の帯を出すだけにする(入力内容が消えないように)。
+window.ukoCanAutoReload = () => !formDirty;
 
 // 一時保存した内容をstoreへ重ね書きする(Firestoreの保存済みプロフィールより優先)。
 // 実際のフォーム反映はfillFormFromProfile()が読むstoreを経由するので、ここではstoreを書き換えるだけでよい。

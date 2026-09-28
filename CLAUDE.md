@@ -11,6 +11,11 @@
   症状が実際にあったため。styles.cssを変更した時だけでなく、version番号を
   上げる時は毎回揃えておくと安全）。
 - 修正するたびに commit + push まで行う（確認を挟まない）。
+- **ある程度大きい修正**（読み取り削減・データ構造の変更など、開きっぱなしの古いタブに
+  残られると困るもの）の時だけ、`version.json` の `reloadVersion` と `index.html` の
+  `<meta name="uko-reload-version">` を**同じ数字だけ**上げる。開いている全員のタブが、
+  裏から戻った時に自動で読み込み直される（`TopPage00/shared/auto-reload.js`、v12.21追加）。
+  細かい修正では上げない。未保存の入力がある間(`formDirty`)は読み込み直さず帯を出すだけ。
 
 ## データモデルの前提
 - `friendBoardPosts/{userId}`：1ユーザー1ドキュメント固定。募集フォームの保存は

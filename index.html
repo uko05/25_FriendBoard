@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 大きめの修正時だけ version.json と一緒に上げる(開きっぱなしのタブを自動で読み込み直す。TopPage00/shared/auto-reload.js参照) -->
+    <meta name="uko-reload-version" content="1" />
     <title>＃原神フレンド承認板｜フレンド募集掲示板 - うーこの部屋</title>
     <meta name="description" content="原神のフレンドを探せる掲示板。プロフィールを登録して相手を探し、UIDは承認した相手にだけ公開されます。">
     <meta property="og:type" content="website">
@@ -40,7 +42,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@uko_dayo_">
 
-    <link rel="stylesheet" href="styles.css?v=12.20" />
+    <link rel="stylesheet" href="styles.css?v=12.21" />
 
     <!-- Favicon -->
     <link rel="icon" href="public/scripts/favicon_io/favicon.ico" type="image/x-icon">
@@ -758,7 +760,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v12.20</span>
+    <span id="site-version" class="site-version">v12.21</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">
@@ -865,6 +867,8 @@
     <!-- 共通サイドバー -->
     <!-- ローカル確認用: -->
     <script src="./shared/sidebar.js"></script>
+    <!-- 新しいバージョンが出たら自動で読み込み直す(同梱のsidebar.jsは自動読み込みしないので直接読む) -->
+    <script src="https://uko05.github.io/TopPage00/shared/auto-reload.js"></script>
     <!-- 本番（GitHub Pages公開後はこちらに切り替え）:
     <script src="https://uko05.github.io/00_TopPage/shared/sidebar.js"></script>
     -->
