@@ -1984,3 +1984,90 @@ body.portal-page {
   .board-radio-group, .board-checkbox-group { gap: 6px 12px; }
   .board-radio-group label, .board-checkbox-group label, .board-single-checkbox { font-size: 13px; }
 }
+
+/* ===== 管理タブ: ユーザー統計 ===== */
+.board-admin-stats-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+.board-admin-stats-meta { font-size: 12px; color: #888; }
+.board-admin-stats-refresh {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  border: 1.5px solid #e0ac00;
+  border-radius: 8px;
+  background: #fff8e1;
+  color: #a67c00;
+  font-weight: bold;
+  cursor: pointer;
+}
+.board-admin-stats-refresh:disabled { opacity: 0.6; cursor: default; }
+.board-admin-stats-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.board-admin-stats-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: #fff;
+}
+.board-admin-stats-table th,
+.board-admin-stats-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+.board-admin-stats-table thead th {
+  position: sticky;
+  top: 0;
+  background: #fafafa;
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+}
+.board-admin-stats-table th.group-sent { background: #eef5fd; }
+.board-admin-stats-table th.group-recv { background: #f4f0fa; }
+.board-admin-stats-table th.sortable { cursor: pointer; user-select: none; }
+.board-admin-stats-table th.sorted { color: #a67c00; }
+.board-admin-stats-table tbody tr { cursor: pointer; }
+.board-admin-stats-table tbody tr:hover { background: #fffbea; }
+.board-admin-stats-table tbody tr.is-skewed { background: #fff5f5; }
+.board-admin-stats-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.board-admin-stats-table td.user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 180px;
+}
+.board-admin-stats-table td.user img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffcc00;
+  flex-shrink: 0;
+}
+.board-admin-stats-table td.user div { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+.board-admin-stats-table td.user .name { font-weight: bold; color: #222; }
+.board-admin-stats-table td.user .sub { font-size: 11px; color: #999; }
+.board-admin-stats-table td.user .pref {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+.board-admin-stats-table td.sent-to { font-size: 11px; color: #555; }
+.board-admin-stats-table td.sent-to .skew {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #ffebee;
+  color: #c62828;
+  font-weight: bold;
+}
+.board-admin-report-stats { margin: 0; font-size: 11px; color: #666; }

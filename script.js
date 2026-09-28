@@ -22,19 +22,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
-     申請タブ内のサブタブ切替（届いた申請／送った申請）
+     タブ内のサブタブ切替（申請タブ：届いた申請／送った申請／やり取り、
+     管理タブ：通報一覧／ユーザー統計）。切り替えは押したボタンと同じタブの中だけで行う
+     (ページ全体を対象にすると、別タブのサブタブまで非表示になってしまうため)。
      ========================= */
-  const subTabButtons = document.querySelectorAll(".board-subtab-btn");
-  subTabButtons.forEach((btn) => {
+  document.querySelectorAll(".board-subtab-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      subTabButtons.forEach((b) => {
+      const scope = btn.closest(".board-tab-panel") || document;
+      scope.querySelectorAll(".board-subtab-btn").forEach((b) => {
         b.classList.remove("active");
         b.setAttribute("aria-selected", "false");
       });
       btn.classList.add("active");
       btn.setAttribute("aria-selected", "true");
 
-      document.querySelectorAll(".board-subtab-panel").forEach((panel) => panel.classList.add("hidden"));
+      scope.querySelectorAll(".board-subtab-panel").forEach((panel) => panel.classList.add("hidden"));
       const target = document.getElementById(`subtab-panel-${btn.dataset.subtab}`);
       if (target) target.classList.remove("hidden");
     });
@@ -70,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tabPost: "マイプロフィール",
       tabSearch: "さがす",
       tabRequests: "申請",
-      tabAdmin: "通報一覧",
+      tabAdmin: "管理",
       tabAnnouncements: "お知らせ",
       tabLockHint: "マイプロフィールを保存すると「さがす」が使えるようになります",
 
@@ -276,6 +278,9 @@ document.addEventListener("DOMContentLoaded", () => {
       requestsTitle: "申請の管理",
       adminReportsTitle: "通報一覧",
       adminHideHandled: "対応済みを非表示にする",
+      adminStatsTitle: "ユーザー統計",
+      adminStatsRefresh: "再集計",
+      adminStatsSkewOnly: "異性ばかりに申請している人だけ表示",
       requestsDesc: "気になる募集に申請すると相手に通知が届きます。相手が承認すると、原神UIDが確認できるようになります。",
       receivedTitle: "届いた申請",
       sentTitle: "送った申請",
@@ -300,7 +305,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tabPost: "My Profile",
       tabSearch: "Search",
       tabRequests: "Requests",
-      tabAdmin: "Reports",
+      tabAdmin: "Admin",
       tabAnnouncements: "Announcements",
       tabLockHint: "Save your My Profile to unlock Search",
 
@@ -506,6 +511,9 @@ document.addEventListener("DOMContentLoaded", () => {
       requestsTitle: "Manage requests",
       adminReportsTitle: "Reports",
       adminHideHandled: "Hide handled reports",
+      adminStatsTitle: "User stats",
+      adminStatsRefresh: "Recalculate",
+      adminStatsSkewOnly: "Only users who mostly apply to the opposite gender",
       requestsDesc: "Apply to a post you're interested in and the poster gets notified. Once they accept, you'll be able to see their Genshin UID.",
       receivedTitle: "Received requests",
       sentTitle: "Sent requests",

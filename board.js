@@ -16,7 +16,7 @@ import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutua
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
-  collection, setDoc, addDoc, updateDoc, deleteDoc, doc, getDoc, onSnapshot,
+  collection, setDoc, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, onSnapshot,
   query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
@@ -63,6 +63,22 @@ const STR = {
     adminOpenProfile: 'プロフィールを開く ↗',
     adminNoName: '（名前未登録）',
     adminLoading: '読み込み中…',
+    adminGenderFemale: '女性',
+    adminGenderMale: '男性',
+    adminGenderUnknown: '性別不明',
+    adminStatsUser: 'ユーザー',
+    adminStatsGroupSent: '申請した側',
+    adminStatsGroupRecv: '申請された側',
+    adminStatsCols: {
+      sent: '申請', sentAccepted: '承認された', sentRejected: '断られた', sentPending: '返事待ち', sentTo: '申請先の性別',
+      recv: '申請された', recvAccepted: '承認した', recvRejected: '断った', recvPending: '未返答',
+    },
+    adminStatsPrefTags: { oppositeGender: '異性希望', sameGender: '同性希望', wantPartner: '恋人希望' },
+    adminStatsSentTo: (f, m, u) => `女${f} / 男${m}` + (u ? ` / 不明${u}` : ''),
+    adminStatsSkewBadge: (g) => `異性（${g}）ばかり`,
+    adminStatsMeta: (users, apps, at, fpct) => `${users}人・申請${apps}件（${at} 集計）／全申請のうち女性宛て${fpct}%`,
+    adminStatsEmpty: '該当するユーザーはいません',
+    adminStatsSummary: (r) => `申請${r.sent}（承認${r.sentAccepted}・断られ${r.sentRejected}）／申請され${r.recv}（承認${r.recvAccepted}・断り${r.recvRejected}）`,
     emptyAnnouncements: 'まだお知らせはありません',
     announcementValidation: 'タイトルと本文を入力してください。',
     announcementPostOk: 'お知らせを投稿しました！',
@@ -140,6 +156,22 @@ const STR = {
     adminOpenProfile: 'Open profile ↗',
     adminNoName: '(no name)',
     adminLoading: 'Loading…',
+    adminGenderFemale: 'Female',
+    adminGenderMale: 'Male',
+    adminGenderUnknown: 'Unknown',
+    adminStatsUser: 'User',
+    adminStatsGroupSent: 'As applicant',
+    adminStatsGroupRecv: 'As recipient',
+    adminStatsCols: {
+      sent: 'Sent', sentAccepted: 'Accepted', sentRejected: 'Declined', sentPending: 'Pending', sentTo: 'Sent to (gender)',
+      recv: 'Received', recvAccepted: 'Accepted', recvRejected: 'Declined', recvPending: 'Unanswered',
+    },
+    adminStatsPrefTags: { oppositeGender: 'Wants opposite gender', sameGender: 'Wants same gender', wantPartner: 'Wants partner' },
+    adminStatsSentTo: (f, m, u) => `F${f} / M${m}` + (u ? ` / ?${u}` : ''),
+    adminStatsSkewBadge: (g) => `Mostly opposite gender (${g})`,
+    adminStatsMeta: (users, apps, at, fpct) => `${users} users, ${apps} requests (as of ${at}) / ${fpct}% of all requests go to women`,
+    adminStatsEmpty: 'No matching users',
+    adminStatsSummary: (r) => `Sent ${r.sent} (accepted ${r.sentAccepted}, declined ${r.sentRejected}) / Received ${r.recv} (accepted ${r.recvAccepted}, declined ${r.recvRejected})`,
     emptyAnnouncements: 'No announcements yet',
     announcementValidation: 'Please enter a title and body.',
     announcementPostOk: 'Announcement posted!',
@@ -1872,6 +1904,14 @@ function buildAdminReportCard(report) {
   people.appendChild(buildAdminReportPerson(s().adminReportedLabel, report.reportedUserId, 'is-reported'));
   card.appendChild(people);
 
+  const statsText = adminStatsSummaryText(report.reportedUserId);
+  if (statsText) {
+    const stats = document.createElement('p');
+    stats.className = 'board-admin-report-stats';
+    stats.textContent = `${s().adminReportedLabel}: ${statsText}`;
+    card.appendChild(stats);
+  }
+
   if (report.reason) {
     const reason = document.createElement('p');
     reason.className = 'board-admin-report-reason';
@@ -1937,6 +1977,265 @@ function buildAdminReportCard(report) {
 
   return card;
 }
+
+// ===== ユーザー統計(管理者のみ) =====
+// 申請(friendBoardApplications)全件と、性別・名前を見るためのプロフィール
+// (friendBoardProfiles)全件を1回だけgetDocsして、ユーザーごとに集計する。
+// 常時購読はせず、管理タブを初めて開いた時と「再集計」ボタンの時だけ読む
+// (読み込み数 = 申請件数 + プロフィール件数。2026-09時点で約1000回/回)。
+// 申請先の性別は申請時点ではなく「今の」相手プロフィールの性別を使う。
+const ADMIN_STATS_SKEW_MIN_SENT = 5;   // これ未満の申請数では偏り判定しない(少数だと偶然で偏るため)
+const ADMIN_STATS_SKEW_RATIO = 0.9;    // 性別が分かっている申請先のうち、異性がこの割合以上なら「異性ばかり」
+// ※募集者はもともと女性が約8割(2026-09時点)なので、「申請先が女性に偏っている」だけでは
+//   普通の利用者(同性の友達を探す女性など)まで大量に引っかかる。そのため本人の性別と比べて
+//   「異性ばかりに申請している」場合だけを印にする(本人の性別が不明なら判定しない)。
+let adminStats = null;                 // userId -> 集計行
+let adminStatsLoadedAt = null;
+let adminStatsLoading = null;          // 読み込み中のPromise(二重読み込み防止)
+let adminStatsSortKey = 'sent';
+let adminStatsSortDesc = true;
+
+function emptyAdminStatsRow(uid) {
+  return {
+    uid, displayName: '', gender: '', friendPreference: [], avatarGame: null, avatarIcon: null, avatarAt: 0,
+    sent: 0, sentAccepted: 0, sentRejected: 0, sentPending: 0,
+    sentToFemale: 0, sentToMale: 0, sentToUnknown: 0,
+    recv: 0, recvAccepted: 0, recvRejected: 0, recvPending: 0,
+  };
+}
+
+// 異性ばかりに申請していれば、その申請先の性別('female' | 'male')を返す。そうでなければ null。
+function adminStatsSkew(row) {
+  if (row.sent < ADMIN_STATS_SKEW_MIN_SENT) return null;
+  if (row.gender !== 'male' && row.gender !== 'female') return null;
+  const known = row.sentToFemale + row.sentToMale;
+  if (!known) return null;
+  const opposite = row.gender === 'male' ? 'female' : 'male';
+  const oppositeCount = opposite === 'female' ? row.sentToFemale : row.sentToMale;
+  return oppositeCount / known >= ADMIN_STATS_SKEW_RATIO ? opposite : null;
+}
+
+async function loadAdminStats() {
+  if (adminStatsLoading) return adminStatsLoading;
+  adminStatsLoading = (async () => {
+    renderAdminStats();
+    try {
+      const [appSnap, profSnap] = await Promise.all([
+        getDocs(collection(db, 'friendBoardApplications')),
+        getDocs(collection(db, 'friendBoardProfiles')),
+      ]);
+      const profiles = new Map();
+      profSnap.forEach((d) => profiles.set(d.id, d.data()));
+      const rows = new Map();
+      const rowOf = (uid) => {
+        if (!rows.has(uid)) {
+          const r = emptyAdminStatsRow(uid);
+          const p = profiles.get(uid) || {};
+          r.displayName = p.displayName || '';
+          r.gender = p.gender || '';
+          r.friendPreference = Array.isArray(p.friendPreference) ? p.friendPreference : [];
+          rows.set(uid, r);
+        }
+        return rows.get(uid);
+      };
+      // アイコンは申請ドキュメントにその時点のものがコピーされているので、一番新しい申請のものを使う
+      const setAvatar = (row, game, icon, at) => {
+        if (icon && at >= row.avatarAt) { row.avatarGame = game; row.avatarIcon = icon; row.avatarAt = at; }
+      };
+      appSnap.forEach((d) => {
+        const a = d.data();
+        if (!a.applicantUserId || !a.postOwnerUserId) return;
+        const at = typeof a.createdAt?.toMillis === 'function' ? a.createdAt.toMillis() : 0;
+        const ap = rowOf(a.applicantUserId);
+        const ow = rowOf(a.postOwnerUserId);
+        setAvatar(ap, a.applicantAvatarGame, a.applicantAvatarIcon, at);
+        setAvatar(ow, a.postOwnerAvatarGame, a.postOwnerAvatarIcon, at);
+        ap.sent++;
+        ow.recv++;
+        if (a.status === 'accepted') { ap.sentAccepted++; ow.recvAccepted++; }
+        else if (a.status === 'rejected') { ap.sentRejected++; ow.recvRejected++; }
+        else { ap.sentPending++; ow.recvPending++; }
+        const g = profiles.get(a.postOwnerUserId)?.gender;
+        if (g === 'female') ap.sentToFemale++;
+        else if (g === 'male') ap.sentToMale++;
+        else ap.sentToUnknown++;
+      });
+      adminStats = rows;
+      adminStatsLoadedAt = new Date();
+    } catch (e) {
+      console.error('[board] admin stats load failed', e);
+    } finally {
+      adminStatsLoading = null;
+      renderAdminStats();
+      renderAdminReports(); // 通報カードの被通報者に統計の要約を出すため
+    }
+  })();
+  return adminStatsLoading;
+}
+
+const ADMIN_STATS_COLUMNS = [
+  { key: 'sent', group: 'sent' }, { key: 'sentAccepted', group: 'sent' }, { key: 'sentRejected', group: 'sent' },
+  { key: 'sentPending', group: 'sent' }, { key: 'sentTo', group: 'sent' },
+  { key: 'recv', group: 'recv' }, { key: 'recvAccepted', group: 'recv' }, { key: 'recvRejected', group: 'recv' },
+  { key: 'recvPending', group: 'recv' },
+];
+
+function adminStatsSortValue(row, key) {
+  if (key === 'sentTo') {
+    // 申請先の性別列は「偏りの強さ」で並べる(女性率・男性率の大きい方)
+    const known = row.sentToFemale + row.sentToMale;
+    return known ? Math.max(row.sentToFemale, row.sentToMale) / known + row.sent / 10000 : 0;
+  }
+  return row[key] || 0;
+}
+
+function adminGenderLabel(g) {
+  if (g === 'female') return s().adminGenderFemale;
+  if (g === 'male') return s().adminGenderMale;
+  return s().adminGenderUnknown;
+}
+
+function renderAdminStats() {
+  const wrap = document.getElementById('admin-stats-wrap');
+  const meta = document.getElementById('admin-stats-meta');
+  const refreshBtn = document.getElementById('admin-stats-refresh');
+  if (!wrap) return;
+  if (refreshBtn) refreshBtn.disabled = !!adminStatsLoading;
+  if (adminStatsLoading && !adminStats) {
+    wrap.innerHTML = '';
+    const p = document.createElement('p');
+    p.className = 'board-list-empty';
+    p.textContent = s().adminLoading;
+    wrap.appendChild(p);
+    if (meta) meta.textContent = '';
+    return;
+  }
+  if (!adminStats) { wrap.innerHTML = ''; return; }
+
+  const skewOnly = document.getElementById('admin-stats-skew-only')?.checked;
+  let rows = [...adminStats.values()];
+  if (meta) {
+    const d = adminStatsLoadedAt;
+    const pad = (n) => String(n).padStart(2, '0');
+    const totalApps = rows.reduce((n, r) => n + r.sent, 0);
+    // 比較の目安として、申請全体のうち女性宛ての割合も出す
+    const toF = rows.reduce((n, r) => n + r.sentToFemale, 0);
+    const toKnown = toF + rows.reduce((n, r) => n + r.sentToMale, 0);
+    const femalePct = toKnown ? Math.round(toF / toKnown * 100) : 0;
+    meta.textContent = s().adminStatsMeta(rows.length, totalApps, d ? `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}` : '', femalePct);
+  }
+  if (skewOnly) rows = rows.filter((r) => adminStatsSkew(r));
+  rows.sort((a, b) => {
+    const diff = adminStatsSortValue(a, adminStatsSortKey) - adminStatsSortValue(b, adminStatsSortKey);
+    return (adminStatsSortDesc ? -diff : diff) || (b.sent + b.recv) - (a.sent + a.recv);
+  });
+
+  const table = document.createElement('table');
+  table.className = 'board-admin-stats-table';
+  const thead = document.createElement('thead');
+  const groupRow = document.createElement('tr');
+  const thUserGroup = document.createElement('th');
+  thUserGroup.rowSpan = 2;
+  thUserGroup.textContent = s().adminStatsUser;
+  groupRow.appendChild(thUserGroup);
+  [['sent', 5, s().adminStatsGroupSent], ['recv', 4, s().adminStatsGroupRecv]].forEach(([g, span, label]) => {
+    const th = document.createElement('th');
+    th.colSpan = span;
+    th.className = `group-${g}`;
+    th.textContent = label;
+    groupRow.appendChild(th);
+  });
+  const colRow = document.createElement('tr');
+  ADMIN_STATS_COLUMNS.forEach((c) => {
+    const th = document.createElement('th');
+    th.className = `sortable group-${c.group}` + (c.key === adminStatsSortKey ? ' sorted' : '');
+    th.textContent = s().adminStatsCols[c.key] + (c.key === adminStatsSortKey ? (adminStatsSortDesc ? ' ▼' : ' ▲') : '');
+    th.addEventListener('click', () => {
+      if (adminStatsSortKey === c.key) adminStatsSortDesc = !adminStatsSortDesc;
+      else { adminStatsSortKey = c.key; adminStatsSortDesc = true; }
+      renderAdminStats();
+    });
+    colRow.appendChild(th);
+  });
+  thead.append(groupRow, colRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  rows.forEach((r) => {
+    const tr = document.createElement('tr');
+    tr.addEventListener('click', () => window.open(exportViewProfileUrl(r.uid), '_blank', 'noopener'));
+
+    const tdUser = document.createElement('td');
+    tdUser.className = 'user';
+    const img = document.createElement('img');
+    img.src = avatarUrl(r.avatarGame, r.avatarIcon);
+    img.alt = '';
+    const info = document.createElement('div');
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = r.displayName || s().adminNoName;
+    const sub = document.createElement('span');
+    sub.className = 'sub';
+    sub.textContent = adminGenderLabel(r.gender);
+    info.append(name, sub);
+    // 偏りの判断材料として、本人が選んでいる「どういうフレンドがほしい？」の性別・恋人関連だけ出す
+    ['oppositeGender', 'sameGender', 'wantPartner'].filter((v) => r.friendPreference.includes(v)).forEach((v) => {
+      const tag = document.createElement('span');
+      tag.className = 'pref';
+      tag.textContent = s().adminStatsPrefTags[v];
+      info.appendChild(tag);
+    });
+    tdUser.append(img, info);
+    tr.appendChild(tdUser);
+
+    ADMIN_STATS_COLUMNS.forEach((c) => {
+      const td = document.createElement('td');
+      td.className = `num group-${c.group}`;
+      if (c.key === 'sentTo') {
+        td.className = 'sent-to group-sent';
+        if (r.sent) {
+          td.textContent = s().adminStatsSentTo(r.sentToFemale, r.sentToMale, r.sentToUnknown);
+          const skew = adminStatsSkew(r);
+          if (skew) {
+            const badge = document.createElement('span');
+            badge.className = 'skew';
+            badge.textContent = s().adminStatsSkewBadge(adminGenderLabel(skew));
+            td.appendChild(badge);
+            tr.classList.add('is-skewed');
+          }
+        }
+      } else {
+        const v = r[c.key] || 0;
+        td.textContent = v ? String(v) : '-';
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  wrap.innerHTML = '';
+  if (!rows.length) {
+    const p = document.createElement('p');
+    p.className = 'board-list-empty';
+    p.textContent = s().adminStatsEmpty;
+    wrap.appendChild(p);
+    return;
+  }
+  wrap.appendChild(table);
+}
+
+// 通報カードの被通報者の下に出す、ユーザー統計の要約(統計を読み込み済みの時だけ)
+function adminStatsSummaryText(uid) {
+  const r = adminStats?.get(uid);
+  if (!r) return '';
+  const skew = adminStatsSkew(r);
+  return s().adminStatsSummary(r) + (skew ? ` / ${s().adminStatsSkewBadge(adminGenderLabel(skew))}` : '');
+}
+
+document.getElementById('tab-btn-admin')?.addEventListener('click', () => { if (!adminStats) loadAdminStats(); });
+document.getElementById('admin-stats-refresh')?.addEventListener('click', () => loadAdminStats());
+document.getElementById('admin-stats-skew-only')?.addEventListener('change', renderAdminStats);
 
 // ===== お知らせ(全員が閲覧、投稿は管理者ロールのみ) =====
 const ANNOUNCEMENT_SEEN_LS_KEY = 'friendBoard_lastSeenAnnouncementAt';
