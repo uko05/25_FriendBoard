@@ -60,6 +60,9 @@ const STR = {
     adminReportedLabel: '被通報者',
     adminChatSnapshotTitle: '通報時点のチャット内容',
     adminMarkHandled: '対応済みにする',
+    adminOpenProfile: 'プロフィールを開く ↗',
+    adminNoName: '（名前未登録）',
+    adminLoading: '読み込み中…',
     emptyAnnouncements: 'まだお知らせはありません',
     announcementValidation: 'タイトルと本文を入力してください。',
     announcementPostOk: 'お知らせを投稿しました！',
@@ -134,6 +137,9 @@ const STR = {
     adminReportedLabel: 'Reported',
     adminChatSnapshotTitle: 'Chat content at time of report',
     adminMarkHandled: 'Mark handled',
+    adminOpenProfile: 'Open profile ↗',
+    adminNoName: '(no name)',
+    adminLoading: 'Loading…',
     emptyAnnouncements: 'No announcements yet',
     announcementValidation: 'Please enter a title and body.',
     announcementPostOk: 'Announcement posted!',
@@ -1717,6 +1723,72 @@ function startAdminReportsListener() {
   }, (err) => console.error('[board] admin reports listen failed', err));
 }
 
+// 通報カードに出す人物情報(名前・UID・アイコン)と、チャットの発言者を通報者/被通報者に
+// 振り分けるための申請情報を、表示中の通報ぶんだけ遅延取得してキャッシュする
+// (コレクション全体は購読しない。applications.jsのensureAdminApplicantProfilesLoadedと同じ方針)。
+// 値は取得中ならPromise、取得後はオブジェクト(存在しなければnull)。
+const adminReportUserCache = new Map(); // userId -> { displayName, genshinUid, avatarGame, avatarIcon }
+const adminReportAppCache = new Map();  // applicationId -> { postOwnerUserId, applicantUserId } | null
+
+async function fetchAdminReportUser(uid) {
+  try {
+    const [profSnap, postSnap] = await Promise.all([
+      getDoc(doc(db, 'friendBoardProfiles', uid)),
+      getDoc(doc(db, 'friendBoardPosts', uid)),
+    ]);
+    const prof = profSnap.exists() ? profSnap.data() : {};
+    const post = postSnap.exists() ? postSnap.data() : {};
+    let avatarGame = post.avatarGame || null;
+    let avatarIcon = post.avatarIcon || null;
+    if (!avatarGame || !avatarIcon) {
+      // 投稿が無い(または投稿にアバターが無い)人は、サイト群共通のアバター設定を見る
+      const a = await getMyAvatar(uid);
+      avatarGame = a.game;
+      avatarIcon = a.icon;
+    }
+    return { displayName: prof.displayName || '', genshinUid: prof.genshinUid || '', avatarGame, avatarIcon };
+  } catch (e) {
+    console.warn('[board] admin report user fetch failed', uid, e);
+    return null;
+  }
+}
+
+async function fetchAdminReportApp(appId) {
+  try {
+    const snap = await getDoc(doc(db, 'friendBoardApplications', appId));
+    if (!snap.exists()) return null;
+    const d = snap.data();
+    return { postOwnerUserId: d.postOwnerUserId, applicantUserId: d.applicantUserId };
+  } catch (e) {
+    console.warn('[board] admin report application fetch failed', appId, e);
+    return null;
+  }
+}
+
+async function ensureAdminReportDetailsLoaded(reports) {
+  const jobs = [];
+  const want = (cache, key, fetcher) => {
+    if (!key || cache.has(key)) return;
+    const p = fetcher(key).then((v) => { cache.set(key, v); });
+    cache.set(key, p);
+    jobs.push(p);
+  };
+  reports.forEach((r) => {
+    want(adminReportUserCache, r.reporterUserId, fetchAdminReportUser);
+    want(adminReportUserCache, r.reportedUserId, fetchAdminReportUser);
+    if (r.chatMessages && r.chatMessages.length) want(adminReportAppCache, r.applicationId, fetchAdminReportApp);
+  });
+  if (!jobs.length) return;
+  await Promise.all(jobs);
+  renderAdminReports();
+}
+
+// キャッシュ済みの値だけを返す(取得中のPromiseはまだ無いものとして扱う)
+function cachedAdminReportValue(cache, key) {
+  const v = cache.get(key);
+  return v && typeof v.then !== 'function' ? v : null;
+}
+
 function renderAdminReports() {
   const list = document.getElementById('admin-reports-list');
   if (!list) return;
@@ -1731,6 +1803,51 @@ function renderAdminReports() {
     return;
   }
   reports.forEach((report) => list.appendChild(buildAdminReportCard(report)));
+  ensureAdminReportDetailsLoaded(reports);
+}
+
+// 通報カード内の「通報者」「被通報者」1人ぶんのミニプロフィール。
+// クリックでQRと同じ個別プロフィール表示(?u=userId)を別タブで開く。
+function buildAdminReportPerson(label, uid, roleClass) {
+  const info = cachedAdminReportValue(adminReportUserCache, uid);
+  const box = document.createElement('a');
+  box.className = `board-admin-report-person ${roleClass}`;
+  box.href = exportViewProfileUrl(uid);
+  box.target = '_blank';
+  box.rel = 'noopener';
+
+  const img = document.createElement('img');
+  img.className = 'board-admin-report-person-avatar';
+  img.alt = '';
+  img.src = avatarUrl(info?.avatarGame, info?.avatarIcon);
+  box.appendChild(img);
+
+  const text = document.createElement('div');
+  text.className = 'board-admin-report-person-text';
+  const role = document.createElement('span');
+  role.className = 'board-admin-report-person-role';
+  role.textContent = label;
+  const name = document.createElement('span');
+  name.className = 'board-admin-report-person-name';
+  const raw = adminReportUserCache.get(uid);
+  const loading = raw === undefined || (raw && typeof raw.then === 'function');
+  name.textContent = loading ? s().adminLoading : (info?.displayName || s().adminNoName);
+  const sub = document.createElement('span');
+  sub.className = 'board-admin-report-person-sub';
+  sub.textContent = [info?.genshinUid ? `UID: ${info.genshinUid}` : null, uid].filter(Boolean).join(' / ');
+  const open = document.createElement('span');
+  open.className = 'board-admin-report-person-open';
+  open.textContent = s().adminOpenProfile;
+  text.append(role, name, sub, open);
+  box.appendChild(text);
+  return box;
+}
+
+function formatChatTimeForAdmin(at) {
+  if (typeof at !== 'number') return '';
+  const d = new Date(at);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 document.getElementById('admin-report-hide-handled')?.addEventListener('change', renderAdminReports);
@@ -1745,10 +1862,15 @@ function buildAdminReportCard(report) {
   time.textContent = relTime(report.createdAt);
   card.appendChild(time);
 
-  const idsRow = document.createElement('p');
-  idsRow.className = 'board-admin-report-ids';
-  idsRow.textContent = `${s().adminReporterLabel}: ${report.reporterUserId}  →  ${s().adminReportedLabel}: ${report.reportedUserId}`;
-  card.appendChild(idsRow);
+  const people = document.createElement('div');
+  people.className = 'board-admin-report-people';
+  people.appendChild(buildAdminReportPerson(s().adminReporterLabel, report.reporterUserId, 'is-reporter'));
+  const arrow = document.createElement('span');
+  arrow.className = 'board-admin-report-arrow';
+  arrow.textContent = '→';
+  people.appendChild(arrow);
+  people.appendChild(buildAdminReportPerson(s().adminReportedLabel, report.reportedUserId, 'is-reported'));
+  card.appendChild(people);
 
   if (report.reason) {
     const reason = document.createElement('p');
@@ -1774,9 +1896,22 @@ function buildAdminReportCard(report) {
     card.appendChild(chatTitle);
     const chatBox = document.createElement('div');
     chatBox.className = 'board-admin-report-chat';
+    // chatMessagesのsenderは'owner'|'applicant'なので、申請データの投稿者/申請者IDと突き合わせて
+    // 通報者・被通報者のどちらの発言かに置き換える(申請が取得できなければ元の値のまま表示)。
+    const app = cachedAdminReportValue(adminReportAppCache, report.applicationId);
     report.chatMessages.forEach((m) => {
+      const senderUid = app ? (m.sender === 'owner' ? app.postOwnerUserId : app.applicantUserId) : null;
+      let who = m.sender;
+      let roleClass = '';
+      if (senderUid && senderUid === report.reporterUserId) { who = s().adminReporterLabel; roleClass = 'is-reporter'; }
+      else if (senderUid && senderUid === report.reportedUserId) { who = s().adminReportedLabel; roleClass = 'is-reported'; }
       const line = document.createElement('p');
-      line.textContent = `[${m.sender}] ${m.text}`;
+      if (roleClass) line.className = roleClass;
+      const head = document.createElement('span');
+      head.className = 'board-admin-report-chat-head';
+      head.textContent = [who, formatChatTimeForAdmin(m.at)].filter(Boolean).join('  ');
+      line.appendChild(head);
+      line.appendChild(document.createTextNode(m.text));
       chatBox.appendChild(line);
     });
     card.appendChild(chatBox);

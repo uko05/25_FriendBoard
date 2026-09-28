@@ -1249,13 +1249,55 @@ body.portal-page {
   gap: 6px;
 }
 .board-admin-report-handled { opacity: 0.55; }
-.board-admin-report-ids {
-  margin: 0;
-  font-size: 12px;
-  font-weight: bold;
-  color: #444;
-  word-break: break-all;
+/* 通報者 → 被通報者 のミニプロフィール(クリックで個別プロフィールを別タブで開く) */
+.board-admin-report-people {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  flex-wrap: wrap;
 }
+.board-admin-report-arrow {
+  align-self: center;
+  font-size: 18px;
+  color: #999;
+}
+.board-admin-report-person {
+  flex: 1 1 220px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(0,0,0,0.12);
+  background: #fafafa;
+  text-decoration: none;
+  color: inherit;
+}
+.board-admin-report-person:hover { background: #f0f0f0; }
+.board-admin-report-person.is-reporter { border-color: rgba(33,150,243,0.45); }
+.board-admin-report-person.is-reported { border-color: rgba(229,57,53,0.5); background: #fff5f5; }
+.board-admin-report-person-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 2px solid #ffcc00;
+}
+.board-admin-report-person-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.board-admin-report-person-role { font-size: 11px; font-weight: bold; color: #888; }
+.board-admin-report-person.is-reporter .board-admin-report-person-role { color: #1976d2; }
+.board-admin-report-person.is-reported .board-admin-report-person-role { color: #c62828; }
+.board-admin-report-person-name { font-size: 14px; font-weight: bold; color: #222; word-break: break-all; }
+.board-admin-report-person-sub { font-size: 11px; color: #999; word-break: break-all; }
+.board-admin-report-person-open { font-size: 11px; color: #a67c00; }
 .board-admin-report-reason {
   margin: 0;
   font-size: 13px;
@@ -1276,10 +1318,24 @@ body.portal-page {
   overflow-y: auto;
 }
 .board-admin-report-chat p {
-  margin: 0 0 4px;
+  margin: 0 0 6px;
+  padding: 4px 8px;
   font-size: 12px;
   color: #333;
+  border-left: 3px solid transparent;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
+.board-admin-report-chat p.is-reporter { border-left-color: rgba(33,150,243,0.6); }
+.board-admin-report-chat p.is-reported { border-left-color: rgba(229,57,53,0.7); background: #fff0f0; }
+.board-admin-report-chat-head {
+  display: block;
+  font-size: 11px;
+  font-weight: bold;
+  color: #888;
+}
+.board-admin-report-chat p.is-reporter .board-admin-report-chat-head { color: #1976d2; }
+.board-admin-report-chat p.is-reported .board-admin-report-chat-head { color: #c62828; }
 .board-admin-report-handled-toggle {
   display: flex;
   align-items: center;
