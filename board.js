@@ -16,9 +16,9 @@ import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutua
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
-  collection, setDoc, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs, onSnapshot,
-  query, where, orderBy, serverTimestamp,
+  collection, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getDoc, getDocs, onSnapshot } from './fsTracked.js'; // 読み取り件数の集計(調査用、fsTracked.js参照)
 
 const OSHI_ELEMS = ['hi', 'mizu', 'koori', 'kaminari', 'kusa', 'kaze', 'iwa'];
 const OSHI_ELEM_LABELS = {

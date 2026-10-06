@@ -16,8 +16,9 @@
 
 import { db } from './firebaseConfig.js';
 import {
-  collection, doc, setDoc, deleteDoc, onSnapshot, query, where, serverTimestamp,
+  collection, doc, setDoc, deleteDoc, query, where, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { onSnapshot } from './fsTracked.js'; // 読み取り件数の集計(調査用、fsTracked.js参照)
 
 let _getUserId = null;
 let started = false;
