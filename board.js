@@ -30,7 +30,7 @@ const OSHI_MAX = 3;
 // 投稿(募集する)は、最終アクティブ日時からこの期間更新がないと探す一覧から自動的に
 // 非表示になる。更新扱いになるのは「更新する」ボタンを押した時と、他の投稿へ申請した時
 // (applications.jsのapplyToPost参照)。
-const POST_STALE_MS = 30 * 24 * 60 * 60 * 1000;
+const POST_STALE_MS = 100 * 24 * 60 * 60 * 1000; // 2026-10-07に30日→100日
 
 const STR = {
   ja: {
@@ -236,7 +236,7 @@ function relTime(ts) {
   return s().dayAgo(Math.floor(hour / 24));
 }
 
-// 30日以上アクティブ更新がない投稿を探す一覧から除外するための判定。
+// 100日以上アクティブ更新がない投稿を探す一覧から除外するための判定。
 // タイムスタンプがまだ書き込み確定していない(pending write)場合はfalse扱いにせず
 // 表示し続ける(誤って新規投稿を隠さないため)。
 function isPostFresh(post) {

@@ -23,7 +23,7 @@
   本当の初回作成日時ではない。
 - `lastActiveAt`：投稿の「アクティブ度」用の別フィールド。保存時／マイプロフの
   「更新する」ボタン／他の投稿への申請／チャット送信、のいずれかで更新される。
-  `POST_STALE_MS`（30日, board.js）を過ぎると探す一覧から自動的に除外される
+  `POST_STALE_MS`（100日, board.js。2026-10-07に30日から変更）を過ぎると探す一覧から自動的に除外される
   （`isPostFresh()`）。本人のマイプロフ画面には出続けるので、いつでも復活可能。
 - さがす一覧の並び順は`latestSearchPosts`（`startSearchListener`のFirestoreクエリ
   `orderBy('createdAt', 'desc')`）の順のまま、`renderSearchList`側で追加のソートを
