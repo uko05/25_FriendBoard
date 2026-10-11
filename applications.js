@@ -17,7 +17,7 @@ import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutua
 import {
   collection, addDoc, updateDoc, doc, query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { getDoc, onSnapshot } from './fsTracked.js'; // 読み取り件数の集計(調査用、fsTracked.js参照)
+import { getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const STR = {
   ja: {

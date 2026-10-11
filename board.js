@@ -18,7 +18,7 @@ import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@m
 import {
   collection, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { getDoc, getDocs, onSnapshot } from './fsTracked.js'; // 読み取り件数の集計(調査用、fsTracked.js参照)
+import { getDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const OSHI_ELEMS = ['hi', 'mizu', 'koori', 'kaminari', 'kusa', 'kaze', 'iwa'];
 const OSHI_ELEM_LABELS = {
