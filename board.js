@@ -1078,7 +1078,7 @@ function pushFieldRow(rows, key, value, lang, ownerUserId) {
 // ===== 募集カード描画 =====
 // onNeedProfile: 指定時、申請ボタン押下時にマイプロフィール未設定なら通常のalertの
 // 代わりにこれを呼ぶ(QRなどから開いた個別プロフィール表示専用の誘導ポップ用)。
-function buildCard(post, { mine, onNeedProfile } = {}) {
+function buildCard(post, { mine, onNeedProfile, showTime = true } = {}) {
   const card = document.createElement('div');
   card.className = 'board-card';
 
@@ -1301,7 +1301,9 @@ function buildCard(post, { mine, onNeedProfile } = {}) {
 
   const time = document.createElement('span');
   time.className = 'board-card-time';
-  time.textContent = relTime(post.createdAt);
+  // さがす一覧では掲載からの日数を出さない(30日前などの古さが見えると申請する気が下がるため、2026-10-20)。
+  // 要素自体は残して、下の並び(ボタンの位置)は変えない
+  if (showTime) time.textContent = relTime(post.createdAt);
   foot.appendChild(time);
 
   if (mine) {
@@ -2423,7 +2425,7 @@ function renderSearchList() {
     list.appendChild(p);
     return;
   }
-  filtered.forEach((post) => list.appendChild(buildCard(post, { mine: post.userId === myUserId })));
+  filtered.forEach((post) => list.appendChild(buildCard(post, { mine: post.userId === myUserId, showTime: false })));
 }
 
 document.getElementById('search-gender-mutual-toggle')?.addEventListener('change', (e) => {
