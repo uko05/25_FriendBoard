@@ -3,21 +3,22 @@
 // 申請→相手が申請者の情報を見て承認/却下→承認されたら承認制の項目が見られる、という流れ。
 // 通知トーストは 14_GenshinOmikuji/feed.js の いいね通知(showLikeToast) と同じ仕組み。
 
-import { db } from './firebaseConfig.js';
-import { store, ADMIN_UID } from './userData.js';
-import { avatarUrl, getMyAvatar } from './avatar.js';
-import { initBlocks, isBlocked, onBlocksChange, blockUser } from './blocks.js';
-import { reportUser } from './reports.js';
+import { db } from './firebaseConfig.js?v=2';
+import { store, ADMIN_UID } from './userData.js?v=2';
+import { avatarUrl, getMyAvatar } from './avatar.js?v=2';
+import { initBlocks, isBlocked, onBlocksChange, blockUser } from './blocks.js?v=2';
+import { reportUser } from './reports.js?v=2';
 import {
   VISIBILITY_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES, GENSHIN_ICON_BASE,
   fieldLabel, formatFieldValue, buildPostFieldBuckets, matchesGenderPreference,
   fieldMatchKind, playStyleValueMatchKind,
-} from './fields.js';
-import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js';
+} from './fields.js?v=2';
+import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js?v=2';
 import {
   collection, addDoc, updateDoc, doc, query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { onSnapshot } from './visibleListener.js?v=2'; // 裏タブでは受信を止める版
 
 const STR = {
   ja: {
@@ -1260,12 +1261,17 @@ function startSentListener(userId) {
     where('applicantUserId', '==', userId),
     orderBy('createdAt', 'desc')
   );
+  // 裏タブで購読を止めている間に承認/お断りされた分は、張り直した時に 'added' として届くので、
+  // ページを開いた最初の1回以外は 'added' も拾う(最初の1回は従来どおりトーストを出さない)
+  let sentFirstSnap = true;
   onSnapshot(q, (snap) => {
     latestSent = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     renderSentList();
     if (_onSentChange) _onSentChange();
 
-    snap.docChanges().filter((c) => c.type === 'modified').forEach((c) => {
+    const first = sentFirstSnap;
+    sentFirstSnap = false;
+    snap.docChanges().filter((c) => c.type === 'modified' || (!first && c.type === 'added')).forEach((c) => {
       const app = { id: c.doc.id, ...c.doc.data() };
       if (!app.applicantSeen && (app.status === 'accepted' || app.status === 'rejected')) {
         showToast({

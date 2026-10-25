@@ -5,7 +5,7 @@
 //   - 変更できるのは24_AccountCenterでアカウント登録し、この共有IDに紐付いた本人のみ
 //     (Firestoreルール側でも accountLinks を見て強制している)
 
-import { db } from './firebaseConfig.js';
+import { db } from './firebaseConfig.js?v=2';
 import {
   doc, setDoc, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";

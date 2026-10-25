@@ -4,7 +4,7 @@
 // 追加項目)を完全に同じにする、という前提(CLAUDE.md参照)なので、生成ロジックを
 // ここに集約している。
 
-import { fieldLabel, filterFieldOptions, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES } from './fields.js';
+import { fieldLabel, filterFieldOptions, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES } from './fields.js?v=2';
 
 // 「性別相互フィルター」のon/off。さがす一覧・届いた申請一覧の両方に同じチェック
 // ボックスを置くが、どちらで切り替えても同じ1つの状態を共有する(セッション内のみ、

@@ -1,24 +1,25 @@
 // board.js
 // ＃原神フレンド承認板：タブ切替・プロフィール自動反映・投稿(募集する)・一覧購読(さがす)
 
-import { db } from './firebaseConfig.js';
-import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink, ADMIN_UID } from './userData.js';
-import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js';
-import { initApplications, applyToPost, hasAppliedTo } from './applications.js';
-import { initBlocks, isBlocked, onBlocksChange, blockUser, unblockUser, blockedByMeList } from './blocks.js';
-import { reportUser } from './reports.js';
+import { db } from './firebaseConfig.js?v=2';
+import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink, ADMIN_UID } from './userData.js?v=2';
+import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js?v=2';
+import { initApplications, applyToPost, hasAppliedTo } from './applications.js?v=2';
+import { initBlocks, isBlocked, onBlocksChange, blockUser, unblockUser, blockedByMeList } from './blocks.js?v=2';
+import { reportUser } from './reports.js?v=2';
 import {
   VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
   fieldLabel, formatFieldValue, buildPostFieldBuckets, matchesGenderPreference,
   fieldMatchKind, playStyleValueMatchKind, GENSHIN_ICON_BASE,
-} from './fields.js';
-import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js';
+} from './fields.js?v=2';
+import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js?v=2';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
   collection, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { getDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { onSnapshot } from './visibleListener.js?v=2'; // 裏タブでは受信を止める版
 
 const OSHI_ELEMS = ['hi', 'mizu', 'koori', 'kaminari', 'kusa', 'kaze', 'iwa'];
 const OSHI_ELEM_LABELS = {

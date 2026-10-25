@@ -5,13 +5,13 @@
 //   - プロフィール本体はFirestoreを正源泉とし、インメモリのstoreで保持
 //   - 変更のたびにデバウンスしてFirestoreへ同期
 
-import { app, db } from './firebaseConfig.js';
+import { app, db } from './firebaseConfig.js?v=2';
 import {
   doc, setDoc, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { VISIBILITY_FIELDS, defaultVisibility, normalizeVisibility } from './fields.js';
+import { VISIBILITY_FIELDS, defaultVisibility, normalizeVisibility } from './fields.js?v=2';
 
 // 14_GenshinOmikujiと同じキーをあえて使う。uko05.github.io配下は全サイト同一オリジンで
 // localStorageを共有しているため、キーを揃えるだけで「Omikuji/AccountCenterで使っている

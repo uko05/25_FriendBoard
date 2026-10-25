@@ -3,7 +3,7 @@
 // 現時点ではFirestoreへの記録のみで、管理者用の確認画面は別途用意する予定
 // (それまでは開発者がFirestoreのfriendBoardReportsコレクションを直接確認する)。
 
-import { db } from './firebaseConfig.js';
+import { db } from './firebaseConfig.js?v=2';
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const REASON_MAXLEN = 500;
