@@ -18,7 +18,7 @@ import { db } from './firebaseConfig.js?v=2';
 import {
   collection, doc, setDoc, deleteDoc, query, where, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { onSnapshot } from './visibleListener.js?v=2'; // 裏タブでは受信を止める版
+import { onSnapshot } from './visibleListener.js?v=3'; // 裏タブでは受信を止める版
 
 let _getUserId = null;
 let started = false;

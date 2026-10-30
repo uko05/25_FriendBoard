@@ -6,7 +6,7 @@
 import { db } from './firebaseConfig.js?v=2';
 import { store, ADMIN_UID } from './userData.js?v=2';
 import { avatarUrl, getMyAvatar } from './avatar.js?v=2';
-import { initBlocks, isBlocked, onBlocksChange, blockUser } from './blocks.js?v=2';
+import { initBlocks, isBlocked, onBlocksChange, blockUser } from './blocks.js?v=3';
 import { reportUser } from './reports.js?v=2';
 import {
   VISIBILITY_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES, GENSHIN_ICON_BASE,
@@ -18,7 +18,7 @@ import {
   collection, addDoc, updateDoc, doc, query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import { onSnapshot } from './visibleListener.js?v=2'; // 裏タブでは受信を止める版
+import { onSnapshot } from './visibleListener.js?v=3'; // 裏タブでは受信を止める版
 
 const STR = {
   ja: {

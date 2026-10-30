@@ -9,7 +9,9 @@
 // 引数(クエリ)は張り直しでも同じものを使うので、「今から○時間前」のような条件には使わないこと。
 import { onSnapshot as rawOnSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-const HIDDEN_GRACE_MS = 60 * 1000;
+// 2026-10-31: 1分→10分。端末のキャッシュが使えない人が、別タブと行き来するたびに募集中の投稿(約220件)を
+// 全部読み直していた(1人で1日32回、約7千件)。裏で受信し続ける分(投稿の更新1件ごとに1件)より、読み直しの方が高い
+const HIDDEN_GRACE_MS = 10 * 60 * 1000;
 const subs = new Set();
 let paused = false;
 let pauseTimer = null;
