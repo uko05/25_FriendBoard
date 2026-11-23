@@ -47,6 +47,22 @@ export function getUserId() {
 // ログイン中(24_AccountCenterでID/パスワード登録済み)なら、accountLinksに紐づく
 // 共有IDをlocalStorageへ反映する（別端末でログインした場合など、ローカルのIDが
 // 登録時のものとズレているケースに対応）。ログインしていない/連携先が無い場合は何もしない。
+// 管理者かどうか(2026-11-23): 決まったアカウント(ADMIN_UID)に加えて、sharedUserRoles で管理者ロールが
+// 付いている人も管理者として扱う(おみくじ・オークションと同じく、共有ID getUserId() で引く)。
+let _isAdminRole = false;
+export function isAdminUser() {
+  return _authUid === ADMIN_UID || _isAdminRole;
+}
+export async function loadAdminRole() {
+  try {
+    const snap = await getDoc(doc(db, 'sharedUserRoles', getUserId()));
+    _isAdminRole = snap.exists() && snap.data().role === 'admin';
+  } catch (e) {
+    console.warn('[userData] role lookup failed', e);
+  }
+  return isAdminUser();
+}
+
 // 2026-11-23: ログインの確認が2.5秒の待ち時間より遅れると、管理者用の表示(フィルター・管理タブ)が
 // 出ないままになっていた。待ち時間のあとでログインが分かったときは、ここに登録した関数を呼んで画面を直す。
 const _lateAuthCbs = [];

@@ -2,9 +2,9 @@
 // ＃原神フレンド承認板：タブ切替・プロフィール自動反映・投稿(募集する)・一覧購読(さがす)
 
 import { db } from './firebaseConfig.js?v=2';
-import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink, onAuthUidLate, ADMIN_UID } from './userData.js?v=3';
+import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink, onAuthUidLate, isAdminUser, loadAdminRole } from './userData.js?v=4';
 import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js?v=2';
-import { initApplications, applyToPost, hasAppliedTo, refreshApplicationsAdminView } from './applications.js?v=4';
+import { initApplications, applyToPost, hasAppliedTo, refreshApplicationsAdminView } from './applications.js?v=5';
 import { initBlocks, isBlocked, onBlocksChange, blockUser, unblockUser, blockedByMeList } from './blocks.js?v=3';
 import { reportUser } from './reports.js?v=2';
 import {
@@ -1747,7 +1747,7 @@ let filterBarOpen = false;
 const adminProfileCache = new Map();
 
 function isAdminViewer() {
-  return getAuthUid() === ADMIN_UID;
+  return isAdminUser();
 }
 
 // ===== 通報一覧(管理者のみ) =====
@@ -3066,7 +3066,7 @@ document.getElementById('export-profile-image-full-btn')?.addEventListener('clic
 
 let adminUIEnabled = false;
 function enableAdminUI() {
-  if (adminUIEnabled || getAuthUid() !== ADMIN_UID) return;
+  if (adminUIEnabled || !isAdminUser()) return;
   adminUIEnabled = true;
   document.getElementById('tab-btn-admin')?.classList.remove('hidden');
   document.getElementById('announcement-post-form')?.classList.remove('hidden');
@@ -3078,9 +3078,11 @@ async function init() {
   // ログイン中ならaccountLinksから共有IDを解決してから(=正しいuserIdが確定してから)
   // プロフィール読み込み・一覧購読を始める
   await waitForAccountLink();
+  await loadAdminRole();   // 管理者ロールが付いている人も管理者(2026-11-23)
   enableAdminUI();
   // ログインの確認が遅れて届いたときも、管理者用の表示を出し直す(2026-11-23)
-  onAuthUidLate(() => {
+  onAuthUidLate(async () => {
+    await loadAdminRole();   // ログインで共有IDが変わることがあるので引き直す
     enableAdminUI();
     renderSearchFilterBar();
     renderSearchList();
