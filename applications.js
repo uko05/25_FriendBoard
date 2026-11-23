@@ -4,7 +4,7 @@
 // 通知トーストは 14_GenshinOmikuji/feed.js の いいね通知(showLikeToast) と同じ仕組み。
 
 import { db } from './firebaseConfig.js?v=2';
-import { store, ADMIN_UID } from './userData.js?v=2';
+import { store, ADMIN_UID } from './userData.js?v=3';
 import { avatarUrl, getMyAvatar } from './avatar.js?v=2';
 import { initBlocks, isBlocked, onBlocksChange, blockUser } from './blocks.js?v=3';
 import { reportUser } from './reports.js?v=2';
@@ -677,6 +677,11 @@ async function sendChatMessage(app, sender, text) {
 
 function isAdminViewer() {
   return !!(_getAuthUid && _getAuthUid() === ADMIN_UID);
+}
+
+// ログインの確認が遅れて届いたとき(board.js から呼ぶ)、管理者用のフィルターを出し直す(2026-11-23)
+export function refreshApplicationsAdminView() {
+  try { renderReceivedFilterBar(); renderReceivedList(); } catch (e) { console.warn('[applications] admin refresh failed', e); }
 }
 
 // ===== 届いた申請一覧のフィルター =====

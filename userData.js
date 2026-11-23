@@ -47,13 +47,22 @@ export function getUserId() {
 // ログイン中(24_AccountCenterでID/パスワード登録済み)なら、accountLinksに紐づく
 // 共有IDをlocalStorageへ反映する（別端末でログインした場合など、ローカルのIDが
 // 登録時のものとズレているケースに対応）。ログインしていない/連携先が無い場合は何もしない。
+// 2026-11-23: ログインの確認が2.5秒の待ち時間より遅れると、管理者用の表示(フィルター・管理タブ)が
+// 出ないままになっていた。待ち時間のあとでログインが分かったときは、ここに登録した関数を呼んで画面を直す。
+const _lateAuthCbs = [];
+export function onAuthUidLate(cb) { _lateAuthCbs.push(cb); }
+
 export function waitForAccountLink() {
   return new Promise((resolve) => {
     let settled = false;
     const finish = () => { if (!settled) { settled = true; resolve(); } };
 
     onAuthStateChanged(auth, async (user) => {
+      const prevUid = _authUid;
       _authUid = (user && user.email) ? user.uid : null;
+      if (settled && _authUid !== prevUid) {
+        _lateAuthCbs.forEach((cb) => { try { cb(_authUid); } catch (e) { console.warn('[userData] late auth callback failed', e); } });
+      }
       if (user && user.email) {
         try {
           const linkSnap = await getDoc(doc(db, 'accountLinks', user.uid));
