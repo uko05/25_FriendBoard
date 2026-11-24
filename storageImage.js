@@ -79,9 +79,23 @@ function removeOnError(img, target) {
   img.addEventListener('error', () => { (target || img).remove(); });
 }
 
+// 他人のカード用: 状態の読み取り結果を覚えておく(一覧の描き直しのたびに読み直さない)。
+// 10分たったら読み直す(その間に表示OKになった人も、いずれボタンが出るように)。
+const REVIEW_CACHE_MS = 10 * 60 * 1000;
+const reviewCache = new Map(); // userId -> { at, promise }
+function cachedImageReview(userId) {
+  const hit = reviewCache.get(userId);
+  if (hit && Date.now() - hit.at < REVIEW_CACHE_MS) return hit.promise;
+  const promise = fetchImageReview(userId);
+  reviewCache.set(userId, { at: Date.now(), promise });
+  return promise;
+}
+
 // ===== 募集カードでの表示 =====
 // mine: 自分のカード(マイプロフィール)ではすぐに表示し、状態も添える。
-// 他人のカードでは押すまで読み込まない。承認済みのときだけ画像を出す。
+// 他人のカード: 表示OK(approved)の人にだけ「画像保管庫の画像を表示」ボタンを出す
+// (チェックだけ入れて画像を選んでいない人・画像承認待ちの人には出さない。2026-11-24)。
+// 画像そのものはボタンを押すまで読み込まない。
 export function renderStorageImageOnCard(wrap, ownerUserId, mine) {
   const show = (review) => {
     if (!review || review.status !== 'approved' || !review.viewUrl) {
@@ -108,15 +122,21 @@ export function renderStorageImageOnCard(wrap, ownerUserId, mine) {
     fetchImageReview(ownerUserId).then(show);
     return;
   }
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'board-card-saved-image-toggle';
-  btn.textContent = storageImageStr().showBtn;
-  wrap.appendChild(btn);
-  btn.addEventListener('click', () => {
-    btn.disabled = true;
-    fetchImageReview(ownerUserId).then(show);
-  }, { once: true });
+  cachedImageReview(ownerUserId).then((review) => {
+    if (!review || review.status !== 'approved' || !review.viewUrl) {
+      wrap.remove();
+      return;
+    }
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'board-card-saved-image-toggle';
+    btn.textContent = storageImageStr().showBtn;
+    wrap.appendChild(btn);
+    btn.addEventListener('click', () => {
+      btn.disabled = true;
+      show(review);
+    }, { once: true });
+  });
 }
 
 // ===== 募集フォーム側(チェック・プレビュー・画像選択) =====
