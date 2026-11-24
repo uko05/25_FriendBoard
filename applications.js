@@ -4,7 +4,7 @@
 // 通知トーストは 14_GenshinOmikuji/feed.js の いいね通知(showLikeToast) と同じ仕組み。
 
 import { db } from './firebaseConfig.js?v=2';
-import { store, isAdminUser } from './userData.js?v=4';
+import { store, isAdminUser } from './userData.js?v=5';
 import { avatarUrl, getMyAvatar } from './avatar.js?v=2';
 import { initBlocks, isBlocked, onBlocksChange, blockUser } from './blocks.js?v=3';
 import { reportUser } from './reports.js?v=2';
@@ -12,8 +12,8 @@ import {
   VISIBILITY_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES, GENSHIN_ICON_BASE,
   fieldLabel, formatFieldValue, buildPostFieldBuckets, matchesGenderPreference,
   fieldMatchKind, playStyleValueMatchKind,
-} from './fields.js?v=2';
-import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js?v=2';
+} from './fields.js?v=3';
+import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js?v=3';
 import {
   collection, addDoc, updateDoc, doc, query, where, orderBy, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
@@ -146,7 +146,7 @@ function buildFieldRows(dict, lang, myValues, revealed) {
   if (!dict) return [];
   const rows = [];
   VISIBILITY_FIELDS.forEach((key) => {
-    if (key === 'friendPreference' || key === 'showGenshinRanking' || key === 'showGenshinCheck' || HEAD_FIELDS.has(key)) return;
+    if (key === 'friendPreference' || key === 'showGenshinRanking' || key === 'showGenshinCheck' || key === 'showStorageImage' || HEAD_FIELDS.has(key)) return;
     const value = dict[key];
     if (value == null || value === '' || (Array.isArray(value) && !value.length)) return;
     if (key === 'oshiChars' || key === 'sameOshiChars') { rows.push({ key, oshiIcons: value }); return; }

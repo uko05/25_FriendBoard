@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- 大きめの修正時だけ version.json と一緒に上げる(開きっぱなしのタブを自動で読み込み直す。TopPage00/shared/auto-reload.js参照) -->
-    <meta name="uko-reload-version" content="6" />
+    <meta name="uko-reload-version" content="7" />
     <title>＃原神フレンド承認板｜フレンド募集掲示板 - うーこの部屋</title>
     <meta name="description" content="原神のフレンドを探せる掲示板。プロフィールを登録して相手を探し、UIDは承認した相手にだけ公開されます。">
     <meta property="og:type" content="website">
@@ -42,7 +42,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@uko_dayo_">
 
-    <link rel="stylesheet" href="styles.css?v=12.22" />
+    <link rel="stylesheet" href="styles.css?v=12.29" />
 
     <!-- Favicon -->
     <link rel="icon" href="public/scripts/favicon_io/favicon.ico" type="image/x-icon">
@@ -264,6 +264,17 @@
                 <div class="board-saved-image-preview hidden" id="preview-genshinCheck">
                     <p class="board-saved-image-preview-message" id="preview-genshinCheck-message"></p>
                     <img class="board-saved-image-preview-img" id="preview-genshinCheck-img" src="" alt="">
+                </div>
+
+                <div class="board-form-row board-form-row-inline">
+                    <label class="board-single-checkbox"><input type="checkbox" id="input-showStorageImage" name="showStorageImage" /><span data-i18n="showStorageImageLabel">画像保管庫の画像を公開する</span></label>
+                </div>
+                <p class="board-storage-image-note"><a href="https://uko05.github.io/17_storage/" target="_blank" rel="noopener" data-i18n="storageImageLinkText">画像保管庫</a><span data-i18n="storageImageNote">に保存した画像から1枚選べます。表示されるまで少し時間がかかることがあります。</span></p>
+                <div class="board-saved-image-preview hidden" id="preview-storageImage">
+                    <p class="board-saved-image-preview-message" id="preview-storageImage-message"></p>
+                    <img class="board-saved-image-preview-img board-storage-image-preview-img" id="preview-storageImage-img" src="" alt="">
+                    <p class="board-storage-image-status" id="preview-storageImage-status"></p>
+                    <button type="button" class="board-card-saved-image-toggle board-storage-image-pick-btn" id="storage-image-pick-btn">画像を選ぶ</button>
                 </div>
 
                 <!-- ===== 連絡・時間帯 ===== -->
@@ -708,6 +719,7 @@
             <nav class="board-subtabs" role="tablist">
                 <button type="button" class="board-subtab-btn active" data-subtab="admin-reports" role="tab" aria-selected="true" data-i18n="adminReportsTitle">通報一覧</button>
                 <button type="button" class="board-subtab-btn" id="subtab-btn-admin-stats" data-subtab="admin-stats" role="tab" aria-selected="false" data-i18n="adminStatsTitle">ユーザー統計</button>
+                <button type="button" class="board-subtab-btn" id="subtab-btn-admin-images" data-subtab="admin-images" role="tab" aria-selected="false"><span data-i18n="adminImagesTitle">画像の確認</span><span class="board-tab-badge hidden" id="admin-images-badge"></span></button>
             </nav>
             <div class="board-subtab-panel" id="subtab-panel-admin-reports" role="tabpanel">
                 <label class="board-admin-report-filter">
@@ -726,6 +738,10 @@
                     <span data-i18n="adminStatsSkewOnly">異性ばかりに申請している人だけ表示</span>
                 </label>
                 <div class="board-admin-stats-wrap" id="admin-stats-wrap"></div>
+            </div>
+            <div class="board-subtab-panel hidden" id="subtab-panel-admin-images" role="tabpanel">
+                <p class="board-requests-desc" data-i18n="adminImagesDesc">「画像保管庫の画像を公開する」で選ばれた画像です。「表示OK」にすると募集カードに表示されます。</p>
+                <div class="board-list" id="admin-images-list"></div>
             </div>
         </section>
 
@@ -760,7 +776,7 @@
 
     </main>
 
-    <span id="site-version" class="site-version">v12.28</span>
+    <span id="site-version" class="site-version">v12.29</span>
 
     <!-- このサイトについて(初回訪問時に自動表示／(?)ボタンからいつでも表示) -->
     <div id="info-modal" class="col-modal" style="display:none;">
@@ -771,6 +787,17 @@
             <p class="info-modal-body" data-i18n="infoModalBody1">このサイトは一般的なフレンド募集とは異なり、相手に承認されないとUIDなどの公開されません。</p>
             <p class="info-modal-body" data-i18n="infoModalBody2">全利用者はマイプロフィールの設定が必須です。気になる人に申請をしたら相手にマイプロフィールが一部公開されます。相手が承認することで、お互いにUIDなど承認後に公開される情報を閲覧でき、ゲーム内でフレンド申請することができるようになります。</p>
             <p class="info-modal-body info-modal-emphasis" data-i18n="infoModalBody3">お互いのことを事前にしっかり知れるので、挨拶だけで終わらない長続きするフレンドを探すことができます</p>
+        </div>
+    </div>
+
+    <!-- 画像保管庫から公開する画像を1枚選ぶポップ(storageImage.js) -->
+    <div id="storage-image-modal" class="col-modal" style="display:none;">
+        <div class="col-modal-backdrop"></div>
+        <div class="col-modal-content storage-image-modal-content">
+            <button type="button" id="storage-image-modal-close" class="col-modal-close" aria-label="close">×</button>
+            <h3 class="apply-message-title" data-i18n="storageImagePickerTitle">公開する画像を選んでください</h3>
+            <p class="board-saved-image-preview-message storage-image-modal-message" id="storage-image-modal-message"></p>
+            <div class="board-storage-picker-grid" id="storage-image-modal-grid"></div>
         </div>
     </div>
 
@@ -860,8 +887,8 @@
          古典的なscriptタグ形式のライブラリ。type=moduleではないので読み込み順は
          board.jsより前に置く) -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
-    <script type="module" src="board.js?v=5"></script>
-    <script src="script.js"></script>
+    <script type="module" src="board.js?v=6"></script>
+    <script src="script.js?v=2"></script>
     <script type="module" src="https://uko05.github.io/24_AccountCenter/account-status.js"></script>
 
     <!-- 共通サイドバー -->

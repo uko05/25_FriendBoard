@@ -2071,3 +2071,107 @@ body.portal-page {
   font-weight: bold;
 }
 .board-admin-report-stats { margin: 0; font-size: 11px; color: #666; }
+
+/* ===== 画像保管庫の画像を公開する(2026-11-24, storageImage.js) ===== */
+.board-storage-image-note {
+  margin: -4px 0 6px 26px;
+  font-size: 12px;
+  color: #666;
+}
+.board-storage-image-note a {
+  color: #d32f2f;
+  text-decoration: underline;
+}
+.board-storage-image-preview-img {
+  max-height: 260px;
+  object-fit: contain;
+}
+.board-storage-image-status {
+  margin: 6px 0;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+  color: #b26a00;
+}
+.board-storage-image-status:empty { display: none; }
+.board-storage-image-status[data-status="approved"] { color: #2e7d32; }
+.board-storage-image-status[data-status="rejected"] { color: #d32f2f; }
+.board-storage-image-pick-btn {
+  display: block;
+  margin: 6px auto 0;
+}
+.board-storage-image-card-img {
+  max-height: 360px;
+  object-fit: contain;
+}
+.board-storage-image-card-status {
+  margin: 0;
+  font-size: 12px;
+  color: #b26a00;
+  text-align: center;
+}
+
+/* 画像を選ぶポップ */
+.storage-image-modal-content {
+  width: min(92vw, 640px);
+}
+.board-storage-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.board-storage-picker-item {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: #f4f4f4;
+  cursor: pointer;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+.board-storage-picker-item:hover { border-color: #ffcc00; }
+.board-storage-picker-item:disabled { cursor: default; opacity: 0.6; }
+.board-storage-picker-item.is-busy { border-color: #ffcc00; opacity: 1; }
+.board-storage-picker-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 管理: 画像の確認 */
+.board-admin-image-link {
+  display: block;
+  margin: 10px 0;
+  text-align: center;
+  font-size: 12px;
+  color: #d32f2f;
+}
+.board-admin-image-img {
+  max-width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+}
+.board-admin-image-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.board-admin-image-actions button {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 8px 22px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1.5px solid;
+  background: #fff;
+}
+.board-admin-image-ok { color: #2e7d32; border-color: #2e7d32 !important; }
+.board-admin-image-ok:hover { background: #e8f5e9; }
+.board-admin-image-ng { color: #d32f2f; border-color: #d32f2f !important; }
+.board-admin-image-ng:hover { background: #ffebee; }
+.board-admin-image-actions button:disabled { opacity: 0.5; cursor: default; }

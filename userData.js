@@ -11,7 +11,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { VISIBILITY_FIELDS, defaultVisibility, normalizeVisibility } from './fields.js?v=2';
+import { VISIBILITY_FIELDS, defaultVisibility, normalizeVisibility } from './fields.js?v=3';
 
 // 14_GenshinOmikujiと同じキーをあえて使う。uko05.github.io配下は全サイト同一オリジンで
 // localStorageを共有しているため、キーを揃えるだけで「Omikuji/AccountCenterで使っている
@@ -114,6 +114,7 @@ export const store = {
   playStylesOtherText: '',
   showGenshinRanking: false,
   showGenshinCheck: false,
+  showStorageImage: false,
   inviteStyle: '',
   multiFrequency: '',
   multiFrequencyByDay: false, // trueなら曜日単位(multiFrequencyが配列['mon','wed',...]になる)
@@ -190,6 +191,7 @@ export async function loadProfileFromFirestore() {
       if (d.playStylesOtherText != null) store.playStylesOtherText = d.playStylesOtherText;
       if (d.showGenshinRanking != null) store.showGenshinRanking = !!d.showGenshinRanking;
       if (d.showGenshinCheck != null) store.showGenshinCheck = !!d.showGenshinCheck;
+      if (d.showStorageImage != null) store.showStorageImage = !!d.showStorageImage;
       if (d.weekdayTimesByDay != null) store.weekdayTimesByDay = !!d.weekdayTimesByDay;
       if (d.weekendTimesByDay != null) store.weekendTimesByDay = !!d.weekendTimesByDay;
       ARRAY_FIELDS.forEach((k) => { if (Array.isArray(d[k])) store[k] = d[k]; });
@@ -242,6 +244,7 @@ export async function syncProfileToFirestore() {
       playStylesOtherText: store.playStylesOtherText,
       showGenshinRanking: store.showGenshinRanking,
       showGenshinCheck: store.showGenshinCheck,
+      showStorageImage: store.showStorageImage,
       inviteStyle: store.inviteStyle,
       multiFrequency: store.multiFrequency,
       multiFrequencyByDay: store.multiFrequencyByDay,

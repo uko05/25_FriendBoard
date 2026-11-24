@@ -9,7 +9,7 @@ export const GENSHIN_ICON_BASE = 'https://cdn.jsdelivr.net/gh/uko05/99_SharedIma
 // フォームの並び順とだいたい揃えている(カードのチップ表示順にも使われる)。
 export const VISIBILITY_FIELDS = [
   'genshinUid', 'displayName', 'server', 'adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms',
-  'oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck',
+  'oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck', 'showStorageImage',
   'multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle',
   'vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText',
   'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'yumeOk', 'roughTalk', 'sameOshiReject', 'sameOshiChars',
@@ -23,7 +23,7 @@ export const VISIBILITY_FIELDS = [
 // どちらもここには含めない。
 export const FIELD_GROUPS = [
   { key: 'basic', fields: ['adventureRank', 'worldLevel', 'gender', 'ageGroup', 'platforms'] },
-  { key: 'style', fields: ['oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck'] },
+  { key: 'style', fields: ['oshiChars', 'spending', 'playStyles', 'playStylesOtherText', 'showGenshinRanking', 'showGenshinCheck', 'showStorageImage'] },
   { key: 'contact', fields: ['multiFrequency', 'multiFrequencyNote', 'weekdayTimes', 'weekendTimes', 'inviteStyle'] },
   { key: 'voice', fields: ['vc', 'vcNote', 'vcApps', 'vcDiscordId', 'vcLineId', 'vcAppsOtherText', 'casualOk', 'jokingOk', 'yuriOk', 'fujoshiOk', 'yumeOk', 'roughTalk', 'sameOshiReject', 'sameOshiChars'] },
   { key: 'sns', fields: ['twitterId', 'tiktokId', 'lineId', 'instagramId'] },
@@ -45,6 +45,7 @@ const FIXED_VISIBILITY = {
   playStylesOtherText: 'public',
   showGenshinRanking: 'public',
   showGenshinCheck: 'public',
+  showStorageImage: 'public',
   vcDiscordId: 'approval',
   vcLineId: 'approval',
   vcAppsOtherText: 'approval',
@@ -96,6 +97,7 @@ const FIELD_LABELS = {
   playStylesOtherText: { ja: 'マルチその他詳細', en: 'Multiplayer other details' },
   showGenshinRanking: { ja: '原神推しキャラランキング', en: 'Genshin Character Ranking' },
   showGenshinCheck: { ja: '原神チェックシート', en: 'Genshin Check Sheet' },
+  showStorageImage: { ja: '画像保管庫の画像', en: 'Image Storage image' },
   inviteStyle: { ja: 'マルチ自発について', en: 'Taking initiative in multiplayer' },
   multiFrequency: { ja: 'マルチ頻度', en: 'Multiplayer Frequency' },
   multiFrequencyNote: { ja: 'マルチ頻度の詳細', en: 'Multiplayer frequency details' },

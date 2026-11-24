@@ -2,18 +2,19 @@
 // ＃原神フレンド承認板：タブ切替・プロフィール自動反映・投稿(募集する)・一覧購読(さがす)
 
 import { db } from './firebaseConfig.js?v=2';
-import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink, onAuthUidLate, isAdminUser, loadAdminRole } from './userData.js?v=4';
+import { getUserId, getAuthUid, store, loadProfileFromFirestore, scheduleSync, waitForAccountLink, onAuthUidLate, isAdminUser, loadAdminRole } from './userData.js?v=5';
 import { initAvatarUI, getMyAvatar, avatarUrl } from './avatar.js?v=2';
-import { initApplications, applyToPost, hasAppliedTo, refreshApplicationsAdminView } from './applications.js?v=5';
+import { initApplications, applyToPost, hasAppliedTo, refreshApplicationsAdminView } from './applications.js?v=6';
 import { initBlocks, isBlocked, onBlocksChange, blockUser, unblockUser, blockedByMeList } from './blocks.js?v=3';
 import { reportUser } from './reports.js?v=2';
 import {
   VISIBILITY_FIELDS, NO_PUBLIC_FIELDS, FIELD_GROUPS, PLAYSTYLE_OFFER_VALUES, PLAYSTYLE_REQUEST_VALUES,
   fieldLabel, formatFieldValue, buildPostFieldBuckets, matchesGenderPreference,
   fieldMatchKind, playStyleValueMatchKind, GENSHIN_ICON_BASE,
-} from './fields.js?v=2';
-import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js?v=2';
+} from './fields.js?v=3';
+import { matchesFilters, renderFilterBar, isGenderMutualFilterOn, setGenderMutualFilterOn } from './filterBar.js?v=3';
 import { getSavedProfileImageFor } from 'https://uko05.github.io/24_AccountCenter/saved-image.js';
+import { initStorageImageForm, refreshStorageImagePreview, renderStorageImageOnCard, REVIEW_COLLECTION } from './storageImage.js?v=1';
 import { genshinChars } from 'https://cdn.jsdelivr.net/gh/uko05/99_SharedImage@main/01_Genshin/chara_data/genshin_chars.js';
 import {
   collection, setDoc, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp,
@@ -57,6 +58,12 @@ const STR = {
     blockedListTitle: 'ブロック中のユーザー',
     emptyBlockedList: 'ブロックしているユーザーはいません',
     emptyAdminReports: '通報はまだありません',
+    emptyAdminImages: '確認待ちの画像はありません',
+    adminImageOwner: '投稿者',
+    adminImageApprove: '表示OK',
+    adminImageReject: '表示NG',
+    adminImageMissing: '画像を読み込めません(削除された可能性があります)',
+    adminImageFail: '更新に失敗しました。時間をおいて再度お試しください。',
     adminReporterLabel: '通報者',
     adminReportedLabel: '被通報者',
     adminChatSnapshotTitle: '通報時点のチャット内容',
@@ -150,6 +157,12 @@ const STR = {
     blockedListTitle: 'Blocked users',
     emptyBlockedList: 'No blocked users',
     emptyAdminReports: 'No reports yet',
+    emptyAdminImages: 'No images waiting for review',
+    adminImageOwner: 'Owner',
+    adminImageApprove: 'Approve',
+    adminImageReject: 'Reject',
+    adminImageMissing: 'Image could not be loaded (it may have been deleted)',
+    adminImageFail: 'Update failed. Please try again later.',
     adminReporterLabel: 'Reporter',
     adminReportedLabel: 'Reported',
     adminChatSnapshotTitle: 'Chat content at time of report',
@@ -283,6 +296,7 @@ const multiFrequencyNoteInput = document.getElementById('input-multiFrequencyNot
 const WEEK_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const showGenshinRankingInput = document.getElementById('input-showGenshinRanking');
 const showGenshinCheckInput = document.getElementById('input-showGenshinCheck');
+const showStorageImageInput = document.getElementById('input-showStorageImage');
 const sameOshiRejectInput = document.getElementById('input-sameOshiReject');
 const weekdayStartInput = document.getElementById('weekday-start');
 const weekdayEndInput = document.getElementById('weekday-end');
@@ -530,6 +544,7 @@ function fillFormFromProfile() {
   if (multiFrequencyNoteInput && store.multiFrequencyNote) multiFrequencyNoteInput.value = store.multiFrequencyNote;
   if (showGenshinRankingInput) showGenshinRankingInput.checked = !!store.showGenshinRanking;
   if (showGenshinCheckInput) showGenshinCheckInput.checked = !!store.showGenshinCheck;
+  if (showStorageImageInput) showStorageImageInput.checked = !!store.showStorageImage;
   if (weekdayByDayInput) weekdayByDayInput.checked = !!store.weekdayTimesByDay;
   if (store.weekdayTimesByDay) {
     WEEKDAY_DAYS.forEach((d) => {
@@ -588,6 +603,7 @@ function fillFormFromProfile() {
   updateSameOshiCharsVisibility();
   refreshGenshinRankingPreview();
   refreshGenshinCheckPreview();
+  refreshStorageImagePreview();
 
   oshiPicker.renderSelected();
   sameOshiPicker.renderSelected();
@@ -867,6 +883,7 @@ function collectFormValues() {
     playStylesOtherText: getCheckboxValues('playStyles').includes('other') ? (playStylesOtherInput?.value.trim() || '') : '',
     showGenshinRanking: !!showGenshinRankingInput?.checked,
     showGenshinCheck: !!showGenshinCheckInput?.checked,
+    showStorageImage: !!showStorageImageInput?.checked,
     inviteStyle: getRadioValue('inviteStyle'),
     multiFrequency: multiFrequencyByDay ? getCheckboxValues('multiFrequencyDays') : (multiFrequencyInput?.value || ''),
     multiFrequencyByDay,
@@ -1068,6 +1085,10 @@ function pushFieldRow(rows, key, value, lang, ownerUserId) {
     if (Array.isArray(value) && value.length) rows.push({ key, oshiIcons: value });
     return;
   }
+  if (key === 'showStorageImage') {
+    if (value === true) rows.push({ key, storageImage: true, ownerUserId });
+    return;
+  }
   if (SAVED_IMAGE_FIELD_SITE_IDS[key]) {
     if (value === true) rows.push({ key, savedImageSite: SAVED_IMAGE_FIELD_SITE_IDS[key], ownerUserId });
     return;
@@ -1157,7 +1178,8 @@ function buildCard(post, { mine, onNeedProfile, showTime = true } = {}) {
   body.appendChild(head);
 
   const savedImageRows = rows.filter((row) => row.savedImageSite);
-  const chipRows = rows.filter((row) => !row.savedImageSite);
+  const storageImageRows = rows.filter((row) => row.storageImage);
+  const chipRows = rows.filter((row) => !row.savedImageSite && !row.storageImage);
   // フォームの見出し(基本情報/あなたについて/連絡・時間帯/ボイスチャット/つながれるSNS)に
   // 対応するカテゴリーごとに枠で区切って表示する(項目が多く雑然として見えるのを防ぐため)
   FIELD_GROUPS.forEach((group) => {
@@ -1290,6 +1312,14 @@ function buildCard(post, { mine, onNeedProfile, showTime = true } = {}) {
         }
       });
     }, { once: true });
+  });
+
+  // 画像保管庫の画像(2026-11-24)。承認済みのときだけ表示する(storageImage.js)
+  storageImageRows.forEach((row) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'board-card-saved-image';
+    body.appendChild(wrap);
+    renderStorageImageOnCard(wrap, row.ownerUserId, mine);
   });
 
   const comment = document.createElement('p');
@@ -2953,7 +2983,7 @@ async function buildProfileExportImage(post, { revealApproval = false } = {}) {
     const offerChips = [];
     const requestChips = [];
     group.fields
-      .filter((k) => k !== 'oshiChars' && k !== 'sameOshiChars' && k !== 'showGenshinRanking' && k !== 'showGenshinCheck')
+      .filter((k) => k !== 'oshiChars' && k !== 'sameOshiChars' && k !== 'showGenshinRanking' && k !== 'showGenshinCheck' && k !== 'showStorageImage')
       .forEach((key) => {
         if (secretSet.has(key)) {
           chips.push({ text: maskedFieldText(lang, key), bg: EXPORT_COLORS.approvalBg, color: EXPORT_COLORS.approvalColor, bold: true });
@@ -3064,6 +3094,101 @@ async function exportProfileImage(revealApproval) {
 document.getElementById('export-profile-image-btn')?.addEventListener('click', () => exportProfileImage(false));
 document.getElementById('export-profile-image-full-btn')?.addEventListener('click', () => exportProfileImage(true));
 
+// ===== 画像の確認(管理者のみ, 2026-11-24) =====
+// 「画像保管庫の画像を公開する」で選ばれた画像(friendBoardImageReviews)のうち、
+// 承認待ち(status=='pending')のものを目視で確認して「表示OK/表示NG」を付ける。
+// 承認待ちだけを購読する(件数は少ない想定。複合インデックスを作らないよう並び替えは手元で行う)。
+let latestImageReviews = [];
+
+function startAdminImageReviewsListener() {
+  const q = query(collection(db, REVIEW_COLLECTION), where('status', '==', 'pending'));
+  onSnapshot(q, (snap) => {
+    latestImageReviews = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.requestedAt?.toMillis?.() || 0) - (b.requestedAt?.toMillis?.() || 0));
+    renderAdminImageReviews();
+  }, (err) => console.error('[board] admin image reviews listen failed', err));
+}
+
+function renderAdminImageReviews() {
+  const badge = document.getElementById('admin-images-badge');
+  if (badge) {
+    badge.textContent = String(latestImageReviews.length);
+    badge.classList.toggle('hidden', latestImageReviews.length === 0);
+  }
+  const list = document.getElementById('admin-images-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!latestImageReviews.length) {
+    const p = document.createElement('p');
+    p.className = 'board-list-empty';
+    p.textContent = s().emptyAdminImages;
+    list.appendChild(p);
+    return;
+  }
+  latestImageReviews.forEach((review) => list.appendChild(buildAdminImageReviewCard(review)));
+  // 投稿者のミニプロフィール(通報一覧と同じキャッシュを使う)
+  const jobs = [];
+  latestImageReviews.forEach((r) => {
+    if (!r.userId || adminReportUserCache.has(r.userId)) return;
+    const p = fetchAdminReportUser(r.userId).then((v) => { adminReportUserCache.set(r.userId, v); });
+    adminReportUserCache.set(r.userId, p);
+    jobs.push(p);
+  });
+  if (jobs.length) Promise.all(jobs).then(renderAdminImageReviews);
+}
+
+function buildAdminImageReviewCard(review) {
+  const card = document.createElement('div');
+  card.className = 'board-card board-admin-report-card board-admin-image-card';
+
+  const time = document.createElement('span');
+  time.className = 'board-card-time';
+  time.textContent = relTime(review.requestedAt);
+  card.appendChild(time);
+
+  card.appendChild(buildAdminReportPerson(s().adminImageOwner, review.userId, 'board-admin-report-person-reporter'));
+
+  const link = document.createElement('a');
+  link.href = review.viewUrl;
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.className = 'board-admin-image-link';
+  const img = document.createElement('img');
+  img.className = 'board-admin-image-img';
+  img.alt = '';
+  img.src = review.viewUrl;
+  img.addEventListener('error', () => { link.textContent = s().adminImageMissing; });
+  link.appendChild(img);
+  card.appendChild(link);
+
+  const actions = document.createElement('div');
+  actions.className = 'board-admin-image-actions';
+  const decide = async (status, btn) => {
+    actions.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+    try {
+      await updateDoc(doc(db, REVIEW_COLLECTION, review.id), { status, reviewedAt: serverTimestamp() });
+    } catch (e) {
+      console.error('[board] image review update failed', e);
+      alert(s().adminImageFail);
+      actions.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+    }
+  };
+  const ok = document.createElement('button');
+  ok.type = 'button';
+  ok.className = 'board-admin-image-ok';
+  ok.textContent = s().adminImageApprove;
+  ok.addEventListener('click', () => decide('approved', ok));
+  const ng = document.createElement('button');
+  ng.type = 'button';
+  ng.className = 'board-admin-image-ng';
+  ng.textContent = s().adminImageReject;
+  ng.addEventListener('click', () => decide('rejected', ng));
+  actions.append(ok, ng);
+  card.appendChild(actions);
+  return card;
+}
+
 let adminUIEnabled = false;
 function enableAdminUI() {
   if (adminUIEnabled || !isAdminUser()) return;
@@ -3071,6 +3196,7 @@ function enableAdminUI() {
   document.getElementById('tab-btn-admin')?.classList.remove('hidden');
   document.getElementById('announcement-post-form')?.classList.remove('hidden');
   startAdminReportsListener();
+  startAdminImageReviewsListener();
 }
 
 // ===== 初期化 =====
@@ -3087,9 +3213,11 @@ async function init() {
     renderSearchFilterBar();
     renderSearchList();
     refreshApplicationsAdminView();
+    refreshStorageImagePreview(); // ログインが分かったら「画像を選ぶ」を出す
   });
   renderSearchFilterBar();
   populateNumberAndTimeSelects();
+  initStorageImageForm();
   await loadProfileFromFirestore();
   applyDraftIfAny();
   fillFormFromProfile();

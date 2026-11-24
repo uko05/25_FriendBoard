@@ -259,6 +259,15 @@
   `scrollTo(0,0)`は`overflow-anchor: none`と組み合わせて使っている
   （スクロールアンカリングがJSの位置リセットを上書きすることがあるため）。
 
+## 画像保管庫の画像を公開する（`storageImage.js`, v12.29追加）
+- 17_storageの画像を1枚選んで募集カードに出す。選択は`friendBoardImageReviews/{userId}`に
+  `status:'pending'`で書き、管理者が管理タブ「画像の確認」で`approved`/`rejected`を付ける。
+  カードには`approved`のときだけ出す（他人のカードは「画像保管庫の画像を表示」を押した時の
+  getDoc 1回だけ）。ルール（24_AccountCenter/firestore.rules）で、本人は`pending`しか書けない・
+  保管庫の自動審査に通った自分の画像（URL一致）しか選べない・管理者はstatus/reviewedAtだけ、を強制。
+- 選ぶにはログイン必須（保管庫がAuthのuidで画像を持つため）。同じ画像を選び直しても承認待ちに戻さない。
+- 画面の文言に「管理者」という言葉は出さない（ユーザーの要望）。状態は「画像承認待ち」「表示中」。
+
 ## ユーザー識別
 - `uko05.github.io`系サイト共通のlocalStorageキー（`genshinOmikuji_userId`）で
   匿名IDを共有している。24_AccountCenterでのアカウント作成は、この匿名IDを
