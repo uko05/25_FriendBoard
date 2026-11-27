@@ -141,7 +141,7 @@ export function renderStorageImageOnCard(wrap, ownerUserId, mine) {
 
 // ===== 募集フォーム側(チェック・プレビュー・画像選択) =====
 let formEls = null;
-let pickerImages = null; // 選択ポップで読み込んだ画像一覧(開き直しても読み直さない)
+let pickerImages = null; // 選択ポップで読み込んだ画像一覧(開くたびに読み直す。画像保管庫で保存した直後の画像も出るように 2026-11-28)
 let currentReview = null; // 今選ばれている画像(同じ画像を選び直した時に承認待ちへ戻さないため)
 
 export function initStorageImageForm() {
@@ -223,7 +223,7 @@ async function openPicker() {
   modalMsg.textContent = t.pickerLoading;
   modalMsg.style.display = 'block';
   try {
-    if (!pickerImages) pickerImages = await loadPickerImages();
+    pickerImages = await loadPickerImages();
   } catch (e) {
     console.warn('[storageImage] picker load failed', e);
     modalMsg.textContent = t.pickerFail;
